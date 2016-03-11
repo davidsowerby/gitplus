@@ -1,0 +1,21 @@
+#set( $H1 = "#" )
+#set ($H2 = "#" + $H1)
+#set ($H3 = "#" + $H2)
+#set ($DATE_FORMAT="YYYY-MM-dd")
+
+$H1 Change Log for $projectName
+
+#foreach ($versionRecord in $versionRecords)
+
+    $H2 [$versionRecord.tagName]($tagUrl/$versionRecord.tagName)($dateTool.format($DATE_FORMAT,$versionRecord.releaseDate))
+
+    $H3 Summary
+
+    #foreach ($commitRecord in $versionRecord.commits)
+    - $commitRecord.shortMessage
+    #end
+
+
+
+
+#end

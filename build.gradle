@@ -1,0 +1,69 @@
+//noinspection GrPackage
+plugins {
+    id 'java'
+    id 'groovy'
+    id 'idea'
+    id 'eclipse-wtp'
+    id 'org.unbroken-dome.test-sets' version '1.2.0'
+
+}
+
+sourceCompatibility = '1.8'
+
+testSets {
+    integrationTest
+}
+
+ext.assertjVersion = '3.3.0'
+ext.commonsLangVersion = '3.3.2'
+ext.groovyVersion = '2.4.1'
+ext.guavaVersion = '19.0'
+
+repositories {
+    jcenter()
+}
+
+dependencies {
+
+    //git
+    compile 'org.eclipse.jgit:org.eclipse.jgit:3.6.0.201412230720-r'
+    compile 'org.kohsuke:github-api:1.72'
+
+    //groovy
+    compile 'org.codehaus.groovy:groovy-all:' + groovyVersion
+
+    //Logging
+    compile 'org.slf4j:slf4j-api:1.7.5'
+
+    //REST
+    compile 'com.jcabi:jcabi-http:1.14.2' //client
+    compile 'org.glassfish:javax.json:1.0.4'
+    compile 'javax.json:javax.json-api:1.0'
+
+    //templating
+    compile 'org.apache.velocity:velocity:1.7'
+    compile 'org.apache.velocity:velocity-tools:2.0'
+
+    //unit testing
+    testCompile 'org.spockframework:spock-core:1.0-groovy-2.4'
+    testCompile 'junit:junit:4.12'
+    testCompile 'cglib:cglib-nodep:3.2.0' // needed for Spock mocking
+    testCompile 'org.objenesis:objenesis:2.2' // needed for Spock mocking
+    testCompile 'com.mycila.testing.plugins:mycila-testing-mockito:2.8'
+    testCompile 'org.mockito:mockito-all:1.10.19'
+    testCompile 'org.assertj:assertj-core:' + assertjVersion
+
+    //utility
+    compile 'com.google.guava:guava:' + guavaVersion
+    compile 'org.apache.commons:commons-lang3:' + commonsLangVersion
+    compile 'com.google.code.findbugs:annotations:3.0.0'
+
+    //integration testing
+    integrationTestCompile 'org.spockframework:spock-core:1.0-groovy-2.4'
+    integrationTestCompile 'junit:junit:4.12'
+}
+
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.10'
+}
