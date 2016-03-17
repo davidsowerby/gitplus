@@ -49,9 +49,6 @@ dependencies {
     testCompile 'junit:junit:4.12'
     testCompile 'cglib:cglib-nodep:3.2.0' // needed for Spock mocking
     testCompile 'org.objenesis:objenesis:2.2' // needed for Spock mocking
-    testCompile 'com.mycila.testing.plugins:mycila-testing-mockito:2.8'
-    testCompile 'org.mockito:mockito-all:1.10.19'
-    testCompile 'org.assertj:assertj-core:' + assertjVersion
 
     //utility
     compile 'com.google.guava:guava:' + guavaVersion

@@ -30,9 +30,18 @@ public interface BuildPropertiesLoader {
     String bintrayKey();
 
     /**
-     * Returns the API key for GitHub
+     * Returns the API key for GitHub.  It is expected - but cannot be enforced - that this token gives limited access rights.  Typically this would be enough
+     * to raise issues, but exclude creating / deleting repositories.  It is up to the developer how best to use this and {@link #githubKeyFullAccess()}
      *
-     * @return the API key for GitHub
+     * @return the restricted API key for GitHub
      */
-    String githubKey();
+    String githubKeyRestricted();
+
+    /**
+     * Returns the API key for GitHub.  It is expected - but cannot be enforced - that this token gives full access to all privileges. It is up to the
+     * developer how best to use this and {@link #githubKeyRestricted()}
+     *
+     * @return the full access API key for GitHub
+     */
+    String githubKeyFullAccess();
 }
