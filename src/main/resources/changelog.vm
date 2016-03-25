@@ -16,11 +16,9 @@ $H3 Summary
 - $commitRecord.shortMessage
 #end
 
-$H3 Issues
-
 #foreach ($fixEntry in $versionRecord.fixesByGroup.entrySet())
 
-$H4 $fixEntry.key
+$H3 $fixEntry.key
 #foreach($issue in $fixEntry.value)
 - [$issue.number]($issue.htmlUrl) $issue.title
 #end
