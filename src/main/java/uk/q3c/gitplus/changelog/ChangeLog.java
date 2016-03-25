@@ -23,6 +23,13 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
+ * Builds a list of {@link VersionRecord}.  The versions are identified by tags. Each VersionRecord holds a set of GitCommit instances, which make up a
+ * version.  GitCommmit parses commit messages fro issue fix references, and the VersionRecord collates those into groups of issues (for example, 'bug',
+ * 'enhancement', 'quality'.  The mapping of issues labels to issue groups is user defined via {@link ChangeLogConfiguration#labelGroups(Map)}.
+ * <p>
+ * Output format is defined by a Velocity template
+ * <p>
+ * <p>
  * Created by David Sowerby on 07 Mar 2016
  */
 public class ChangeLog {
@@ -51,19 +58,10 @@ public class ChangeLog {
     }
 
 
-    public File getProjectDir() {
-        return gitPlus.getProjectDir();
-    }
-
-
     public String getProjectName() {
         return gitPlus.getProjectName();
     }
 
-
-    public GitPlus getGitPlus() {
-        return gitPlus;
-    }
 
     public void createChangeLog() throws IOException {
         File outputFile = configuration.getOutputFile();
@@ -92,22 +90,16 @@ public class ChangeLog {
     }
 
 
-    public GitRemote getGitRemote() throws IOException {
-        return getGitPlus().getGitRemote();
+    private GitRemote getGitRemote() throws IOException {
+        return gitPlus.getGitRemote();
     }
 
 
-    /**
-     * Returns a list of {@link VersionRecord}, a subset of commit information for each commit which is tagged, treating each tag as a separate version.
-     * Commits between tags are rolled up into a version
-     *
-     * @return a list of {@link VersionRecord}, in order of oldest first
-     */
     public List<VersionRecord> getVersionRecords() {
         return versionRecords;
     }
 
-    public void assembleVersionRecords() {
+    private void assembleVersionRecords() {
         buildTagMap();
         versionRecords = new ArrayList<>();
         Set<GitCommit> commits = gitPlus.extractDevelopCommits();
@@ -118,6 +110,7 @@ public class ChangeLog {
         Optional<Tag> tagForFirstsCommit = tagForCommit(firstCommit);
         Tag tag = tagForFirstsCommit.isPresent() ? tagForFirstsCommit.get() : currentBuildTag(firstCommit);
         VersionRecord currentVersionRecord = new VersionRecord(tag, configuration);
+        currentVersionRecord.addCommit(firstCommit);
         versionRecords.add(currentVersionRecord);
 
         while (commitIterator.hasNext()) {
@@ -126,9 +119,8 @@ public class ChangeLog {
             if (tagForCommit.isPresent()) {
                 currentVersionRecord = new VersionRecord(tagForCommit.get(), configuration);
                 versionRecords.add(currentVersionRecord);
-            } else {
-                currentVersionRecord.addCommit(currentCommit);
             }
+            currentVersionRecord.addCommit(currentCommit);
         }
     }
 
