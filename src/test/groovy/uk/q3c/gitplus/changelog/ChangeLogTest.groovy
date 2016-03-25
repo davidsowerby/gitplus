@@ -194,11 +194,10 @@ class ChangeLogTest extends Specification {
         labels = createLabels()
         issues = new ArrayList<>()
         for (int i = 0; i < 20; i++) {
-            Issue issue = Mock(Issue)
-            issue.getNumber() >> i
-            issue.getTitle() >> "issue " + i
-            issue.getLabels() >> labels.get(i)
-            issue.getHtmlUrl() >> "https:/github.com/davidsowerby/dummmy/issues/" + i
+            Issue issue = new Issue(i)
+            issue.title("issue " + i)
+                    .labels(labels.get(i))
+                    .htmlUrl("https:/github.com/davidsowerby/dummmy/issues/" + i)
             issues.add(issue)
         }
     }

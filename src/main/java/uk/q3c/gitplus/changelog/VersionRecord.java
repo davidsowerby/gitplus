@@ -130,7 +130,7 @@ public class VersionRecord {
                                                 if (group != null) {
                                                     //create an entry set if none already
                                                     if (!fixesByGroup.containsKey(group)) {
-                                                        fixesByGroup.put(group, new HashSet<>());
+                                                        fixesByGroup.put(group, new TreeSet<>());
                                                     }
                                                     fixesByGroup.get(group)
                                                                 .add(issue);

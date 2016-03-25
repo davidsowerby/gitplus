@@ -14,7 +14,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * <p>
  * Created by David Sowerby on 22 Mar 2016
  */
-public class Issue {
+public class Issue implements Comparable<Issue> {
 
     private String title;
     private Set<String> labels = new HashSet<>();
@@ -79,13 +79,45 @@ public class Issue {
         return this;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Issue issue = (Issue) o;
+
+        if (number != issue.number) return false;
+        return htmlUrl.equals(issue.htmlUrl);
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = number;
+        result = 31 * result + htmlUrl.hashCode();
+        return result;
+    }
+
     public Issue number(final int number) {
         this.number = number;
+
         return this;
     }
 
     public Issue htmlUrl(final String htmlUrl) {
         this.htmlUrl = htmlUrl;
         return this;
+    }
+
+    @Override
+    public int compareTo(Issue o) {
+        if (o == null) {
+            return -1;
+        }
+        int h = htmlUrl.compareTo(o.htmlUrl);
+        if (h != 0) {
+            return h;
+        }
+        return this.number - o.number;
     }
 }
