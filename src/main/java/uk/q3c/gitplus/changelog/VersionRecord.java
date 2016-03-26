@@ -56,15 +56,6 @@ public class VersionRecord {
         return fixesByGroup;
     }
 
-    public List<String> labelGroups() {
-        return new ArrayList<>(fixesByGroup.keySet());
-    }
-
-    public Set<Issue> issuesInGroup(String groupName) {
-        return fixesByGroup.get(groupName);
-    }
-
-
     public List<GitCommit> getCommits() {
         return commits;
     }

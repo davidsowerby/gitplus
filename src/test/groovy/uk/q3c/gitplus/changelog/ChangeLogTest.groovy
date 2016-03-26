@@ -10,10 +10,11 @@ import uk.q3c.gitplus.local.GitCommit
 import uk.q3c.gitplus.local.Tag
 import uk.q3c.gitplus.remote.GitRemote
 import uk.q3c.gitplus.remote.Issue
+import uk.q3c.util.testutil.FileTestUtil
 
+import java.nio.file.Paths
 import java.time.ZoneId
 import java.time.ZonedDateTime
-
 /**
  * Created by David Sowerby on 07 Mar 2016
  */
@@ -36,8 +37,7 @@ class ChangeLogTest extends Specification {
     def setup() {
 
         tags = new ArrayList<>()
-//        temp = temporaryFolder.getRoot()
-        temp = new File('/home/david/temp/gitplus')
+        temp = temporaryFolder.getRoot()
     }
 
 
@@ -90,12 +90,17 @@ class ChangeLogTest extends Specification {
         createDataWithMostRecentCommitTagged()
         gitPlus()
         changeLog = new ChangeLog(gitPlus, changeLogConfiguration)
+        URL url = this.getClass()
+                .getResource('changelog.md');
+        File expectedResult = Paths.get(url.toURI())
+                .toFile();
 
         when:
         changeLog.createChangeLog()
 
         then:
-        false
+        !FileTestUtil.compare(changeLogConfiguration.getOutputFile(), expectedResult).isPresent()
+        changeLog.getVersionRecords().size() == 5
     }
 /**
  * This creates:<ol>

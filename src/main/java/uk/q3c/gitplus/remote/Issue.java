@@ -81,12 +81,18 @@ public class Issue implements Comparable<Issue> {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         Issue issue = (Issue) o;
 
-        if (number != issue.number) return false;
+        if (number != issue.number) {
+            return false;
+        }
         return htmlUrl.equals(issue.htmlUrl);
 
     }
@@ -98,11 +104,6 @@ public class Issue implements Comparable<Issue> {
         return result;
     }
 
-    public Issue number(final int number) {
-        this.number = number;
-
-        return this;
-    }
 
     public Issue htmlUrl(final String htmlUrl) {
         this.htmlUrl = htmlUrl;

@@ -45,10 +45,11 @@ dependencies {
     compile 'org.apache.velocity:velocity-tools:2.0'
 
     //unit testing
-    testCompile 'org.spockframework:spock-core:1.0-groovy-2.4'
     testCompile 'junit:junit:4.12'
+    testCompile 'org.spockframework:spock-core:1.0-groovy-2.4'
     testCompile 'cglib:cglib-nodep:3.2.0' // needed for Spock mocking
     testCompile 'org.objenesis:objenesis:2.2' // needed for Spock mocking
+    testCompile 'uk.q3c:q3c-testUtil:0.8.1'
 
     //utility
     compile 'com.google.guava:guava:' + guavaVersion

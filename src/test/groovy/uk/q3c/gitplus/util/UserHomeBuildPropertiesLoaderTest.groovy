@@ -11,5 +11,7 @@ class UserHomeBuildPropertiesLoaderTest extends Specification {
         expect:
         new UserHomeBuildPropertiesLoader().load().getProperties().size() >= 2
         new UserHomeBuildPropertiesLoader().load().bintrayKey() != null
+        new UserHomeBuildPropertiesLoader().load().githubKeyFullAccess() != null
+        new UserHomeBuildPropertiesLoader().load().githubKeyRestricted() != null
     }
 }
