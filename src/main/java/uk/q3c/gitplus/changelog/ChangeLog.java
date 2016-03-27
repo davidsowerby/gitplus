@@ -33,6 +33,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  * Created by David Sowerby on 07 Mar 2016
  */
 public class ChangeLog {
+    public static final String DEFAULT_TEMPLATE = "markdown.vm";
     private static Logger log = getLogger(ChangeLog.class);
     private final VelocityContext velocityContext;
     private final ChangeLogConfiguration configuration;

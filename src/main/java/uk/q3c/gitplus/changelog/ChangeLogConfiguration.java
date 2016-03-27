@@ -50,7 +50,7 @@ public class ChangeLogConfiguration {
 
     //    @formatter:on
 
-    private String templateName = "changelog.vm";
+    private String templateName = ChangeLog.DEFAULT_TEMPLATE;
     private Map<String, Set<String>> labelGroups = defaultLabelGroups;
     private String messageTagOpen = "{{";
     private String messageTagClose = "}}";

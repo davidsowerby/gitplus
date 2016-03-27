@@ -50,7 +50,7 @@ class ChangeLogTest extends Specification {
 
         then:
         1 * changeLogConfiguration.validate()
-        1 * changeLogConfiguration.getTemplateName() >> 'changelog.vm'
+        1 * changeLogConfiguration.getTemplateName() >> ChangeLog.DEFAULT_TEMPLATE
         1 * gitPlus.createOrVerifyRepos()
     }
 
@@ -164,7 +164,7 @@ class ChangeLogTest extends Specification {
         gitPlus.getGitRemote() >> gitRemote
         gitPlus.getProjectName() >> 'Dummy'
         changeLogConfiguration.getOutputFile() >> new File(temp, 'changelog.md')
-        changeLogConfiguration.getTemplateName() >> 'changelog.vm'
+        changeLogConfiguration.getTemplateName() >> ChangeLog.DEFAULT_TEMPLATE
         changeLogConfiguration.getLabelGroups() >> ChangeLogConfiguration.defaultLabelGroups
     }
 

@@ -28,7 +28,7 @@ class ChangeLogConfigurationTest extends Specification {
 
     def "defaults"() {
         expect:
-        config.getTemplateName().equals('changelog.vm')
+        config.getTemplateName().equals(ChangeLog.DEFAULT_TEMPLATE)
         config.messageTagOpen.equals('{{')
         config.messageTagClose.equals('}}')
         config.separatePullRequests
