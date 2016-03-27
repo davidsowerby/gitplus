@@ -7,7 +7,7 @@ import uk.q3c.gitplus.util.UserHomeBuildPropertiesLoader
 /**
  * Created by David Sowerby on 25 Mar 2016
  */
-class GitHubProviderTest extends Specification {
+class GitHubServiceProviderTest extends Specification {
 
     def "get"() {
         given:

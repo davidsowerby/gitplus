@@ -188,4 +188,9 @@ public class GitHubRemote implements GitRemote {
                         .toExternalForm();
     }
 
+    @Override
+    public String getCloneUrl() throws IOException {
+        return getHtmlUrl() + ".git";
+    }
+
 }

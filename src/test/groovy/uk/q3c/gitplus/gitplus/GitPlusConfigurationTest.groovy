@@ -5,7 +5,7 @@ import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
 import uk.q3c.gitplus.remote.DefaultGitRemoteFactory
 
-import static uk.q3c.gitplus.remote.GitRemote.Provider.GITHUB
+import static uk.q3c.gitplus.remote.GitRemote.ServiceProvider.GITHUB
 
 /**
  * Created by David Sowerby on 14 Mar 2016
@@ -36,7 +36,7 @@ class GitPlusConfigurationTest extends Specification {
         config.projectCreator == null
         !config.isCreateRemoteRepo()
         !config.isPublicProject()
-        config.getRemoteProvider().equals(GITHUB)
+        config.getRemoteServiceProvider().equals(GITHUB)
 
     }
 
@@ -177,7 +177,7 @@ class GitPlusConfigurationTest extends Specification {
         config.publicProject(true)
         config.remoteRepoFullName(repoFullName)
         config.confirmRemoteDelete(confirmDelete)
-        config.remoteProvider(GITHUB)
+        config.remoteServiceProvider(GITHUB)
 
         then:
         config.getProjectDir().equals(f)

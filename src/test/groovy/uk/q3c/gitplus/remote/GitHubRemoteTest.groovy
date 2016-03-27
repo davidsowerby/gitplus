@@ -305,18 +305,21 @@ class GitHubRemoteTest extends Specification {
 
     }
 
-    def "get http url"() {
+    def "get http url and clone url"() {
         given:
         remote = new GitHubRemote(krailConfiguration, gitHubProvider, remoteRequest)
         URL url = new URL("https://github.com/davidsowerby/krail")
 
         when:
-        String result = remote.getHtmlUrl()
+        String htmlUrl = remote.getHtmlUrl()
+        String cloneUrl = remote.getCloneUrl()
 
         then:
         1 * gitHub.getRepository('davidsowerby/krail') >> repo
-        1 * repo.getHtmlUrl() >> url
-        result.equals("https://github.com/davidsowerby/krail")
+        2 * repo.getHtmlUrl() >> url
+        htmlUrl.equals("https://github.com/davidsowerby/krail")
+        cloneUrl.equals("https://github.com/davidsowerby/krail.git")
+
     }
 
 

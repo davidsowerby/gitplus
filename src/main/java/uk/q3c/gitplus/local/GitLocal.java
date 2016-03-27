@@ -244,6 +244,20 @@ public class GitLocal implements AutoCloseable {
         }
     }
 
+    public void setOrigin(GitRemote gitRemote) {
+        try {
+            String originUrl = gitRemote.getCloneUrl();
+
+            StoredConfig config = git.getRepository()
+                                     .getConfig();
+            config.setString("remote", "origin", "url", originUrl);
+            config.save();
+
+        } catch (IOException e) {
+            throw new GitLocalException("Unable to set origin", e);
+        }
+    }
+
     /**
      * Pushes the currently checked out branch to the remote origin specified in {@link #configuration#getRemoteRepoUrl()}
      */
@@ -408,6 +422,4 @@ public class GitLocal implements AutoCloseable {
                                                                        .getAbsolutePath(), e);
         }
     }
-
-
 }

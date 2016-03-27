@@ -13,7 +13,7 @@ import uk.q3c.gitplus.local.GitLocalException
 import uk.q3c.gitplus.remote.GitRemote
 import uk.q3c.gitplus.remote.GitRemoteFactory
 
-import static uk.q3c.gitplus.remote.GitRemote.Provider.GITHUB
+import static uk.q3c.gitplus.remote.GitRemote.ServiceProvider.GITHUB
 
 /**
  * Created by David Sowerby on 13 Mar 2016
@@ -33,7 +33,7 @@ class GitPlusTest extends Specification {
     GitPlusConfiguration configuration
 
     def setup() {
-        gitRemoteFactory.create(_) >> gitRemote
+        gitRemoteFactory.createRemoteInstance(_) >> gitRemote
         configuration = new GitPlusConfiguration()
     }
 
@@ -130,7 +130,7 @@ class GitPlusTest extends Specification {
         1 * gitLocal.createLocalRepo()
         1 * projectCreator.execute(new File(temporaryFolder.getRoot(), "scratch"))
         1 * gitRemote.createRepo()
-        1 * gitLocal.push(gitRemote, true)
+        2 * gitLocal.push(gitRemote, false)
     }
 
 
@@ -156,7 +156,7 @@ class GitPlusTest extends Specification {
         1 * gitLocal.createLocalRepo()
         0 * projectCreator.execute(configuration.getProjectDir())
         1 * gitRemote.createRepo()
-        1 * gitLocal.push(gitRemote, true)
+        2 * gitLocal.push(gitRemote, false)
     }
 
 
@@ -328,7 +328,7 @@ class GitPlusTest extends Specification {
         final String repoFullName = 'davidsowerby/scratch'
         final String expectedTagUrl = 'https://github.com/davidsowerby/scratch/tree'
         final String expectedHtmlUrl = 'https://github.com/davidsowerby/scratch'
-        gitRemoteFactory.create(_) >> gitRemote
+        gitRemoteFactory.createRemoteInstance(_) >> gitRemote
         configuration.remoteRepoFullName(repoFullName)
                 .gitRemoteFactory(gitRemoteFactory)
                 .remoteRepoFullName('davidsowerby/scratch')

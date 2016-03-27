@@ -1,5 +1,6 @@
 package uk.q3c.gitplus.gitplus;
 
+import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Repository;
 import org.slf4j.Logger;
@@ -12,6 +13,7 @@ import uk.q3c.gitplus.remote.GitRemoteFactory;
 import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -32,6 +34,7 @@ public class GitPlus implements AutoCloseable {
     private static Logger log = getLogger(GitPlus.class);
     private final GitLocal gitLocal;
     private GitRemote gitRemote;
+    private boolean reposVerified = false;
 
     private GitPlusConfiguration configuration;
 
@@ -64,55 +67,102 @@ public class GitPlus implements AutoCloseable {
      * @throws GitPlusException if construction fails
      */
     public GitPlus createOrVerifyRepos() {
+        if (reposVerified) {
+            log.info("Called createOrVerifyRepos, but repos already verified, no action taken");
+            return this;
+        }
         try {
-            if (configuration.isCreateLocalRepo()) {
-                createLocalRepo();
-            } else if (configuration.isCloneRemoteRepo()) {
-                cloneRemote();
+            if (configuration.isCreateLocalRepo() && configuration.isCreateRemoteRepo()) {
+                createFullSetup();
+                return this;
             }
-            if (configuration.getRemoteRepoFullName() == null) {
-                String origin = gitLocal.getOrigin();
-                if (origin != null) {
-                    GitRemote.Provider provider = configuration.getRemoteProvider();
-                    GitRemoteFactory remoteFactory = configuration.getGitRemoteFactory();
-                    configuration.remoteRepoFullName(remoteFactory.repoFullNameFromCloneUrl(provider, origin));
-                }
-            }
+            createOrCloneLocal();
+            verifyRemoteFromLocal();
+            reposVerified = true;
         } catch (Exception e) {
             throw new GitPlusException("Failed to create or verify repository", e);
         }
         return this;
-
-
     }
 
-    public void createRemoteRepo() throws IOException {
+    private void createOrCloneLocal() throws IOException, GitAPIException {
+        if (configuration.isCreateLocalRepo()) {
+            createLocalRepo();
+            if (configuration.isCreateProject()) {
+                createProject();
+            }
+        } else if (configuration.isCloneRemoteRepo()) {
+            cloneRemote();
+        }
+    }
+
+    private void verifyRemoteFromLocal() throws IOException {
+        if (configuration.getRemoteRepoFullName() == null) {
+            String origin = gitLocal.getOrigin();
+            if (origin != null) {
+                GitRemote.ServiceProvider serviceProvider = configuration.getRemoteServiceProvider();
+                GitRemoteFactory remoteFactory = configuration.getGitRemoteFactory();
+                configuration.remoteRepoFullName(remoteFactory.repoFullNameFromCloneUrl(serviceProvider, origin));
+            }
+        }
+    }
+
+    /**
+     * Creates local repo, remote repo, master and develop branches, a README, and if createProject is true also creates the project (and pushes to remote)
+     * as well.
+     */
+    private void createFullSetup() throws IOException, GitAPIException {
+        createLocalRepo();
+        addReadmeToLocal();
+        if (configuration.isCreateProject()) {
+            createProject();
+        }
+        gitLocal.commit("Initial commit");
+        createRemoteRepo();
+        gitLocal.setOrigin(gitRemote);
+        gitLocal.push(getGitRemote(), false);
+        gitLocal.createBranch(DEVELOP_BRANCH);
+        gitLocal.checkout(DEVELOP_BRANCH);
+        gitLocal.push(getGitRemote(), false);
+        reposVerified = true;
+    }
+
+    /**
+     * Creates a README file with just he project name in it, and adds the file to Git
+     */
+    private void addReadmeToLocal() throws IOException {
+        File f = new File(configuration.getProjectDir(), "README.md");
+        List<String> lines = new ArrayList<>();
+        lines.add("# " + configuration.getProjectName());
+        FileUtils.writeLines(f, lines);
+        gitLocal.add(f);
+    }
+
+
+    private void createProject() {
+        configuration.getProjectCreator()
+                     .execute(configuration.getProjectDir());
+        gitLocal.add(configuration.getProjectDir());
+    }
+
+    private void createRemoteRepo() throws IOException {
         getGitRemote().createRepo();
     }
 
-
-    public void cloneRemote() {
+    private void cloneRemote() {
         gitLocal.cloneRemote();
     }
 
     private void createLocalRepo() throws IOException, GitAPIException {
         log.debug("creating local repo");
         gitLocal.createLocalRepo();
-        if (configuration.isCreateProject()) {
-            configuration.getProjectCreator()
-                         .execute(configuration.getProjectDir());
-        }
-        if (configuration.isCreateRemoteRepo()) {
-            createRemoteRepo();
-            gitLocal.push(gitRemote, true);
-        }
     }
 
 
     public GitRemote getGitRemote() throws IOException {
         if (gitRemote == null) {
             gitRemote = configuration.getGitRemoteFactory()
-                                     .create(configuration);
+                                     .createRemoteInstance(configuration);
         }
         return gitRemote;
     }

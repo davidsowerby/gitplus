@@ -12,7 +12,7 @@ import java.util.Set;
  */
 public interface GitRemote {
 
-    enum Provider {GITHUB}
+    enum ServiceProvider {GITHUB}
 
     boolean isIssueFixWord(String previousToken);
 
@@ -74,4 +74,6 @@ public interface GitRemote {
      * @return
      */
     String getHtmlUrl() throws IOException;
+
+    String getCloneUrl() throws IOException;
 }

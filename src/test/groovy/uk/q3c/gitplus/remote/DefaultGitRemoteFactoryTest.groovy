@@ -10,7 +10,7 @@ import uk.q3c.gitplus.gitplus.GitPlusConfigurationException
 class DefaultGitRemoteFactoryTest extends Specification {
 
     GitPlusConfiguration gitPlusConfiguration
-    GitRemote.Provider provider = GitRemote.Provider.GITHUB
+    GitRemote.ServiceProvider provider = GitRemote.ServiceProvider.GITHUB
 
     def setup() {
         gitPlusConfiguration = new GitPlusConfiguration().apiToken('xxxxxxxxx')
@@ -18,7 +18,7 @@ class DefaultGitRemoteFactoryTest extends Specification {
 
     def "create"() {
         expect:
-        new DefaultGitRemoteFactory().create(gitPlusConfiguration) instanceof GitHubRemote
+        new DefaultGitRemoteFactory().createRemoteInstance(gitPlusConfiguration) instanceof GitHubRemote
     }
 
     def "Urls"() {

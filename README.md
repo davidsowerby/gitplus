@@ -1,6 +1,6 @@
 # GitPlus
 
-This module is being developed with the intent to use it with Gradle, to provide support for some common Git related tasks used during a Continuous Delivery process, including the production of a ChangeLog.
+This module is being developed for use with Gradle, to provide support for some common Git and Change Log related tasks used during a Continuous Delivery process.  It could, however, be verily easily used without Gradle. 
 
 It is made up of 3 main parts:
 
@@ -16,7 +16,7 @@ It is hoped that there may be further implementations for BitBucket etc.
 
 ## ChangeLog
 
-Using the two components above, ```ChangeLog``` generates a change log from Git comments, with a number of configurable options.  It also uses Velocity template so that the layout can be changed easily.
+Using the two components above, ```ChangeLog``` generates a change log from Git comments.  Many elements are configurable, and a Velocity template is used to enable the user to change the layout.
 
 
 # Status

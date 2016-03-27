@@ -1,7 +1,7 @@
 package uk.q3c.gitplus.gitplus;
 
 import uk.q3c.gitplus.remote.DefaultGitRemoteFactory;
-import uk.q3c.gitplus.remote.GitRemote.Provider;
+import uk.q3c.gitplus.remote.GitRemote.ServiceProvider;
 import uk.q3c.gitplus.remote.GitRemoteFactory;
 
 import java.io.File;
@@ -27,10 +27,10 @@ public class GitPlusConfiguration {
     private boolean publicProject;
     private String confirmRemoteDelete;
     private boolean localOnly;
-    private Provider remoteProvider = Provider.GITHUB;
+    private ServiceProvider remoteServiceProvider = ServiceProvider.GITHUB;
 
-    public Provider getRemoteProvider() {
-        return remoteProvider;
+    public ServiceProvider getRemoteServiceProvider() {
+        return remoteServiceProvider;
     }
 
     public GitPlusConfiguration localOnly(final boolean localOnly) {
@@ -79,7 +79,7 @@ public class GitPlusConfiguration {
         if (gitRemoteFactory == null) {
             throw new GitPlusConfigurationException("gitRemoteFactory has not been set.  Call validate() before calling this method");
         }
-        return gitRemoteFactory.htmlUrlFromFullRepoName(remoteProvider, remoteRepoFullName);
+        return gitRemoteFactory.htmlUrlFromFullRepoName(remoteServiceProvider, remoteRepoFullName);
     }
 
 
@@ -163,7 +163,7 @@ public class GitPlusConfiguration {
             }
             if (projectName == null) {
                 if (remoteRepoFullName != null) {
-                    projectName = gitRemoteFactory.projectNameFromRemoteRepFullName(remoteProvider, remoteRepoFullName);
+                    projectName = gitRemoteFactory.projectNameFromRemoteRepFullName(remoteServiceProvider, remoteRepoFullName);
                 } else {
                     throw new GitPlusConfigurationException("If projectDir is null, projectName cannot be null");
                 }
@@ -269,8 +269,8 @@ public class GitPlusConfiguration {
     }
 
 
-    public GitPlusConfiguration remoteProvider(final Provider remoteProvider) {
-        this.remoteProvider = remoteProvider;
+    public GitPlusConfiguration remoteServiceProvider(final ServiceProvider remoteServiceProvider) {
+        this.remoteServiceProvider = remoteServiceProvider;
         return this;
     }
 }

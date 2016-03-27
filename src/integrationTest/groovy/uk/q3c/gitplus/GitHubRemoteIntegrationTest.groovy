@@ -1,17 +1,23 @@
 package uk.q3c.gitplus
 
-import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider
-import org.kohsuke.github.GHIssue
-import org.kohsuke.github.GHIssueBuilder
+import com.google.common.collect.ImmutableList
+import org.apache.commons.io.FileUtils
+import org.junit.Rule
+import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
+import uk.q3c.gitplus.changelog.ChangeLog
+import uk.q3c.gitplus.changelog.ChangeLogConfiguration
+import uk.q3c.gitplus.gitplus.GitPlus
 import uk.q3c.gitplus.gitplus.GitPlusConfiguration
 import uk.q3c.gitplus.local.GitLocal
-import uk.q3c.gitplus.local.GitLocalException
-import uk.q3c.gitplus.local.PushResponse
+import uk.q3c.gitplus.remote.GitHubProvider
 import uk.q3c.gitplus.remote.GitHubRemote
 import uk.q3c.gitplus.remote.GitRemote
+import uk.q3c.gitplus.remote.RemoteRequest
 import uk.q3c.gitplus.util.UserHomeBuildPropertiesLoader
+import uk.q3c.util.testutil.FileTestUtil
 
+import java.nio.file.Paths
 /**
  * This test needs to delete the 'dummy' repo in cleanup.  This test is a bit weird because it has to use deleteRepo to clean up, but also tests deleteRepo
  *
@@ -19,8 +25,16 @@ import uk.q3c.gitplus.util.UserHomeBuildPropertiesLoader
  */
 class GitHubRemoteIntegrationTest extends Specification {
 
+    @Rule
+    TemporaryFolder temproraryFolder
+    File temp
+
     String fullAccessApiKey
     String apiKey
+    GitPlusConfiguration gitPlusConfiguration
+    GitLocal gitLocal
+    GitRemote gitRemote
+    GitPlus gitPlus
 
     def setup() {
         def loader = new UserHomeBuildPropertiesLoader();
@@ -32,8 +46,9 @@ class GitHubRemoteIntegrationTest extends Specification {
             deleteRepo()
             waitRemoteRepoNotExists('dummy')
         }
-
+        temp = temproraryFolder.getRoot()
     }
+
 
     def cleanup() {
         println 'cleaning up at end'
@@ -41,80 +56,124 @@ class GitHubRemoteIntegrationTest extends Specification {
             deleteRepo()
             waitRemoteRepoNotExists('dummy')
         }
-
     }
 
-    def "api status"() {
+    def "lifecycle"() {
         given:
-        remote = new GitHubRemote(krailConfiguration, gitHubProvider)
+        gitPlusConfiguration = new GitPlusConfiguration()
+                .remoteRepoFullName('davidsowerby/dummy')
+                .apiToken(fullAccessApiKey)
+                .createLocalRepo(true)
+                .createRemoteRepo(true)
+                .publicProject(true)
+                .projectDirParent(temp)
+        gitLocal = new GitLocal(gitPlusConfiguration)
+        gitPlus = new GitPlus(gitPlusConfiguration, gitLocal)
+//        File changeLogOutputFile = new File(temp, 'changelog.md')
+        File changeLogOutputFile = new File('/home/david/temp/changelog.md')
+        ChangeLogConfiguration changeLogConfiguration = new ChangeLogConfiguration().outputFile(changeLogOutputFile)
+        gitRemote = gitPlus.getGitRemote()
 
-        expect:
-        remote.apiStatus() == GitHubRemote.Status.GREEN
-    }
-
-    def "list repos for this user"() {
-        given:
-        remote = new GitHubRemote(krailConfiguration, gitHubProvider)
-
+        URL url = this.getClass()
+                .getResource('changelog-step1.md');
+        File expectedResult1 = Paths.get(url.toURI())
+                .toFile();
 
         when:
-        Set<String> repos = remote.listRepositoryNames()
+        gitPlus.createOrVerifyRepos()
+        createTestIssues(10)
+        createVersion('0.1')
+        generateChangeLog(changeLogConfiguration)
 
         then:
-        repos.contains('krail')
-        !repos.contains('perl')
+        FileTestUtil.compare(changeLogOutputFile, expectedResult1)
+
     }
 
-    def "create issue"() {
-        given:
-        remote = new GitHubRemote(scratchConfiguration, gitHubProvider)
-        String title = "test issue"
-        String body = "body"
-        String label = "buglet"
-        GHIssueBuilder issueBuilder = Mock(GHIssueBuilder)
-
-        when:
-        GHIssue result = remote.createIssue(title, body, label)
-
-        then:
-        result.getNumber() > 0
-        result.getTitle().equals(title)
-        result.getBody().equals(body)
-        result.getLabels().size() == 1
-        containsLabel(result.getLabels(), label)
+    def generateChangeLog(ChangeLogConfiguration changeLogConfiguration) {
+        ChangeLog changeLog = new ChangeLog(gitPlus, changeLogConfiguration)
+        changeLog.createChangeLog()
     }
 
-    def "create repo with correct configuration"() {
-        given:
-        GitPlusConfiguration dummyConfiguration = new GitPlusConfiguration().apiToken(fullAccessApiKey)
-                .publicProject(true).remoteRepoFullName('davidsowerby/dummy')
-        GitRemote remote = new GitHubRemote(dummyConfiguration)
+    def createTestIssues(int number) {
+        List<String> labels = ImmutableList.of('bug', 'documentation', 'quality', 'bug', 'task', 'bug', 'performance', 'enhancement', 'task', 'bug')
+        for (int i = 0; i < number; i++) {
+            gitRemote.createIssue('Issue ' + i + ' Title', 'Some stuff about the issue', labels.get(i % 10))
+        }
 
-        when:
-        remote.createRepo()
-        println 'created repo'
-
-        then:
-        remote.getRepo().getName().equals("dummy")
-        waitRemoteRepoExists("dummy")
-        println 'repo exists'
-
-
-        when:
-        println 'pause for breath'
-        Thread.sleep(4000) //sometimes fails if we rush straight in to delete
-        deleteRepo()
-        println 'deleted'
-
-        then:
-        waitRemoteRepoNotExists("dummy")
     }
 
-    void deleteRepo() {
+    def createVersion(String version) {
+        gitLocal.checkout(GitPlus.DEVELOP_BRANCH)
+        createFileAndAddToGit(1)
+        gitLocal.commit('Fix #1 commit 1')
+        createFileAndAddToGit(2)
+        gitLocal.commit('Fix #2 commit 2')
+        gitLocal.tag(version)
+        gitLocal.push(gitRemote, true)
+    }
+
+    def createFileAndAddToGit(int index) {
+        File f = new File(gitPlusConfiguration.getProjectDir(), index + '.txt')
+        List<String> lines = new ArrayList<>()
+        lines.add('Test file')
+        FileUtils.writeLines(f, lines)
+        gitLocal.add(f)
+    }
+//
+//    def "create issue"() {
+//        given:
+//        remote = new GitHubRemote(scratchConfiguration, gitHubProvider)
+//        String title = "test issue"
+//        String body = "body"
+//        String label = "buglet"
+//        GHIssueBuilder issueBuilder = Mock(GHIssueBuilder)
+//
+//        when:
+//        GHIssue result = remote.createIssue(title, body, label)
+//
+//        then:
+//        result.getNumber() > 0
+//        result.getTitle().equals(title)
+//        result.getBody().equals(body)
+//        result.getLabels().size() == 1
+//        containsLabel(result.getLabels(), label)
+//    }
+//
+//    def "create repo with correct configuration"() {
+//        given:
+//        GitPlusConfiguration dummyConfiguration = new GitPlusConfiguration().apiToken(fullAccessApiKey)
+//                .publicProject(true).remoteRepoFullName('davidsowerby/dummy')
+//        GitRemote remote = new GitHubRemote(dummyConfiguration)
+//
+//        when:
+//        remote.createRepo()
+//        println 'created repo'
+//
+//        then:
+//        remote.getRepo().getName().equals("dummy")
+//        waitRemoteRepoExists("dummy")
+//        println 'repo exists'
+//
+//
+//        when:
+//        println 'pause for breath'
+//        Thread.sleep(4000) //sometimes fails if we rush straight in to delete
+//        deleteRepo()
+//        println 'deleted'
+//
+//        then:
+//        waitRemoteRepoNotExists("dummy")
+//    }
+
+    /**
+     * Delete repo using full access key
+     */
+    private void deleteRepo() {
         GitPlusConfiguration dummyConfiguration = new GitPlusConfiguration().apiToken(fullAccessApiKey)
                 .publicProject(true).remoteRepoFullName('davidsowerby/dummy')
                 .confirmRemoteDelete("I really, really want to delete the davidsowerby/dummy repo from GitHub")
-        GitRemote remote = new GitHubRemote(dummyConfiguration)
+        GitRemote remote = new GitHubRemote(dummyConfiguration, new GitHubProvider(), new RemoteRequest())
         println 'deleting repo'
         remote.deleteRepo()
     }
@@ -128,7 +187,7 @@ class GitHubRemoteIntegrationTest extends Specification {
         println 'waiting for repo to exist'
         GitPlusConfiguration dummyConfiguration = new GitPlusConfiguration().apiToken(apiKey)
                 .remoteRepoFullName('davidsowerby/dummy')
-        GitRemote remote = new GitHubRemote(dummyConfiguration)
+        GitRemote remote = new GitHubRemote(dummyConfiguration, new GitHubProvider(), new RemoteRequest())
         def timeout = 20
         Set<String> names = remote.listRepositoryNames()
         while (!names.contains(repoName) && timeout > 0) {
@@ -142,44 +201,14 @@ class GitHubRemoteIntegrationTest extends Specification {
         }
     }
 
-    /**
-     * Requires a remote repo to clone
-     */
-    def "clone remote and push"() {
-        given:
-        configuration.projectName("scratch").projectDirParent(temp).remoteRepoFullName('davidsowerby/scratch').validate()
-        gitLocal = new GitLocal(configuration)
-        String apiToken = new UserHomeBuildPropertiesLoader().load().githubKeyRestricted()
-        gitRemote.getCredentialsProvider() >> new UsernamePasswordCredentialsProvider(apiToken, "")
-
-        when:
-        gitLocal.cloneRemote()
-
-        then:
-        new File(temp, "scratch").exists()
-        gitLocal.getOrigin().equals(configuration.getRemoteRepoUrl() + ".git")
-
-        when:
-        addAFile();
-        gitLocal.commit("xx")
-        PushResponse result = gitLocal.push(gitRemote, true)
-
-        then:
-        result.isSuccessful()
-    }
-
-    def "clone failure throws GitLocalException"() {
-        given:
-        //use invalid url
-        configuration.projectName("scratch").projectDirParent(temp).remoteRepoFullName("davidsowerby/scrtch")
-        configuration.validate()
-        gitLocal = new GitLocal(configuration)
-
-        when:
-        gitLocal.cloneRemote()
-
-        then:
-        thrown GitLocalException
+    private boolean remoteRepoExists(String repoName) {
+        GitPlusConfiguration dummyConfiguration = new GitPlusConfiguration().apiToken(apiKey)
+                .remoteRepoFullName('davidsowerby/dummy')
+        GitRemote remote = new GitHubRemote(dummyConfiguration, new GitHubProvider(), new RemoteRequest())
+        println 'getting repo names'
+        Set<String> names = remote.listRepositoryNames()
+        println 'names retrieved'
+        return names.contains(repoName)
     }
 
 /**
@@ -191,7 +220,7 @@ class GitHubRemoteIntegrationTest extends Specification {
         println 'waiting for repo not to exist'
         GitPlusConfiguration dummyConfiguration = new GitPlusConfiguration().apiToken(apiKey)
                 .remoteRepoFullName('davidsowerby/dummy')
-        GitRemote remote = new GitHubRemote(dummyConfiguration)
+        GitRemote remote = new GitHubRemote(dummyConfiguration, new GitHubProvider(), new RemoteRequest())
         def timeout = 20
         Set<String> names = remote.listRepositoryNames()
         while (names.contains(repoName) && timeout > 0) {
@@ -200,19 +229,10 @@ class GitHubRemoteIntegrationTest extends Specification {
             timeout--
             names = remote.listRepositoryNames()
         }
-        if (timeout) {
+        if (timeout <= 0) {
             throw new RuntimeException("Timed out")
         }
     }
 
-    boolean remoteRepoExists(String repoName) {
-        GitPlusConfiguration dummyConfiguration = new GitPlusConfiguration().apiToken(apiKey)
-                .remoteRepoFullName('davidsowerby/dummy')
-        GitRemote remote = new GitHubRemote(dummyConfiguration)
-        println 'getting repo names'
-        Set<String> names = remote.listRepositoryNames()
-        println 'names retrieved'
-        return names.contains(repoName)
-    }
 
 }

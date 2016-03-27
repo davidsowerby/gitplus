@@ -1,7 +1,7 @@
 package uk.q3c.gitplus.remote;
 
 import uk.q3c.gitplus.gitplus.GitPlusConfiguration;
-import uk.q3c.gitplus.remote.GitRemote.Provider;
+import uk.q3c.gitplus.remote.GitRemote.ServiceProvider;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
@@ -17,23 +17,23 @@ public interface GitRemoteFactory {
      * @param gitPlusConfiguration the configuration containing information
      * @return an instance of a {@link GitRemote} implementation from the information provided in {@code gitPlusConfiguration}
      */
-    GitRemote create(@Nonnull GitPlusConfiguration gitPlusConfiguration) throws IOException;
+    GitRemote createRemoteInstance(@Nonnull GitPlusConfiguration gitPlusConfiguration) throws IOException;
 
-    String htmlUrlStem(@Nonnull Provider provider);
+    String htmlUrlStem(@Nonnull ServiceProvider serviceProvider);
 
-    String htmlUrlFromFullRepoName(@Nonnull Provider provider, @Nonnull String fullRepoName);
+    String htmlUrlFromFullRepoName(@Nonnull ServiceProvider serviceProvider, @Nonnull String fullRepoName);
 
-    String htmlTagUrl(@Nonnull Provider provider, @Nonnull String fullRepoName);
+    String htmlTagUrl(@Nonnull ServiceProvider serviceProvider, @Nonnull String fullRepoName);
 
-    String apiUrlStem(@Nonnull Provider provider);
+    String apiUrlStem(@Nonnull ServiceProvider serviceProvider);
 
-    String cloneUrl(@Nonnull Provider provider, @Nonnull String fullRepoName);
+    String cloneUrl(@Nonnull ServiceProvider serviceProvider, @Nonnull String fullRepoName);
 
-    String repoFullNameFromHtmlUrl(@Nonnull Provider provider, @Nonnull String htmlUrl);
+    String repoFullNameFromHtmlUrl(@Nonnull ServiceProvider serviceProvider, @Nonnull String htmlUrl);
 
-    String projectNameFromRemoteRepFullName(@Nonnull Provider remoteProvider, @Nonnull String remoteRepoFullName);
+    String projectNameFromRemoteRepFullName(@Nonnull ServiceProvider remoteServiceProvider, @Nonnull String remoteRepoFullName);
 
-    String repoFullNameFromCloneUrl(@Nonnull Provider remoteProvider, @Nonnull String origin);
+    String repoFullNameFromCloneUrl(@Nonnull ServiceProvider remoteServiceProvider, @Nonnull String origin);
 
-    String htmlUrlFromCloneUrl(@Nonnull Provider provider, @Nonnull String cloneUrl);
+    String htmlUrlFromCloneUrl(@Nonnull ServiceProvider serviceProvider, @Nonnull String cloneUrl);
 }
