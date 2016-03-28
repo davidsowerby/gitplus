@@ -31,7 +31,9 @@ public class VersionRecord {
         this.tag = tag;
         createLabelLookup(changeLogConfiguration.getLabelGroups());
         commits = new ArrayList<>();
-        fixesByGroup = new HashMap<>();
+        fixesByGroup = new LinkedHashMap<>();
+        changeLogConfiguration.getLabelGroups()
+                              .forEach((group, labels) -> fixesByGroup.put(group, new TreeSet<>()));
 
     }
 
@@ -116,21 +118,21 @@ public class VersionRecord {
                      .forEach(issue -> issue.getLabels()
                                             .forEach(l -> {
                                                 String group = labelLookup.get(l);
-
-                                                //if label in a group
+                                                //if label in a group, add it, otherwise ignore
                                                 if (group != null) {
-                                                    //create an entry set if none already
-                                                    if (!fixesByGroup.containsKey(group)) {
-                                                        fixesByGroup.put(group, new TreeSet<>());
-                                                    }
                                                     fixesByGroup.get(group)
                                                                 .add(issue);
                                                 }
                                             }));
                 }
         );
-
-
+        List<String> toRemove = new ArrayList<>();
+        fixesByGroup.forEach((group, issues) -> {
+            if (issues.isEmpty()) {
+                toRemove.add(group);
+            }
+        });
+        toRemove.forEach(r -> fixesByGroup.remove(r));
     }
 
     public PersonIdent getPersonIdent() {

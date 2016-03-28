@@ -87,7 +87,6 @@ public class ChangeLog {
         velocityTemplate.merge(velocityContext, w);
         FileUtils.writeStringToFile(outputFile, w.toString());
 
-        System.out.println(w);
     }
 
 

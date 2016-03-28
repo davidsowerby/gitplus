@@ -11,10 +11,10 @@
 - Initial commit
 
 
-### Documentation
-- [2](https://github.com/davidsowerby/dummy/issues/2) Issue 1 Title
-
-
 ### Fixes
 - [1](https://github.com/davidsowerby/dummy/issues/1) Issue 0 Title
+
+
+### Documentation
+- [2](https://github.com/davidsowerby/dummy/issues/2) Issue 1 Title
 

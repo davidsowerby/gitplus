@@ -50,6 +50,7 @@ dependencies {
     testCompile 'cglib:cglib-nodep:3.2.0' // needed for Spock mocking
     testCompile 'org.objenesis:objenesis:2.2' // needed for Spock mocking
     testCompile 'uk.q3c:q3c-testUtil:0.8.1'
+    testCompile 'org.assertj:assertj-core:2.4.0'
 
     //utility
     compile 'com.google.guava:guava:' + guavaVersion
