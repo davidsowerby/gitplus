@@ -13,6 +13,7 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 
 import static org.assertj.core.api.Assertions.assertThat
+
 /**
  * Limited unit testing - tried to Mock RevCommit with Spock and Mockito, both failed, probably because of the
  * static call to RawParseUtils.commitMessage in getFullMessage().  Also, getFullMessage cannot be overridden,
@@ -136,7 +137,7 @@ class VersionRecordTest extends Specification {
         fixes.size() == 1
     }
 
-    def "parse groups issues in the group order of configuration.getLabelGroups()"() {
+    def "parse groups issues in the group order of configuration.getLabelGroups() and ignores duplicate issues in group"() {
         given:
         final String tagName = "0.1"
         ZonedDateTime commitDate = ZonedDateTime.of(LocalDateTime.of(2010, 11, 11, 12, 2), ZoneId.systemDefault())
@@ -155,6 +156,7 @@ class VersionRecordTest extends Specification {
         Issue issue3 = newIssue(3, 'Making unnecessary calls', 'quality')
         Issue issue4 = newIssue(4, 'Making unnecessary calls', 'quality').pullRequest(true)
         Issue issue5 = newIssue(5, 'Making unnecessary calls', 'bug')
+
         record = new VersionRecord(tag, changeLogConfiguration)
         addCommits(record, 5)
         gitRemote.isIssueFixWord('Fix') >> true
@@ -169,7 +171,7 @@ class VersionRecordTest extends Specification {
         1 * gitRemote.getIssue('', 2) >> issue2
         1 * gitRemote.getIssue('', 3) >> issue3
         1 * gitRemote.getIssue('', 4) >> issue4
-        1 * gitRemote.getIssue('', 5) >> issue5
+        2 * gitRemote.getIssue('', 5) >> issue5 // deliberately added twice to ensure output not duplicated
         fixes.size() == 5
         assertThat(fixes.keySet()).containsExactly(ChangeLogConfiguration.DEFAULT_PULL_REQUESTS_TITLE, 'Fixes', 'Quality', 'Tasks', 'Documentation')
         assertThat(pullRequests).containsOnly(issue4)
@@ -179,7 +181,11 @@ class VersionRecordTest extends Specification {
     def addCommits(VersionRecord record, int i) {
         for (int j = 1; j <= i; j++) {
             String msg = 'Fix #' + j + ' commit summary'
-            record.addCommit(new GitCommit(msg))
+            if (j == 4) {
+                msg = msg + '\n\n Fix #5 commit detail'
+            }
+            GitCommit commit = new GitCommit(msg);
+            record.addCommit(commit)
         }
 
 
