@@ -143,6 +143,7 @@ class VersionRecordTest extends Specification {
         ZonedDateTime releaseDate = ZonedDateTime.of(LocalDateTime.of(2015, 1, 11, 12, 12), ZoneId.systemDefault())
         ChangeLogConfiguration changeLogConfiguration = Mock(ChangeLogConfiguration)
         changeLogConfiguration.getLabelGroups() >> ChangeLogConfiguration.defaultLabelGroups
+        changeLogConfiguration.getPullRequestTitle() >> ChangeLogConfiguration.DEFAULT_PULL_REQUESTS_TITLE
         Tag tag = new Tag(tagName)
                 .commitDate(commitDate)
                 .releaseDate(releaseDate)
@@ -152,7 +153,7 @@ class VersionRecordTest extends Specification {
         Issue issue1 = newIssue(1, 'Making unnecessary calls', 'documentation')
         Issue issue2 = newIssue(2, 'Making unnecessary calls', 'task')
         Issue issue3 = newIssue(3, 'Making unnecessary calls', 'quality')
-        Issue issue4 = newIssue(4, 'Making unnecessary calls', 'quality')
+        Issue issue4 = newIssue(4, 'Making unnecessary calls', 'quality').pullRequest(true)
         Issue issue5 = newIssue(5, 'Making unnecessary calls', 'bug')
         record = new VersionRecord(tag, changeLogConfiguration)
         addCommits(record, 5)
@@ -161,6 +162,7 @@ class VersionRecordTest extends Specification {
         when:
         record.parse(gitRemote)
         Map<String, Set<Issue>> fixes = record.getFixesByGroup()
+        Set<Issue> pullRequests = record.getPullRequests();
 
         then:
         1 * gitRemote.getIssue('', 1) >> issue1
@@ -168,8 +170,9 @@ class VersionRecordTest extends Specification {
         1 * gitRemote.getIssue('', 3) >> issue3
         1 * gitRemote.getIssue('', 4) >> issue4
         1 * gitRemote.getIssue('', 5) >> issue5
-        fixes.size() == 4
-        assertThat(fixes.keySet()).containsExactly('Fixes', 'Quality', 'Tasks', 'Documentation')
+        fixes.size() == 5
+        assertThat(fixes.keySet()).containsExactly(ChangeLogConfiguration.DEFAULT_PULL_REQUESTS_TITLE, 'Fixes', 'Quality', 'Tasks', 'Documentation')
+        assertThat(pullRequests).containsOnly(issue4)
     }
 
 

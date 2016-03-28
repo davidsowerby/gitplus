@@ -55,7 +55,7 @@ class IssueTest extends Specification {
 
     def "set and get"() {
         given:
-        Issue issue1 = new Issue(1).htmlUrl('a').body('b').labels(ImmutableSet.of('a', 'b'))
+        Issue issue1 = new Issue(1).htmlUrl('a').body('b').labels(ImmutableSet.of('a', 'b')).pullRequest(true)
 
 
         expect:
@@ -64,6 +64,7 @@ class IssueTest extends Specification {
         issue1.getBody().equals('b')
         issue1.hasLabel('a')
         !issue1.hasLabel('c')
+        issue1.isPullRequest()
 
     }
 }

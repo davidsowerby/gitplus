@@ -16,7 +16,7 @@ import java.util.Set;
  */
 
 public class ChangeLogConfiguration {
-
+    public static final String DEFAULT_PULL_REQUESTS_TITLE = "Pull Requests";
     public static final ImmutableMap<String, String> defaultTypoMap = new ImmutableMap.Builder<String, String>().put("Fix#", "Fix #")
                                                                                                                 .put("fix#", "fix #")
                                                                                                                 .put("Fixes#", "Fixes #")
@@ -41,6 +41,7 @@ public class ChangeLogConfiguration {
 
     //    @formatter:off
     public static  final ImmutableMap<String, Set<String>> defaultLabelGroups = new ImmutableMap.Builder<String, Set<String>>()
+            .put(DEFAULT_PULL_REQUESTS_TITLE,ImmutableSet.of()) // pull requests do not need mapping
             .put("Fixes", defaultFixSet)
             .put("Quality",defaultQualitySet)
             .put("Enhancements",defaultEnhancementSet)
@@ -60,7 +61,16 @@ public class ChangeLogConfiguration {
     private Map<String, String> typoMap = defaultTypoMap;
     private boolean useTypoMap = true;
     private File outputFile;
+    private String pullRequestTitle = DEFAULT_PULL_REQUESTS_TITLE;
 
+    public ChangeLogConfiguration pullRequestTitle(final String pullRequestTitle) {
+        this.pullRequestTitle = pullRequestTitle;
+        return this;
+    }
+
+    public String getPullRequestTitle() {
+        return pullRequestTitle;
+    }
 
     public boolean isUseTypoMap() {
         return useTypoMap;

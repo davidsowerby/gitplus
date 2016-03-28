@@ -21,19 +21,23 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class VersionRecord {
     private static Logger log = getLogger(VersionRecord.class);
     private final Tag tag;
+    private final String pullRequestsTitle;
     private List<GitCommit> commits;
     private Map<String, Set<Issue>> fixesByGroup;
     private Map<String, String> labelLookup;
+    private Set<Issue> pullRequests;
 
     public VersionRecord(@Nonnull Tag tag, @Nonnull ChangeLogConfiguration changeLogConfiguration) {
         checkNotNull(tag);
         checkNotNull(changeLogConfiguration);
         this.tag = tag;
         createLabelLookup(changeLogConfiguration.getLabelGroups());
+        pullRequests = new TreeSet<>();
         commits = new ArrayList<>();
         fixesByGroup = new LinkedHashMap<>();
         changeLogConfiguration.getLabelGroups()
                               .forEach((group, labels) -> fixesByGroup.put(group, new TreeSet<>()));
+        pullRequestsTitle = changeLogConfiguration.getPullRequestTitle();
 
     }
 
@@ -115,17 +119,26 @@ public class VersionRecord {
         commits.forEach(c -> {
                     c.extractIssueReferences(gitRemote);
                     c.getIssueReferences()
-                     .forEach(issue -> issue.getLabels()
-                                            .forEach(l -> {
-                                                String group = labelLookup.get(l);
-                                                //if label in a group, add it, otherwise ignore
-                                                if (group != null) {
-                                                    fixesByGroup.get(group)
-                                                                .add(issue);
-                                                }
-                                            }));
+                     .forEach(issue -> {
+                         if (issue.isPullRequest()) {
+                             pullRequests.add(issue);
+                         } else {
+                             issue.getLabels()
+                                  .forEach(l -> {
+                                      String group = labelLookup.get(l);
+                                      //if label in a group, add it, otherwise ignore
+                                      if (group != null) {
+                                          fixesByGroup.get(group)
+                                                      .add(issue);
+                                      }
+                                  });
+                         }
+                     });
                 }
         );
+        if (fixesByGroup.containsKey(pullRequestsTitle)) {
+            fixesByGroup.put(pullRequestsTitle, pullRequests);
+        }
         List<String> toRemove = new ArrayList<>();
         fixesByGroup.forEach((group, issues) -> {
             if (issues.isEmpty()) {
@@ -137,5 +150,9 @@ public class VersionRecord {
 
     public PersonIdent getPersonIdent() {
         return tag.getTaggerIdent();
+    }
+
+    public Set<Issue> getPullRequests() {
+        return pullRequests;
     }
 }

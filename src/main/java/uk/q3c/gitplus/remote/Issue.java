@@ -21,6 +21,7 @@ public class Issue implements Comparable<Issue> {
     private String body;
     private int number;
     private String htmlUrl;
+    private boolean pullRequest;
 
     public Issue(@Nonnull GHIssue ghIssue) throws IOException {
         checkNotNull(ghIssue);
@@ -31,6 +32,7 @@ public class Issue implements Comparable<Issue> {
         number = ghIssue.getNumber();
         htmlUrl = ghIssue.getHtmlUrl()
                          .toExternalForm();
+        pullRequest = ghIssue.isPullRequest();
     }
 
     public Issue(int number) {
@@ -110,6 +112,11 @@ public class Issue implements Comparable<Issue> {
         return this;
     }
 
+    public Issue pullRequest(boolean pullRequest) {
+        this.pullRequest = pullRequest;
+        return this;
+    }
+
     @Override
     public int compareTo(Issue o) {
         if (o == null) {
@@ -120,5 +127,9 @@ public class Issue implements Comparable<Issue> {
             return h;
         }
         return this.number - o.number;
+    }
+
+    public boolean isPullRequest() {
+        return pullRequest;
     }
 }

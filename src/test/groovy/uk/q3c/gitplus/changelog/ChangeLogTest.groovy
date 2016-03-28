@@ -87,6 +87,7 @@ class ChangeLogTest extends Specification {
 
     def "changelog with mock data"() {
         given:
+        changeLogConfiguration.getPullRequestTitle() >> ChangeLogConfiguration.DEFAULT_PULL_REQUESTS_TITLE
         createDataWithMostRecentCommitTagged()
         gitPlus()
         changeLog = new ChangeLog(gitPlus, changeLogConfiguration)
@@ -110,6 +111,7 @@ class ChangeLogTest extends Specification {
  */
     private void createDataWithMostRecentCommitTagged() {
         createCommits(1, 3, 5, 8, 9)
+        issues.get(2).pullRequest(true)
     }
 
 /**

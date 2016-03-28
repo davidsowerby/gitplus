@@ -88,11 +88,11 @@
 - commit 0 short message
 
 
+### Pull Requests
+- [2](https:/github.com/davidsowerby/dummmy/issues/2) issue 2
+
+
 ### Fixes
 - [0](https:/github.com/davidsowerby/dummmy/issues/0) issue 0
 - [1](https:/github.com/davidsowerby/dummmy/issues/1) issue 1
-
-
-### Tasks
-- [2](https:/github.com/davidsowerby/dummmy/issues/2) issue 2
 
