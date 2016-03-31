@@ -11,6 +11,7 @@ import uk.q3c.gitplus.remote.GitRemote;
 import uk.q3c.gitplus.remote.GitRemoteFactory;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -21,7 +22,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
- * A thin wrapper around Git to make some of the commands either simpler or just more direct and relevant
+ * Brings together<ol>
+ * <li>a {@link GitLocal} instance representing a local Git repo,</li>
+ * <li>a {@link GitRemote} instance representing a remote, hosted Git with issues</li>
+ * <li>a further, optional {@link GitLocal} instance to represent a wiki repo associated with the main code repo.  This may not apply to all remote ervice
+ * providers</li>
  * <p>
  * Created by David Sowerby on 12/01/15.
  */
@@ -33,17 +38,30 @@ public class GitPlus implements AutoCloseable {
     public static final String URL = "url";
     private static Logger log = getLogger(GitPlus.class);
     private final GitLocal gitLocal;
+    private GitLocal wikiLocal;
     private GitRemote gitRemote;
     private boolean reposVerified = false;
 
     private GitPlusConfiguration configuration;
 
-    public GitPlus(@Nonnull GitPlusConfiguration configuration, @Nonnull GitLocal gitLocal) {
+    public GitPlus(@Nonnull GitPlusConfiguration configuration, @Nonnull GitLocal gitLocal, @Nullable GitLocal wikiLocal) {
         checkNotNull(configuration);
         checkNotNull(gitLocal);
         this.gitLocal = gitLocal;
-        this.configuration = configuration;
         configuration.validate();
+        this.configuration = new GitPlusConfiguration(configuration); // copy so that we can modify
+        if (configuration.isUseWiki()) {
+            if (wikiLocal == null) {
+                throw new GitPlusConfigurationException("'useWiki' is true, therefore wikiLocal must not be null");
+            }
+            this.wikiLocal = wikiLocal;
+            wikiLocal.configureForWiki();
+        }
+
+    }
+
+    public GitPlus(@Nonnull GitPlusConfiguration configuration, @Nonnull GitLocal gitLocal) {
+        this(configuration, gitLocal, null);
     }
 
 
@@ -53,6 +71,9 @@ public class GitPlus implements AutoCloseable {
     @Override
     public void close() throws IOException {
         gitLocal.close();
+        if (wikiLocal != null) {
+            wikiLocal.close();
+        }
     }
 
 
@@ -76,7 +97,13 @@ public class GitPlus implements AutoCloseable {
                 createFullSetup();
                 return this;
             }
-            createOrCloneLocal();
+            if (configuration.isCloneRemoteRepo()) {
+                cloneRemote();
+            }
+            if (configuration.isCreateLocalRepo()) {
+                createLocalRepo();
+            }
+            // We are not creating anything just use it as it is
             verifyRemoteFromLocal();
             reposVerified = true;
         } catch (Exception e) {
@@ -85,24 +112,17 @@ public class GitPlus implements AutoCloseable {
         return this;
     }
 
-    private void createOrCloneLocal() throws IOException, GitAPIException {
-        if (configuration.isCreateLocalRepo()) {
-            createLocalRepo();
-            if (configuration.isCreateProject()) {
-                createProject();
-            }
-        } else if (configuration.isCloneRemoteRepo()) {
-            cloneRemote();
-        }
+    public GitPlusConfiguration getConfiguration() {
+        return configuration;
     }
+
 
     private void verifyRemoteFromLocal() throws IOException {
         if (configuration.getRemoteRepoFullName() == null) {
             String origin = gitLocal.getOrigin();
             if (origin != null) {
-                GitRemote.ServiceProvider serviceProvider = configuration.getRemoteServiceProvider();
                 GitRemoteFactory remoteFactory = configuration.getGitRemoteFactory();
-                configuration.remoteRepoFullName(remoteFactory.repoFullNameFromCloneUrl(serviceProvider, origin));
+                configuration.remoteRepoFullName(remoteFactory.fullRepoNameFromCloneUrl(origin));
             }
         }
     }
@@ -114,16 +134,17 @@ public class GitPlus implements AutoCloseable {
     private void createFullSetup() throws IOException, GitAPIException {
         createLocalRepo();
         addReadmeToLocal();
-        if (configuration.isCreateProject()) {
-            createProject();
-        }
         gitLocal.commit("Initial commit");
         createRemoteRepo();
-        gitLocal.setOrigin(gitRemote);
+        gitLocal.setOrigin();
         gitLocal.push(getGitRemote(), false);
         gitLocal.createBranch(DEVELOP_BRANCH);
         gitLocal.checkout(DEVELOP_BRANCH);
         gitLocal.push(getGitRemote(), false);
+        if (configuration.isUseWiki()) {
+            wikiLocal.createLocalRepo();
+            wikiLocal.setOrigin();
+        }
         reposVerified = true;
     }
 
@@ -140,6 +161,7 @@ public class GitPlus implements AutoCloseable {
 
 
     private void createProject() {
+        log.debug("creating project");
         configuration.getProjectCreator()
                      .execute(configuration.getProjectDir());
         gitLocal.add(configuration.getProjectDir());
@@ -151,11 +173,17 @@ public class GitPlus implements AutoCloseable {
 
     private void cloneRemote() {
         gitLocal.cloneRemote();
+        if (configuration.isUseWiki()) {
+            wikiLocal.cloneRemote();
+        }
     }
 
     private void createLocalRepo() throws IOException, GitAPIException {
         log.debug("creating local repo");
         gitLocal.createLocalRepo();
+        if (configuration.isCreateProject()) {
+            createProject();
+        }
     }
 
 
@@ -199,5 +227,13 @@ public class GitPlus implements AutoCloseable {
 
     public Set<GitCommit> extractMasterCommits() {
         return gitLocal.extractMasterCommits();
+    }
+
+    public GitLocal getGitLocal() {
+        return gitLocal;
+    }
+
+    public GitLocal getWikiLocal() {
+        return wikiLocal;
     }
 }

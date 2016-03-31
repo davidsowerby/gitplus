@@ -18,6 +18,7 @@ import uk.q3c.gitplus.util.UserHomeBuildPropertiesLoader
 import uk.q3c.util.testutil.FileTestUtil
 
 import java.nio.file.Paths
+
 /**
  * This test needs to delete the 'dummy' repo in cleanup.  This test is a bit weird because it has to use deleteRepo to clean up, but also tests deleteRepo
  *
@@ -35,6 +36,7 @@ class GitHubRemoteIntegrationTest extends Specification {
     GitLocal gitLocal
     GitRemote gitRemote
     GitPlus gitPlus
+    GitLocal wikiLocal
 
     def setup() {
         def loader = new UserHomeBuildPropertiesLoader();
@@ -67,11 +69,11 @@ class GitHubRemoteIntegrationTest extends Specification {
                 .createRemoteRepo(true)
                 .publicProject(true)
                 .projectDirParent(temp)
+                .useWiki(true)
         gitLocal = new GitLocal(gitPlusConfiguration)
-        gitPlus = new GitPlus(gitPlusConfiguration, gitLocal)
-//        File changeLogOutputFile = new File(temp, 'changelog.md')
-        File changeLogOutputFile = new File('/home/david/temp/changelog.md')
-        ChangeLogConfiguration changeLogConfiguration = new ChangeLogConfiguration().outputFile(changeLogOutputFile)
+        wikiLocal = new GitLocal(gitPlusConfiguration)
+        gitPlus = new GitPlus(gitPlusConfiguration, gitLocal, wikiLocal)
+        ChangeLogConfiguration changeLogConfiguration = new ChangeLogConfiguration()
         gitRemote = gitPlus.getGitRemote()
 
         URL url = this.getClass()
@@ -83,16 +85,20 @@ class GitHubRemoteIntegrationTest extends Specification {
         gitPlus.createOrVerifyRepos()
         createTestIssues(10)
         createVersion('0.1')
-        generateChangeLog(changeLogConfiguration)
+        ChangeLog changeLog = generateChangeLog(changeLogConfiguration)
 
         then:
-        FileTestUtil.compare(changeLogOutputFile, expectedResult1)
+        FileTestUtil.compare(changeLog.getOutputFile(), expectedResult1)
+        wikiLocal.getProjectDir().exists()
+        new File(wikiLocal.getProjectDir(), '.git').exists()
+        new File(wikiLocal.getProjectDir(), 'changelog.md').exists()
 
     }
 
-    def generateChangeLog(ChangeLogConfiguration changeLogConfiguration) {
+    def ChangeLog generateChangeLog(ChangeLogConfiguration changeLogConfiguration) {
         ChangeLog changeLog = new ChangeLog(gitPlus, changeLogConfiguration)
         changeLog.createChangeLog()
+        return changeLog
     }
 
     def createTestIssues(int number) {

@@ -7,6 +7,7 @@ import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
 import uk.q3c.gitplus.gitplus.GitPlus
 import uk.q3c.gitplus.local.GitCommit
+import uk.q3c.gitplus.local.GitLocal
 import uk.q3c.gitplus.local.Tag
 import uk.q3c.gitplus.remote.GitRemote
 import uk.q3c.gitplus.remote.Issue
@@ -15,6 +16,9 @@ import uk.q3c.util.testutil.FileTestUtil
 import java.nio.file.Paths
 import java.time.ZoneId
 import java.time.ZonedDateTime
+
+import static uk.q3c.gitplus.changelog.ChangeLogConfiguration.OutputTarget.*
+
 /**
  * Created by David Sowerby on 07 Mar 2016
  */
@@ -27,23 +31,37 @@ class ChangeLogTest extends Specification {
     ChangeLog changeLog
     ChangeLogConfiguration changeLogConfiguration = Mock(ChangeLogConfiguration)
     GitPlus gitPlus = Mock(GitPlus)
+    GitLocal gitLocal = Mock(GitLocal)
+    GitLocal wikiLocal = Mock(GitLocal)
     List<Tag> tags
     List<GitCommit> commits
     List<Issue> issues
     List<Set<String>> labels
     GitRemote gitRemote = Mock(GitRemote)
+    final String projectFolderName = 'project'
+    final String wikiFolderName = 'project.wiki'
+    static File projectFolder
+    static File wikiFolder
 
 
     def setup() {
 
         tags = new ArrayList<>()
         temp = temporaryFolder.getRoot()
+        gitPlus.getGitLocal() >> gitLocal
+        gitPlus.getWikiLocal() >> wikiLocal
+        projectFolder = new File(temp, projectFolderName)
+        wikiFolder = new File(temp, wikiFolderName)
+        gitLocal.getProjectDir() >> projectFolder
+        wikiLocal.getProjectDir() >> wikiFolder
+
+
     }
 
 
     def "constructor validates configuration, verifies repo"() {
         given:
-        changeLogConfiguration.getOutputFile() >> temp
+        changeLogConfiguration.getOutputFilename() >> temp
 
         when:
         new ChangeLog(gitPlus, changeLogConfiguration)
@@ -88,6 +106,8 @@ class ChangeLogTest extends Specification {
     def "changelog with mock data"() {
         given:
         changeLogConfiguration.getPullRequestTitle() >> ChangeLogConfiguration.DEFAULT_PULL_REQUESTS_TITLE
+        changeLogConfiguration.getOutputDirectory() >> USE_FILE_SPEC
+        changeLogConfiguration.getOutputFile() >> new File(temp, 'changelog.md')
         createDataWithMostRecentCommitTagged()
         gitPlus()
         changeLog = new ChangeLog(gitPlus, changeLogConfiguration)
@@ -103,6 +123,74 @@ class ChangeLogTest extends Specification {
         !FileTestUtil.compare(changeLogConfiguration.getOutputFile(), expectedResult).isPresent()
         changeLog.getVersionRecords().size() == 5
     }
+
+    def "getOutputFile using FILE_SPEC"() {
+        given:
+        changeLogConfiguration.getOutputDirectory() >> USE_FILE_SPEC
+        changeLogConfiguration.getOutputFile() >> new File(temp, 'changelog.md')
+        changeLogConfiguration.getTemplateName() >> 'markdown.vm'
+        changeLog = new ChangeLog(gitPlus, changeLogConfiguration)
+
+        expect:
+        changeLog.getOutputFile().equals(new File(temp, 'changelog.md'))
+    }
+
+    def "getOutputFile using PROJECT_ROOT"() {
+        given:
+        changeLogConfiguration.getOutputDirectory() >> PROJECT_ROOT
+        changeLogConfiguration.getOutputFile() >> new File(temp, 'changelog.md')
+        changeLogConfiguration.getTemplateName() >> 'markdown.vm'
+        changeLogConfiguration.getOutputFilename() >> 'changelog.md'
+        changeLog = new ChangeLog(gitPlus, changeLogConfiguration)
+
+        expect:
+        changeLog.getOutputFile().equals(new File(projectFolder, 'changelog.md'))
+    }
+
+    def "getOutputFile using PROJECT_BUILD_ROOT"() {
+        given:
+        changeLogConfiguration.getOutputDirectory() >> PROJECT_BUILD_ROOT
+        changeLogConfiguration.getOutputFile() >> new File(temp, 'changelog.md')
+        changeLogConfiguration.getTemplateName() >> 'markdown.vm'
+        changeLogConfiguration.getOutputFilename() >> 'changelog.md'
+        changeLog = new ChangeLog(gitPlus, changeLogConfiguration)
+
+        File buildFolder = new File(projectFolder, 'build')
+
+        expect:
+        changeLog.getOutputFile().equals(new File(buildFolder, 'changelog.md'))
+    }
+
+    def "getOutputFile using WIKI_ROOT"() {
+        given:
+        changeLogConfiguration.getOutputDirectory() >> WIKI_ROOT
+        changeLogConfiguration.getOutputFile() >> new File(temp, 'changelog.md')
+        changeLogConfiguration.getTemplateName() >> 'markdown.vm'
+        changeLogConfiguration.getOutputFilename() >> 'changelog.md'
+        changeLog = new ChangeLog(gitPlus, changeLogConfiguration)
+
+        expect:
+        changeLog.getOutputFile().equals(new File(wikiFolder, 'changelog.md'))
+    }
+
+    def "getOutputFile using CURRENT_DIR"() {
+        given:
+        changeLogConfiguration.getOutputDirectory() >> CURRENT_DIR
+        changeLogConfiguration.getOutputFile() >> new File(temp, 'changelog.md')
+        changeLogConfiguration.getTemplateName() >> 'markdown.vm'
+        changeLogConfiguration.getOutputFilename() >> 'changelog.md'
+        changeLog = new ChangeLog(gitPlus, changeLogConfiguration)
+
+        File currentDir = new File('.')
+
+        expect:
+        changeLog.getOutputFile().equals(new File(currentDir, 'changelog.md'))
+    }
+
+    def "currrentBuildTag"() {
+
+    }
+
 /**
  * This creates:<ol>
  * <li>release 0.1 with tag 0 at commit 1, version includes commit 0,1, issues 0,1,2</li>
@@ -165,7 +253,7 @@ class ChangeLogTest extends Specification {
         gitPlus.getRemoteTagUrl() >> 'https://github.com/davidsowerby/dummy/tree'
         gitPlus.getGitRemote() >> gitRemote
         gitPlus.getProjectName() >> 'Dummy'
-        changeLogConfiguration.getOutputFile() >> new File(temp, 'changelog.md')
+        changeLogConfiguration.getOutputFilename() >> new File(temp, 'changelog.md')
         changeLogConfiguration.getTemplateName() >> ChangeLog.DEFAULT_TEMPLATE
         changeLogConfiguration.getLabelGroups() >> ChangeLogConfiguration.defaultLabelGroups
     }

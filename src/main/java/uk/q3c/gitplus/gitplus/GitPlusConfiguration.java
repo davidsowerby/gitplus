@@ -4,7 +4,10 @@ import uk.q3c.gitplus.remote.DefaultGitRemoteFactory;
 import uk.q3c.gitplus.remote.GitRemote.ServiceProvider;
 import uk.q3c.gitplus.remote.GitRemoteFactory;
 
+import javax.annotation.Nonnull;
 import java.io.File;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Created by David Sowerby on 14 Mar 2016
@@ -26,21 +29,42 @@ public class GitPlusConfiguration {
     private String projectHomePage;
     private boolean publicProject;
     private String confirmRemoteDelete;
-    private boolean localOnly;
+    private String remoteRepoHtmlUrl;
+    private boolean useWiki = true;
     private ServiceProvider remoteServiceProvider = ServiceProvider.GITHUB;
+    private String cloneUrl;
+
+
+    public GitPlusConfiguration() {
+        //required
+    }
+
+    public GitPlusConfiguration(@Nonnull GitPlusConfiguration other) {
+        checkNotNull(other);
+        this.projectDir = other.projectDir;
+        this.apiToken = other.apiToken;
+        this.createLocalRepo = other.createLocalRepo;
+        this.createRemoteRepo = other.createRemoteRepo;
+        this.cloneRemoteRepo = other.cloneRemoteRepo;
+        this.projectName = other.projectName;
+        this.createProject = other.createProject;
+        this.remoteRepoFullName = other.remoteRepoFullName;
+        this.projectDirParent = other.projectDirParent;
+        this.projectCreator = other.projectCreator;
+        this.gitRemoteFactory = other.gitRemoteFactory;
+        this.projectDescription = other.projectDescription;
+        this.projectHomePage = other.projectHomePage;
+        this.publicProject = other.publicProject;
+        this.confirmRemoteDelete = other.confirmRemoteDelete;
+        this.remoteServiceProvider = other.remoteServiceProvider;
+        this.remoteRepoHtmlUrl = other.remoteRepoHtmlUrl;
+        this.useWiki = other.useWiki;
+    }
 
     public ServiceProvider getRemoteServiceProvider() {
         return remoteServiceProvider;
     }
 
-    public GitPlusConfiguration localOnly(final boolean localOnly) {
-        this.localOnly = localOnly;
-        return this;
-    }
-
-    public boolean isLocalOnly() {
-        return localOnly;
-    }
 
     public String getRemoteRepoFullName() {
         return remoteRepoFullName;
@@ -75,11 +99,14 @@ public class GitPlusConfiguration {
         return this;
     }
 
-    public String getRemoteRepoUrl() {
+    public String getRemoteRepoHtmlUrl() {
         if (gitRemoteFactory == null) {
-            throw new GitPlusConfigurationException("gitRemoteFactory has not been set.  Call validate() before calling this method");
+            throw new GitPlusConfigurationException("gitRemoteFactory has not been set, have you forgotten to call validate()?");
         }
-        return gitRemoteFactory.htmlUrlFromFullRepoName(remoteServiceProvider, remoteRepoFullName);
+        if (remoteRepoHtmlUrl == null) {
+            remoteRepoHtmlUrl = gitRemoteFactory.htmlUrlFromFullRepoName(remoteRepoFullName);
+        }
+        return remoteRepoHtmlUrl;
     }
 
 
@@ -128,7 +155,21 @@ public class GitPlusConfiguration {
         if (gitRemoteFactory == null) {
             gitRemoteFactory = new DefaultGitRemoteFactory();
         }
+        gitRemoteFactory.setRemoteServiceProvider(getRemoteServiceProvider());
 
+        if (createProject) {
+            exceptionIfNull("createProject", "projectCreator", projectCreator);
+        }
+
+        prepareRemoteConfig();
+        checkProjectDir();
+
+        if (createLocalRepo) {
+            exceptionIfNull("createLocalRepo", "projectName", projectName);
+        }
+    }
+
+    private void prepareRemoteConfig() {
         if (createRemoteRepo) {
             exceptionIfNull("createRemoteRepo", "projectDescription", projectDescription);
         }
@@ -138,20 +179,10 @@ public class GitPlusConfiguration {
             }
         }
 
-        if (createProject) {
-            exceptionIfNull("createProject", "projectCreator", projectCreator);
-        }
-
         if (createRemoteRepo || cloneRemoteRepo) {
             exceptionIfNull("createRemoteRepo OR cloneRemoteRepo", "apiToken", apiToken);
             exceptionIfNull("createRemoteRepo OR cloneRemoteRepo", "remoteRepoFullName", remoteRepoFullName);
-        }
-
-
-        checkProjectDir();
-
-        if (createLocalRepo) {
-            exceptionIfNull("createLocalRepo", "projectName", projectName);
+            remoteRepoHtmlUrl = gitRemoteFactory.htmlUrlFromFullRepoName(remoteRepoFullName);
         }
     }
 
@@ -163,7 +194,7 @@ public class GitPlusConfiguration {
             }
             if (projectName == null) {
                 if (remoteRepoFullName != null) {
-                    projectName = gitRemoteFactory.projectNameFromRemoteRepFullName(remoteServiceProvider, remoteRepoFullName);
+                    projectName = gitRemoteFactory.projectNameFromFullRepoName(remoteRepoFullName);
                 } else {
                     throw new GitPlusConfigurationException("If projectDir is null, projectName cannot be null");
                 }
@@ -271,6 +302,128 @@ public class GitPlusConfiguration {
 
     public GitPlusConfiguration remoteServiceProvider(final ServiceProvider remoteServiceProvider) {
         this.remoteServiceProvider = remoteServiceProvider;
+        return this;
+    }
+
+    public GitPlusConfiguration remoteRepoHtmlUrl(final String remoteRepoHtmlUrl) {
+        this.remoteRepoHtmlUrl = remoteRepoHtmlUrl;
+        return this;
+    }
+
+    public boolean isUseWiki() {
+        return useWiki;
+    }
+
+    /**
+     * Determinses whether wiki is used.  This option has limited value for the GitHub implementation, as that provides no facility for turning off wiki
+     * enablement.  Thus for GitHub a wiki is always enabled - however, setting this property to false will prevent the wiki from being cloned or pushed.
+     *
+     * @param useWiki true to use the wiki
+     * @return this for fluency
+     */
+    public GitPlusConfiguration useWiki(final boolean useWiki) {
+        this.useWiki = useWiki;
+        return this;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        GitPlusConfiguration that = (GitPlusConfiguration) o;
+
+        if (createLocalRepo != that.createLocalRepo) {
+            return false;
+        }
+        if (createRemoteRepo != that.createRemoteRepo) {
+            return false;
+        }
+        if (cloneRemoteRepo != that.cloneRemoteRepo) {
+            return false;
+        }
+        if (createProject != that.createProject) {
+            return false;
+        }
+        if (publicProject != that.publicProject) {
+            return false;
+        }
+        if (useWiki != that.useWiki) {
+            return false;
+        }
+        if (projectDir != null ? !projectDir.equals(that.projectDir) : that.projectDir != null) {
+            return false;
+        }
+        if (apiToken != null ? !apiToken.equals(that.apiToken) : that.apiToken != null) {
+            return false;
+        }
+        if (projectName != null ? !projectName.equals(that.projectName) : that.projectName != null) {
+            return false;
+        }
+        if (remoteRepoFullName != null ? !remoteRepoFullName.equals(that.remoteRepoFullName) : that.remoteRepoFullName != null) {
+            return false;
+        }
+        if (projectDirParent != null ? !projectDirParent.equals(that.projectDirParent) : that.projectDirParent != null) {
+            return false;
+        }
+        if (projectCreator != null ? !projectCreator.equals(that.projectCreator) : that.projectCreator != null) {
+            return false;
+        }
+        if (gitRemoteFactory != null ? !gitRemoteFactory.equals(that.gitRemoteFactory) : that.gitRemoteFactory != null) {
+            return false;
+        }
+        if (projectDescription != null ? !projectDescription.equals(that.projectDescription) : that.projectDescription != null) {
+            return false;
+        }
+        if (projectHomePage != null ? !projectHomePage.equals(that.projectHomePage) : that.projectHomePage != null) {
+            return false;
+        }
+        if (confirmRemoteDelete != null ? !confirmRemoteDelete.equals(that.confirmRemoteDelete) : that.confirmRemoteDelete != null) {
+            return false;
+        }
+        if (remoteRepoHtmlUrl != null ? !remoteRepoHtmlUrl.equals(that.remoteRepoHtmlUrl) : that.remoteRepoHtmlUrl != null) {
+            return false;
+        }
+        return remoteServiceProvider == that.remoteServiceProvider;
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = projectDir != null ? projectDir.hashCode() : 0;
+        result = 31 * result + (apiToken != null ? apiToken.hashCode() : 0);
+        result = 31 * result + (createLocalRepo ? 1 : 0);
+        result = 31 * result + (createRemoteRepo ? 1 : 0);
+        result = 31 * result + (cloneRemoteRepo ? 1 : 0);
+        result = 31 * result + (projectName != null ? projectName.hashCode() : 0);
+        result = 31 * result + (createProject ? 1 : 0);
+        result = 31 * result + (remoteRepoFullName != null ? remoteRepoFullName.hashCode() : 0);
+        result = 31 * result + (projectDirParent != null ? projectDirParent.hashCode() : 0);
+        result = 31 * result + (projectCreator != null ? projectCreator.hashCode() : 0);
+        result = 31 * result + (gitRemoteFactory != null ? gitRemoteFactory.hashCode() : 0);
+        result = 31 * result + (projectDescription != null ? projectDescription.hashCode() : 0);
+        result = 31 * result + (projectHomePage != null ? projectHomePage.hashCode() : 0);
+        result = 31 * result + (publicProject ? 1 : 0);
+        result = 31 * result + (confirmRemoteDelete != null ? confirmRemoteDelete.hashCode() : 0);
+        result = 31 * result + (remoteRepoHtmlUrl != null ? remoteRepoHtmlUrl.hashCode() : 0);
+        result = 31 * result + (useWiki ? 1 : 0);
+        result = 31 * result + (remoteServiceProvider != null ? remoteServiceProvider.hashCode() : 0);
+        return result;
+    }
+
+    public String getCloneUrl() {
+        if (cloneUrl == null) {
+            cloneUrl = getGitRemoteFactory().cloneUrlFromHtmlUrl(getRemoteRepoHtmlUrl());
+        }
+        return cloneUrl;
+    }
+
+    public GitPlusConfiguration cloneUrl(String cloneUrl) {
+        this.cloneUrl = cloneUrl;
         return this;
     }
 }

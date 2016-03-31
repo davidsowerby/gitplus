@@ -11,6 +11,10 @@ import java.io.IOException;
  */
 public interface GitRemoteFactory {
 
+    ServiceProvider getRemoteServiceProvider();
+
+    void setRemoteServiceProvider(@Nonnull ServiceProvider remoteServiceProvider);
+
     /**
      * Creates an instance of a {@link GitRemote} implementation from the information provided in {@code gitPlusConfiguration}
      *
@@ -19,21 +23,27 @@ public interface GitRemoteFactory {
      */
     GitRemote createRemoteInstance(@Nonnull GitPlusConfiguration gitPlusConfiguration) throws IOException;
 
-    String htmlUrlStem(@Nonnull ServiceProvider serviceProvider);
+    String htmlUrlStem();
 
-    String htmlUrlFromFullRepoName(@Nonnull ServiceProvider serviceProvider, @Nonnull String fullRepoName);
+    String htmlUrlFromFullRepoName(@Nonnull String fullRepoName);
 
-    String htmlTagUrl(@Nonnull ServiceProvider serviceProvider, @Nonnull String fullRepoName);
+    String htmlTagUrlFromFullRepoName(@Nonnull String fullRepoName);
 
-    String apiUrlStem(@Nonnull ServiceProvider serviceProvider);
+    String apiUrlStem();
 
-    String cloneUrl(@Nonnull ServiceProvider serviceProvider, @Nonnull String fullRepoName);
+    String cloneUrlFromFullRepoName(@Nonnull String fullRepoName);
 
-    String repoFullNameFromHtmlUrl(@Nonnull ServiceProvider serviceProvider, @Nonnull String htmlUrl);
+    String fullRepoNameFromHtmlUrl(@Nonnull String htmlUrl);
 
-    String projectNameFromRemoteRepFullName(@Nonnull ServiceProvider remoteServiceProvider, @Nonnull String remoteRepoFullName);
+    String projectNameFromFullRepoName(@Nonnull String remoteRepoFullName);
 
-    String repoFullNameFromCloneUrl(@Nonnull ServiceProvider remoteServiceProvider, @Nonnull String origin);
+    String fullRepoNameFromCloneUrl(@Nonnull String origin);
 
-    String htmlUrlFromCloneUrl(@Nonnull ServiceProvider serviceProvider, @Nonnull String cloneUrl);
+    String htmlUrlFromCloneUrl(@Nonnull String cloneUrl);
+
+    String wikiHtmlUrlFromCoreHtmlUrl(@Nonnull String coreHtmlUrl);
+
+    String wikiCloneUrlFromCoreHtmLUrl(@Nonnull String coreCloneUrl);
+
+    String cloneUrlFromHtmlUrl(@Nonnull String remoteRepoHtmlUrl);
 }

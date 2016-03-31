@@ -65,7 +65,6 @@ public class ChangeLog {
 
 
     public void createChangeLog() throws IOException {
-        File outputFile = configuration.getOutputFile();
         assembleVersionRecords();
 
 
@@ -85,8 +84,44 @@ public class ChangeLog {
 
         StringWriter w = new StringWriter();
         velocityTemplate.merge(velocityContext, w);
-        FileUtils.writeStringToFile(outputFile, w.toString());
+        FileUtils.writeStringToFile(getOutputFile(), w.toString());
 
+    }
+
+    /**
+     * Derives the output file location and name from {@link #configuration}
+     *
+     * @return the output File
+     */
+    public File getOutputFile() {
+        File outputFile;
+        switch (configuration.getOutputDirectory()) {
+            case USE_FILE_SPEC:
+                outputFile = configuration.getOutputFile();
+                break;
+            case PROJECT_ROOT:
+                outputFile = new File(gitPlus.getGitLocal()
+                                             .getProjectDir(), configuration.getOutputFilename());
+                break;
+            case PROJECT_BUILD_ROOT:
+                File buildDir = new File(gitPlus.getGitLocal()
+                                                .getProjectDir(), "build");
+                outputFile = new File(buildDir, configuration.getOutputFilename());
+                break;
+            case WIKI_ROOT:
+                outputFile = new File(gitPlus.getWikiLocal()
+                                             .getProjectDir(), configuration.getOutputFilename());
+                break;
+            case CURRENT_DIR:
+                File currentDir = new File(".");
+                outputFile = new File(currentDir, configuration.getOutputFilename());
+                break;
+            default:
+                throw new ChangeLogConfigurationException("Unrecognised output directory, " + configuration.getOutputDirectory()
+                                                                                                           .name());
+
+        }
+        return outputFile;
     }
 
 
@@ -108,7 +143,7 @@ public class ChangeLog {
         //If constructing changelog for a released version, most recent commit has a tag
         //if not yet released use 'current build' pseudo tag for most recent commit
         Optional<Tag> tagForFirstsCommit = tagForCommit(firstCommit);
-        Tag tag = tagForFirstsCommit.isPresent() ? tagForFirstsCommit.get() : currentBuildTag(firstCommit);
+        Tag tag = tagForFirstsCommit.isPresent() ? tagForFirstsCommit.get() : new DefaultCurrentBuildTag(firstCommit);
         VersionRecord currentVersionRecord = new VersionRecord(tag, configuration);
         currentVersionRecord.addCommit(firstCommit);
         versionRecords.add(currentVersionRecord);
@@ -124,13 +159,6 @@ public class ChangeLog {
         }
     }
 
-    private Tag currentBuildTag(GitCommit commit) {
-        return new Tag("current build")
-                .tagType(Tag.TagType.PSEUDO)
-                .releaseDate(commit.getCommitDate())
-                .fullMessage("Pseudo tag on latest commit")
-                .taggerIdent(commit.getCommitter());
-    }
 
     private void buildTagMap() {
         List<Tag> tags = gitPlus.getTags();

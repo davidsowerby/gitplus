@@ -4,6 +4,7 @@ import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
 import uk.q3c.gitplus.remote.DefaultGitRemoteFactory
+import uk.q3c.gitplus.remote.GitRemoteFactory
 
 import static uk.q3c.gitplus.remote.GitRemote.ServiceProvider.GITHUB
 
@@ -19,6 +20,7 @@ class GitPlusConfigurationTest extends Specification {
 
     GitPlusConfiguration config
     ProjectCreator projectCreator = Mock(ProjectCreator)
+    GitRemoteFactory remoteFactory = Mock(GitRemoteFactory)
 
     def setup() {
         config = new GitPlusConfiguration()
@@ -31,7 +33,6 @@ class GitPlusConfigurationTest extends Specification {
         config.apiToken == null
         !config.createLocalRepo
         !config.cloneRemoteRepo
-        !config.localOnly
         !config.createProject
         config.projectCreator == null
         !config.isCreateRemoteRepo()
@@ -162,32 +163,15 @@ class GitPlusConfigurationTest extends Specification {
         config.getProjectDir().equals(new File(temp, "scratch"))
     }
 
-    def "set and get"() {
-        given:
-        File f = new File('.')
-        String projectName = 'wiggly'
-        String repoFullName = 'ds/ds'
-        String confirmDelete = 'ah, go on'
-
+    def "validate sets the remote factory provider"() {
         when:
-        config.projectDir(f)
-        config.gitRemoteFactory(new DefaultGitRemoteFactory())
-        config.projectName(projectName)
-        config.localOnly(true)
-        config.publicProject(true)
-        config.remoteRepoFullName(repoFullName)
-        config.confirmRemoteDelete(confirmDelete)
-        config.remoteServiceProvider(GITHUB)
+        config.createLocalRepo(true).projectDirParent(temp).projectName("scratch")
+        config.validate()
 
         then:
-        config.getProjectDir().equals(f)
-        config.getGitRemoteFactory() instanceof DefaultGitRemoteFactory
-        config.getProjectName().equals(projectName)
-        config.isLocalOnly()
-        config.isPublicProject()
-        config.getRemoteRepoFullName().equals(repoFullName)
-        config.getConfirmRemoteDelete().equals(confirmDelete)
+        config.getGitRemoteFactory().getRemoteServiceProvider() == GITHUB
     }
+
 
     def "project description and homepage are data only"() {
         when:
@@ -215,7 +199,7 @@ class GitPlusConfigurationTest extends Specification {
         config.validate()
 
         then:
-        config.getRemoteRepoUrl().equals("https://github.com/davidsowerby/scratch")
+        config.getRemoteRepoHtmlUrl().equals("https://github.com/davidsowerby/scratch")
     }
 
     def "full repo url, no validation throws GitPlusConfigurationException"() {
@@ -223,7 +207,7 @@ class GitPlusConfigurationTest extends Specification {
         config.remoteRepoFullName("davidsowerby/scratch").projectName('scratch')
 
         when:
-        config.getRemoteRepoUrl()
+        config.getRemoteRepoHtmlUrl()
 
         then:
 
@@ -270,4 +254,204 @@ class GitPlusConfigurationTest extends Specification {
         then:
         config.getProjectDirParent().equals(new File('.'))
     }
+
+    def "copy constructor"() {
+        given:
+        config.apiToken('x')
+                .createLocalRepo(true)
+                .confirmRemoteDelete('dd')
+                .createProject(true)
+                .useWiki(false)
+                .createRemoteRepo(true)
+                .projectCreator(projectCreator)
+                .gitRemoteFactory(remoteFactory)
+
+        when:
+        GitPlusConfiguration newConfig = new GitPlusConfiguration(config)
+
+        then:
+        newConfig.equals(config)
+    }
+
+    def "equals and hashcode same instance"() {
+        given:
+        GitPlusConfiguration configuration1 = new GitPlusConfiguration()
+        GitPlusConfiguration configuration2 = configuration1
+
+        expect:
+        configuration1.equals(configuration2)
+        configuration1.hashCode() == configuration2.hashCode()
+    }
+
+    def "equals and hashcode not equal null"() {
+        given:
+        GitPlusConfiguration configuration1 = new GitPlusConfiguration()
+        GitPlusConfiguration configuration2 = null
+
+        expect:
+        !configuration1.equals(configuration2)
+    }
+
+    def "equals and hashcode differing elements"() {
+        given:
+        GitPlusConfiguration configuration1 = new GitPlusConfiguration()
+        GitPlusConfiguration configuration2 = new GitPlusConfiguration()
+        GitRemoteFactory remoteFactory1 = Mock(GitRemoteFactory)
+        GitRemoteFactory remoteFactory2 = Mock(GitRemoteFactory)
+        ProjectCreator projectCreator1 = Mock(ProjectCreator)
+        ProjectCreator projectCreator2 = Mock(ProjectCreator)
+        File f1 = Mock(File)
+        File f2 = Mock(File)
+
+        when:
+        configuration1.createRemoteRepo(true)
+        configuration2.createRemoteRepo(false)
+
+        then:
+        !configuration1.equals(configuration2)
+        configuration1.hashCode() != configuration2.hashCode()
+
+        when:
+        configuration1.createRemoteRepo(false).apiToken('a')
+        configuration2.createRemoteRepo(false).apiToken('aa')
+
+        then:
+        !configuration1.equals(configuration2)
+        configuration1.hashCode() != configuration2.hashCode()
+
+        when:
+        configuration1.apiToken('a').cloneRemoteRepo(true)
+        configuration2.apiToken('a').cloneRemoteRepo(false)
+
+        then:
+        !configuration1.equals(configuration2)
+        configuration1.hashCode() != configuration2.hashCode()
+
+        when:
+        configuration1.cloneRemoteRepo(true).confirmRemoteDelete('dd')
+        configuration2.cloneRemoteRepo(true).confirmRemoteDelete('da')
+
+        then:
+        !configuration1.equals(configuration2)
+        configuration1.hashCode() != configuration2.hashCode()
+
+        when:
+        configuration1.confirmRemoteDelete('dd').createProject(true)
+        configuration2.confirmRemoteDelete('dd').createProject(false)
+
+        then:
+        !configuration1.equals(configuration2)
+        configuration1.hashCode() != configuration2.hashCode()
+
+
+        when:
+        configuration1.createProject(true).gitRemoteFactory(remoteFactory1)
+        configuration2.createProject(true).gitRemoteFactory(remoteFactory2)
+
+        then:
+        !configuration1.equals(configuration2)
+        configuration1.hashCode() != configuration2.hashCode()
+
+        when:
+        configuration1.gitRemoteFactory(remoteFactory1).projectCreator(projectCreator1)
+        configuration2.gitRemoteFactory(remoteFactory1).projectCreator(projectCreator2)
+
+        then:
+        !configuration1.equals(configuration2)
+        configuration1.hashCode() != configuration2.hashCode()
+
+        when:
+        configuration1.projectCreator(projectCreator1).createLocalRepo(true)
+        configuration2.projectCreator(projectCreator1).createLocalRepo(false)
+
+        then:
+        !configuration1.equals(configuration2)
+        configuration1.hashCode() != configuration2.hashCode()
+
+        when:
+        configuration1.createLocalRepo(true).publicProject(true)
+        configuration2.createLocalRepo(true).publicProject(false)
+
+        then:
+        !configuration1.equals(configuration2)
+        configuration1.hashCode() != configuration2.hashCode()
+
+        when:
+        configuration1.publicProject(true).useWiki(true)
+        configuration2.publicProject(true).useWiki(false)
+        configuration1.isUseWiki()
+        !configuration2.isUseWiki()
+
+        then:
+        !configuration1.equals(configuration2)
+        configuration1.hashCode() != configuration2.hashCode()
+
+        when:
+        configuration1.useWiki(true).remoteRepoHtmlUrl('a')
+        configuration2.useWiki(true).remoteRepoHtmlUrl('b')
+
+        then:
+        !configuration1.equals(configuration2)
+        configuration1.hashCode() != configuration2.hashCode()
+
+        when:
+        configuration1.remoteRepoHtmlUrl('a').projectDescription('a')
+        configuration2.remoteRepoHtmlUrl('a').projectDescription('b')
+
+        then:
+        !configuration1.equals(configuration2)
+        configuration1.hashCode() != configuration2.hashCode()
+
+        when:
+        configuration1.projectDescription('a').projectHomePage('a')
+        configuration2.projectDescription('a').projectHomePage('b')
+
+        then:
+        !configuration1.equals(configuration2)
+        configuration1.hashCode() != configuration2.hashCode()
+
+        when:
+        configuration1.projectHomePage('a').projectDirParent(f1)
+        configuration2.projectHomePage('a').projectDirParent(f2)
+
+        then:
+        !configuration1.equals(configuration2)
+        configuration1.hashCode() != configuration2.hashCode()
+
+        when:
+        configuration1.projectDirParent(f1).remoteRepoFullName('a')
+        configuration2.projectDirParent(f1).remoteRepoFullName('b')
+
+        then:
+        !configuration1.equals(configuration2)
+        configuration1.hashCode() != configuration2.hashCode()
+        !configuration1.getRemoteRepoFullName().equals(configuration2.getRemoteRepoFullName())
+
+        when:
+        configuration1.remoteRepoFullName('a').projectName('a')
+        configuration2.remoteRepoFullName('a').projectName('b')
+
+        then:
+        !configuration1.equals(configuration2)
+        configuration1.hashCode() != configuration2.hashCode()
+
+        when:
+        configuration1.projectName('a').projectDir(f1)
+        configuration2.projectName('a').projectDir(f2)
+
+        then:
+        !configuration1.equals(configuration2)
+        configuration1.hashCode() != configuration2.hashCode()
+
+        when:
+        configuration1.projectDir(f1).remoteServiceProvider(GITHUB)
+        configuration2.projectDir(f1).remoteServiceProvider(null)
+
+        then:
+        !configuration1.equals(configuration2)
+        configuration1.hashCode() != configuration2.hashCode()
+
+    }
+
+
 }

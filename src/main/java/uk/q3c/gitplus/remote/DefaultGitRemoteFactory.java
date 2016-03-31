@@ -16,6 +16,18 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public class DefaultGitRemoteFactory implements GitRemoteFactory {
 
+    private ServiceProvider remoteServiceProvider;
+
+    @Override
+    public ServiceProvider getRemoteServiceProvider() {
+        return remoteServiceProvider;
+    }
+
+    @Override
+    public void setRemoteServiceProvider(@Nonnull ServiceProvider remoteServiceProvider) {
+        this.remoteServiceProvider = remoteServiceProvider;
+    }
+
     @Override
     public GitRemote createRemoteInstance(@Nonnull GitPlusConfiguration gitPlusConfiguration) throws IOException {
         checkNotNull(gitPlusConfiguration);
@@ -23,47 +35,41 @@ public class DefaultGitRemoteFactory implements GitRemoteFactory {
     }
 
     @Override
-    public String htmlUrlStem(@Nonnull ServiceProvider serviceProvider) {
-        checkNotNull(serviceProvider);
+    public String htmlUrlStem() {
         return "https://github.com";
     }
 
     @Override
-    public String htmlUrlFromFullRepoName(@Nonnull ServiceProvider serviceProvider, @Nonnull String fullRepoName) {
-        checkNotNull(serviceProvider);
+    public String htmlUrlFromFullRepoName(@Nonnull String fullRepoName) {
         checkNotNull(fullRepoName);
-        return htmlUrlStem(serviceProvider) + '/' + fullRepoName;
+        return htmlUrlStem() + '/' + fullRepoName;
     }
 
     @Override
-    public String htmlTagUrl(@Nonnull ServiceProvider serviceProvider, @Nonnull String fullRepoName) {
-        checkNotNull(serviceProvider);
+    public String htmlTagUrlFromFullRepoName(@Nonnull String fullRepoName) {
         checkNotNull(fullRepoName);
-        return htmlUrlFromFullRepoName(serviceProvider, fullRepoName) + "/tree";
+        return htmlUrlFromFullRepoName(fullRepoName) + "/tree";
     }
 
     @Override
-    public String apiUrlStem(@Nonnull ServiceProvider serviceProvider) {
-        checkNotNull(serviceProvider);
+    public String apiUrlStem() {
         return "https://api.github.com";
     }
 
     @Override
-    public String cloneUrl(@Nonnull ServiceProvider serviceProvider, @Nonnull String fullRepoName) {
-        checkNotNull(serviceProvider);
+    public String cloneUrlFromFullRepoName(@Nonnull String fullRepoName) {
         checkNotNull(fullRepoName);
-        return htmlUrlStem(serviceProvider) + '/' + fullRepoName + ".git";
+        return htmlUrlStem() + '/' + fullRepoName + ".git";
     }
 
     @Override
-    public String repoFullNameFromHtmlUrl(@Nonnull ServiceProvider serviceProvider, @Nonnull String htmlUrl) {
-        checkNotNull(serviceProvider);
+    public String fullRepoNameFromHtmlUrl(@Nonnull String htmlUrl) {
         checkNotNull(htmlUrl);
-        return htmlUrl.replaceFirst(htmlUrlStem(serviceProvider) + '/', "");
+        return htmlUrl.replaceFirst(htmlUrlStem() + '/', "");
     }
 
     @Override
-    public String projectNameFromRemoteRepFullName(@Nonnull ServiceProvider serviceProvider, @Nonnull String remoteRepoFullName) {
+    public String projectNameFromFullRepoName(@Nonnull String remoteRepoFullName) {
         if (!remoteRepoFullName.contains("/")) {
             throw new GitPlusConfigurationException("Repo full name must be of the form 'owner/repo' ");
         }
@@ -71,19 +77,34 @@ public class DefaultGitRemoteFactory implements GitRemoteFactory {
     }
 
     @Override
-    public String repoFullNameFromCloneUrl(@Nonnull ServiceProvider serviceProvider, @Nonnull String cloneUrl) {
-        checkNotNull(serviceProvider);
+    public String fullRepoNameFromCloneUrl(@Nonnull String cloneUrl) {
         checkNotNull(cloneUrl);
-        String htmlUrl = htmlUrlFromCloneUrl(serviceProvider, cloneUrl);
-        return repoFullNameFromHtmlUrl(serviceProvider, htmlUrl);
+        String htmlUrl = htmlUrlFromCloneUrl(cloneUrl);
+        return fullRepoNameFromHtmlUrl(htmlUrl);
 
     }
 
     @Override
-    public String htmlUrlFromCloneUrl(@Nonnull ServiceProvider serviceProvider, @Nonnull String cloneUrl) {
-        checkNotNull(serviceProvider);
+    public String htmlUrlFromCloneUrl(@Nonnull String cloneUrl) {
         checkNotNull(cloneUrl);
-        return cloneUrl.substring(cloneUrl.length() - 4);
+        return cloneUrl.substring(0, cloneUrl.length() - 4);
 
+    }
+
+    @Override
+    public String wikiHtmlUrlFromCoreHtmlUrl(@Nonnull String coreHtmlUrl) {
+        checkNotNull(coreHtmlUrl);
+        return coreHtmlUrl + "/wiki";
+    }
+
+    @Override
+    public String wikiCloneUrlFromCoreHtmLUrl(@Nonnull String coreHtmlUrl) {
+        checkNotNull(coreHtmlUrl);
+        return coreHtmlUrl + (".wiki.git");
+    }
+
+    @Override
+    public String cloneUrlFromHtmlUrl(@Nonnull String remoteRepoHtmlUrl) {
+        return remoteRepoHtmlUrl + ".git";
     }
 }

@@ -7,23 +7,25 @@ import uk.q3c.gitplus.gitplus.GitPlus
 import uk.q3c.gitplus.gitplus.GitPlusConfiguration
 import uk.q3c.gitplus.local.GitLocal
 
+import static uk.q3c.gitplus.changelog.ChangeLogConfiguration.OutputTarget.USE_FILE_SPEC
+
 /**
  * Created by David Sowerby on 13 Mar 2016
  */
 class ChangeLogConfigurationTest extends Specification {
 
-    final String remoteScratchUrl = "https://github.com/davidsowerby/scratch"
 
     ChangeLogConfiguration config;
     GitPlusConfiguration gitPlusConfiguration
-    GitPlus gitHandler;
+    GitPlus gitPlus;
     @Rule
     TemporaryFolder temporaryFolder = new TemporaryFolder();
 
     def setup() {
         gitPlusConfiguration = new GitPlusConfiguration().remoteRepoFullName('davidsowerby/scratch')
+        gitPlusConfiguration.validate()
         config = new ChangeLogConfiguration()
-        gitHandler = new GitPlus(gitPlusConfiguration, new GitLocal(gitPlusConfiguration))
+        gitPlus = new GitPlus(gitPlusConfiguration, new GitLocal(gitPlusConfiguration), new GitLocal(gitPlusConfiguration))
     }
 
     def "defaults"() {
@@ -36,7 +38,7 @@ class ChangeLogConfigurationTest extends Specification {
         config.typoMap.equals(ChangeLogConfiguration.defaultTypoMap)
         config.getLabelGroups().equals(ChangeLogConfiguration.defaultLabelGroups)
         config.getExcludedMessageTags().isEmpty()
-        config.getOutputFile() == null
+        config.getOutputFilename() == 'changelog.md'
     }
 
     def "set get"() {
@@ -47,9 +49,12 @@ class ChangeLogConfigurationTest extends Specification {
         final String messageTagOpen = '[['
         final String messageTagClose = ']]'
         Set<String> excludedMessageTags = new HashSet<>()
+        String pullRequestTitle = 'Pulleys'
+        String outputFilename = 'filename.md'
 
         when:
         config.outputFile(new File('.'))
+        config.outputFileName(outputFilename)
         config.typoMap(typoMap)
         config.templateName(templateName)
         config.labelGroups(labelGroups)
@@ -58,6 +63,7 @@ class ChangeLogConfigurationTest extends Specification {
         config.separatePullRequests(false)
         config.useTypoMap(false)
         config.excludedMessageTags(excludedMessageTags)
+        config.pullRequestTitle(pullRequestTitle)
 
         then:
         config.getOutputFile().equals(new File('.'))
@@ -69,6 +75,8 @@ class ChangeLogConfigurationTest extends Specification {
         !config.isSeparatePullRequests()
         !config.isUseTypoMap()
         config.getExcludedMessageTags() == excludedMessageTags
+        config.pullRequestTitle.equals(pullRequestTitle)
+        config.getOutputFilename().equals(outputFilename)
     }
 
     def "validate empty"() {
@@ -76,14 +84,16 @@ class ChangeLogConfigurationTest extends Specification {
         config.validate()
 
         then:
-        thrown ChangeLogConfigurationException
+        noExceptionThrown()
+    }
 
+    def "validate, using file spec but no output file throws exception"() {
         when:
-        config.outputFile(new File('.'))
+        config.outputDirectory(USE_FILE_SPEC)
         config.validate()
 
         then:
-        noExceptionThrown()
+        thrown ChangeLogConfigurationException
     }
 
 

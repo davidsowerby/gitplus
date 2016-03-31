@@ -18,6 +18,7 @@ import org.slf4j.Logger;
 import uk.q3c.gitplus.gitplus.GitPlus;
 import uk.q3c.gitplus.gitplus.GitPlusConfiguration;
 import uk.q3c.gitplus.remote.GitRemote;
+import uk.q3c.gitplus.remote.GitRemoteFactory;
 
 import javax.annotation.Nonnull;
 import java.io.File;
@@ -29,6 +30,9 @@ import java.util.*;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.slf4j.LoggerFactory.getLogger;
 
+/**
+ * A thin wrapper around Git to make some of the commands either simpler or just more direct and relevant to the task of using within Gradle
+ */
 public class GitLocal implements AutoCloseable {
     private static Logger log = getLogger(GitLocal.class);
 
@@ -37,7 +41,8 @@ public class GitLocal implements AutoCloseable {
 
     public GitLocal(@Nonnull GitPlusConfiguration configuration) {
         checkNotNull(configuration);
-        this.configuration = configuration;
+        this.configuration = new GitPlusConfiguration(configuration); //copy so that we can modify
+        this.configuration.validate();
     }
 
     /**
@@ -92,18 +97,17 @@ public class GitLocal implements AutoCloseable {
 
     public void cloneRemote() {
         log.debug("cloning remote from: {}", configuration
-                .getRemoteRepoUrl());
+                .getRemoteRepoHtmlUrl());
 
         try {
             CloneCommand cloneCommand = Git.cloneRepository()
-                                           .setURI(configuration
-                                                   .getRemoteRepoUrl() + ".git")
+                                           .setURI(configuration.getCloneUrl())
                                            .setDirectory(configuration.getProjectDir());
             cloneCommand.call();
 
         } catch (Exception e) {
             throw new GitLocalException("Unable to clone " + configuration
-                    .getRemoteRepoUrl(), e);
+                    .getRemoteRepoHtmlUrl(), e);
         }
     }
 
@@ -244,13 +248,26 @@ public class GitLocal implements AutoCloseable {
         }
     }
 
-    public void setOrigin(GitRemote gitRemote) {
+    public void setOrigin(@Nonnull GitRemote gitRemote) {
+        checkNotNull(gitRemote);
         try {
             String originUrl = gitRemote.getCloneUrl();
+            setOrigin(originUrl);
+        } catch (IOException e) {
+            throw new GitLocalException("Unable to set origin", e);
+        }
+    }
 
-            StoredConfig config = git.getRepository()
+    public void setOrigin() {
+        setOrigin(configuration.getCloneUrl());
+    }
+
+    public void setOrigin(@Nonnull String origin) {
+        checkNotNull(origin);
+        try {
+            StoredConfig config = getGit().getRepository()
                                      .getConfig();
-            config.setString("remote", "origin", "url", originUrl);
+            config.setString("remote", "origin", "url", origin);
             config.save();
 
         } catch (IOException e) {
@@ -421,5 +438,34 @@ public class GitLocal implements AutoCloseable {
             throw new GitLocalException("Unable to tag" + configuration.getProjectDir()
                                                                        .getAbsolutePath(), e);
         }
+    }
+
+    /**
+     * Adjusts the {@link #configuration} for use with a wiki repo - these adjustments depend on the remote provider, and therefore use the factory from
+     * {@link GitPlusConfiguration#getGitRemoteFactory()} to provide the conversions
+     */
+    public void configureForWiki() {
+        GitRemoteFactory factory = configuration.getGitRemoteFactory();
+        String coreHtmlUrl = configuration.getRemoteRepoHtmlUrl();
+        String wikiCoreHtmlUrl = factory.wikiHtmlUrlFromCoreHtmlUrl(coreHtmlUrl);
+        String wikiCloneUrl = factory.wikiCloneUrlFromCoreHtmLUrl(coreHtmlUrl);
+        String projectName = configuration.getProjectName() + ".wiki";
+        File projectDir = new File(configuration.getProjectDir()
+                                                .getParentFile(), projectName);
+        configuration.remoteRepoHtmlUrl(wikiCoreHtmlUrl)
+                     .projectName(projectName)
+                     .createRemoteRepo(false)
+                     .cloneRemoteRepo(true)
+                     .cloneUrl(wikiCloneUrl)
+                     .projectDir(projectDir);
+
+    }
+
+    public GitPlusConfiguration getConfiguration() {
+        return configuration;
+    }
+
+    public File getProjectDir() {
+        return configuration.getProjectDir();
     }
 }

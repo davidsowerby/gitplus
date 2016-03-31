@@ -9,6 +9,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
+import static uk.q3c.gitplus.changelog.ChangeLogConfiguration.OutputTarget.USE_FILE_SPEC;
+
 /**
  * A execute object for {@link ChangeLog}
  * <p>
@@ -16,6 +18,14 @@ import java.util.Set;
  */
 
 public class ChangeLogConfiguration {
+    /**
+     * The {@link #outputFilename} is referenced to an OutputTarget directory, unless USE_FILE_SPEC is selected, in which case the {@link #outputFile} must
+     * be specified
+     */
+    public enum OutputTarget {
+        PROJECT_ROOT, PROJECT_BUILD_ROOT, WIKI_ROOT, CURRENT_DIR, USE_FILE_SPEC
+    }
+
     public static final String DEFAULT_PULL_REQUESTS_TITLE = "Pull Requests";
     public static final ImmutableMap<String, String> defaultTypoMap = new ImmutableMap.Builder<String, String>().put("Fix#", "Fix #")
                                                                                                                 .put("fix#", "fix #")
@@ -32,10 +42,15 @@ public class ChangeLogConfiguration {
                                                                                                                 .put("Resolves#", "Resolves #")
                                                                                                                 .put("resolves#", "resolves #")
                                                                                                                 .build();
+    @SuppressWarnings("WeakerAccess")
     public static final ImmutableSet<String> defaultFixSet = ImmutableSet.of("bug");
+    @SuppressWarnings("WeakerAccess")
     public static final ImmutableSet<String> defaultEnhancementSet = ImmutableSet.of("enhancement", "performance");
+    @SuppressWarnings("WeakerAccess")
     public static final ImmutableSet<String> defaultDocumentationSet = ImmutableSet.of("documentation");
+    @SuppressWarnings("WeakerAccess")
     public static final ImmutableSet<String> defaultTaskSet = ImmutableSet.of("task");
+    @SuppressWarnings("WeakerAccess")
     public static final ImmutableSet<String> defaultQualitySet = ImmutableSet.of("testing", "quality");
 
 
@@ -60,9 +75,39 @@ public class ChangeLogConfiguration {
 
     private Map<String, String> typoMap = defaultTypoMap;
     private boolean useTypoMap = true;
-    private File outputFile;
+    private String outputFilename = "changelog.md";
     private String pullRequestTitle = DEFAULT_PULL_REQUESTS_TITLE;
+    private OutputTarget outputDirectory = OutputTarget.WIKI_ROOT;
+    private File outputFile;
 
+    public ChangeLogConfiguration outputFile(final File outputFile) {
+        this.outputFile = outputFile;
+        return this;
+    }
+
+    public File getOutputFile() {
+        return outputFile;
+    }
+
+    /**
+     * The {@link #outputFilename} is referenced to an OutputTarget directory, unless USE_FILE_SPEC is selected, in which case the {@link #outputFile} must
+     * be specified
+     */
+    public ChangeLogConfiguration outputDirectory(final OutputTarget outputDirectory) {
+        this.outputDirectory = outputDirectory;
+        return this;
+    }
+
+    public OutputTarget getOutputDirectory() {
+        return outputDirectory;
+    }
+
+    /**
+     * The heading used to describe pull requests in the output file
+     *
+     * @param pullRequestTitle the title to use
+     * @return this for fluency
+     */
     public ChangeLogConfiguration pullRequestTitle(final String pullRequestTitle) {
         this.pullRequestTitle = pullRequestTitle;
         return this;
@@ -115,8 +160,8 @@ public class ChangeLogConfiguration {
     }
 
 
-    public File getOutputFile() {
-        return outputFile;
+    public String getOutputFilename() {
+        return outputFilename;
     }
 
     public ChangeLogConfiguration templateName(final String templateName) {
@@ -165,15 +210,18 @@ public class ChangeLogConfiguration {
         return this;
     }
 
-    public ChangeLogConfiguration outputFile(final File outputFile) {
-        this.outputFile = outputFile;
+    public ChangeLogConfiguration outputFileName(final String outputFile) {
+        this.outputFilename = outputFile;
         return this;
     }
 
 
     public void validate() {
-        if (outputFile == null) {
-            throw new ChangeLogConfigurationException("outputFile must be specified");
+        if (outputDirectory != USE_FILE_SPEC && outputFilename == null) {
+            throw new ChangeLogConfigurationException("outputFileName must be specified");
+        }
+        if (outputDirectory == USE_FILE_SPEC && outputFile == null) {
+            throw new ChangeLogConfigurationException("When output target is " + USE_FILE_SPEC.name() + " outputFile must be specified");
         }
     }
 }

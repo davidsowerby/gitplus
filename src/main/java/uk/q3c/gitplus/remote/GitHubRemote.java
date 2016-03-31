@@ -136,7 +136,8 @@ public class GitHubRemote implements GitRemote {
     }
 
     /**
-     * Creates the remote repo from the information in {@link #configuration}
+     * Creates the remote repo from the information in {@link #configuration}.  Note that the {@link GitHub#createRepository} methods called does not allow
+     * for any option to control creation of a wiki - it is always created, even if {@link #configuration} has useWiki set to false.
      */
     @Override
     public void createRepo() {

@@ -65,8 +65,8 @@ class GitLocalTest extends Specification {
     def "create local repo failure throws GitLocalException"() {
         given:
         configuration.projectName("scratch").projectDirParent(temp).createLocalRepo(true)
-//        configuration.validate() not validating makes projectDir null to induce failure
         gitLocal = new GitLocal(configuration)
+        gitLocal.getConfiguration().projectDir(null) // null to induce failure
 
         when:
         gitLocal.createLocalRepo()
@@ -143,7 +143,10 @@ class GitLocalTest extends Specification {
 
     def "GitLocalException when init call fails"() {
         given:
+        configuration.projectName('dummy')
         gitLocal = new GitLocal(configuration)
+        gitLocal.getConfiguration().projectDir(null) // force failure
+
 
         when:
         gitLocal.init()
@@ -203,10 +206,11 @@ class GitLocalTest extends Specification {
 
     }
 
-    def "GitLocalException   when calls made, repo does not exist"() {
+    def "GitLocalException when calls made, repo does not exist"() {
         given:
         configuration.createLocalRepo(true).projectName("scratch").projectDirParent(temp).createLocalRepo(true)
         gitLocal = new GitLocal(configuration)
+        gitLocal.getConfiguration().projectDir(null) //  null to induce failure
 
         when:
         gitLocal.status()
@@ -338,6 +342,20 @@ class GitLocalTest extends Specification {
         tags.get(0).getReleaseDate() != null
         tags.get(1).getReleaseDate() != null
 
+    }
+
+    def "configure for wiki"() {
+        given:
+        configuration.remoteRepoFullName('davidsowerby/scratch').projectDirParent(temp).apiToken('x')
+        configuration.validate()
+        gitLocal = new GitLocal(configuration)
+
+        when:
+        gitLocal.configureForWiki()
+
+        then:
+        gitLocal.getConfiguration().getRemoteRepoHtmlUrl().equals('https://github.com/davidsowerby/scratch/wiki')
+        gitLocal.getConfiguration().getProjectDir().equals(new File(temp, 'scratch.wiki'))
     }
 
 
