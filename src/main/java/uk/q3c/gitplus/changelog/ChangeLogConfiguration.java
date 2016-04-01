@@ -4,7 +4,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
 import java.io.File;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -68,10 +67,10 @@ public class ChangeLogConfiguration {
 
     private String templateName = ChangeLog.DEFAULT_TEMPLATE;
     private Map<String, Set<String>> labelGroups = defaultLabelGroups;
-    private String messageTagOpen = "{{";
-    private String messageTagClose = "}}";
+    private String exclusionTagOpen = "{{";
+    private String exclusionTagClose = "}}";
     private boolean separatePullRequests = true;
-    private Set<String> excludedMessageTags = new HashSet<>();
+    private Set<String> exclusionTags = ImmutableSet.of("javadoc");
 
     private Map<String, String> typoMap = defaultTypoMap;
     private boolean useTypoMap = true;
@@ -79,6 +78,7 @@ public class ChangeLogConfiguration {
     private String pullRequestTitle = DEFAULT_PULL_REQUESTS_TITLE;
     private OutputTarget outputDirectory = OutputTarget.WIKI_ROOT;
     private File outputFile;
+
 
     public ChangeLogConfiguration outputFile(final File outputFile) {
         this.outputFile = outputFile;
@@ -135,13 +135,13 @@ public class ChangeLogConfiguration {
     }
 
 
-    public String getMessageTagOpen() {
-        return messageTagOpen;
+    public String getExclusionTagOpen() {
+        return exclusionTagOpen;
     }
 
 
-    public String getMessageTagClose() {
-        return messageTagClose;
+    public String getExclusionTagClose() {
+        return exclusionTagClose;
     }
 
 
@@ -150,8 +150,8 @@ public class ChangeLogConfiguration {
     }
 
 
-    public Set<String> getExcludedMessageTags() {
-        return excludedMessageTags;
+    public Set<String> getExclusionTags() {
+        return exclusionTags;
     }
 
 
@@ -180,13 +180,13 @@ public class ChangeLogConfiguration {
         return this;
     }
 
-    public ChangeLogConfiguration messageTagOpen(final String messageTagOpen) {
-        this.messageTagOpen = messageTagOpen;
+    public ChangeLogConfiguration exclusionTagOpen(final String messageTagOpen) {
+        this.exclusionTagOpen = messageTagOpen;
         return this;
     }
 
-    public ChangeLogConfiguration messageTagClose(final String messageTagClose) {
-        this.messageTagClose = messageTagClose;
+    public ChangeLogConfiguration exclusionTagClose(final String messageTagClose) {
+        this.exclusionTagClose = messageTagClose;
         return this;
     }
 
@@ -195,8 +195,8 @@ public class ChangeLogConfiguration {
         return this;
     }
 
-    public ChangeLogConfiguration excludedMessageTags(final Set<String> excludedMessageTags) {
-        this.excludedMessageTags = excludedMessageTags;
+    public ChangeLogConfiguration exclusionTags(final Set<String> exclusionTags) {
+        this.exclusionTags = exclusionTags;
         return this;
     }
 

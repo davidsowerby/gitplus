@@ -31,13 +31,13 @@ class ChangeLogConfigurationTest extends Specification {
     def "defaults"() {
         expect:
         config.getTemplateName().equals(ChangeLog.DEFAULT_TEMPLATE)
-        config.messageTagOpen.equals('{{')
-        config.messageTagClose.equals('}}')
+        config.exclusionTagOpen.equals('{{')
+        config.exclusionTagClose.equals('}}')
         config.separatePullRequests
         config.useTypoMap
         config.typoMap.equals(ChangeLogConfiguration.defaultTypoMap)
         config.getLabelGroups().equals(ChangeLogConfiguration.defaultLabelGroups)
-        config.getExcludedMessageTags().isEmpty()
+        config.getExclusionTags().isEmpty()
         config.getOutputFilename() == 'changelog.md'
     }
 
@@ -58,11 +58,11 @@ class ChangeLogConfigurationTest extends Specification {
         config.typoMap(typoMap)
         config.templateName(templateName)
         config.labelGroups(labelGroups)
-        config.messageTagOpen(messageTagOpen)
-        config.messageTagClose(messageTagClose)
+        config.exclusionTagOpen(messageTagOpen)
+        config.exclusionTagClose(messageTagClose)
         config.separatePullRequests(false)
         config.useTypoMap(false)
-        config.excludedMessageTags(excludedMessageTags)
+        config.exclusionTags(excludedMessageTags)
         config.pullRequestTitle(pullRequestTitle)
 
         then:
@@ -70,11 +70,11 @@ class ChangeLogConfigurationTest extends Specification {
         config.getTypoMap() == typoMap
         config.getTemplateName().equals(templateName)
         config.getLabelGroups() == labelGroups
-        config.getMessageTagOpen().equals(messageTagOpen)
-        config.getMessageTagClose().equals(messageTagClose)
+        config.getExclusionTagOpen().equals(messageTagOpen)
+        config.getExclusionTagClose().equals(messageTagClose)
         !config.isSeparatePullRequests()
         !config.isUseTypoMap()
-        config.getExcludedMessageTags() == excludedMessageTags
+        config.getExclusionTags() == excludedMessageTags
         config.pullRequestTitle.equals(pullRequestTitle)
         config.getOutputFilename().equals(outputFilename)
     }

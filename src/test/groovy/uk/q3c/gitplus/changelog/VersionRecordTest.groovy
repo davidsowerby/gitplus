@@ -139,17 +139,11 @@ class VersionRecordTest extends Specification {
 
     def "parse groups issues in the group order of configuration.getLabelGroups() and ignores duplicate issues in group"() {
         given:
-        final String tagName = "0.1"
-        ZonedDateTime commitDate = ZonedDateTime.of(LocalDateTime.of(2010, 11, 11, 12, 2), ZoneId.systemDefault())
-        ZonedDateTime releaseDate = ZonedDateTime.of(LocalDateTime.of(2015, 1, 11, 12, 12), ZoneId.systemDefault())
+
         ChangeLogConfiguration changeLogConfiguration = Mock(ChangeLogConfiguration)
         changeLogConfiguration.getLabelGroups() >> ChangeLogConfiguration.defaultLabelGroups
         changeLogConfiguration.getPullRequestTitle() >> ChangeLogConfiguration.DEFAULT_PULL_REQUESTS_TITLE
-        Tag tag = new Tag(tagName)
-                .commitDate(commitDate)
-                .releaseDate(releaseDate)
-                .commit(rc1)
-                .taggerIdent(personIdent)
+        Tag tag = newTag("0.1")
 
         Issue issue1 = newIssue(1, 'Making unnecessary calls', 'documentation')
         Issue issue2 = newIssue(2, 'Making unnecessary calls', 'task')
@@ -177,6 +171,50 @@ class VersionRecordTest extends Specification {
         assertThat(pullRequests).containsOnly(issue4)
     }
 
+    def "commit ignored when it contains exclusion tag"() {
+        given:
+        final String tagName = "0.1"
+        ZonedDateTime commitDate = ZonedDateTime.of(LocalDateTime.of(2010, 11, 11, 12, 2), ZoneId.systemDefault())
+        ZonedDateTime releaseDate = ZonedDateTime.of(LocalDateTime.of(2015, 1, 11, 12, 12), ZoneId.systemDefault())
+        ChangeLogConfiguration changeLogConfiguration = Mock(ChangeLogConfiguration)
+        changeLogConfiguration.getLabelGroups() >> ChangeLogConfiguration.defaultLabelGroups
+        changeLogConfiguration.getPullRequestTitle() >> ChangeLogConfiguration.DEFAULT_PULL_REQUESTS_TITLE
+        changeLogConfiguration.getExclusionTags() >> ImmutableSet.of('javadoc')
+        changeLogConfiguration.getExclusionTagOpen() >> '{{'
+        changeLogConfiguration.getExclusionTagClose() >> '}}'
+        Tag tag = new Tag(tagName)
+                .commitDate(commitDate)
+                .releaseDate(releaseDate)
+                .commit(rc1)
+                .taggerIdent(personIdent)
+        record = new VersionRecord(tag, changeLogConfiguration)
+        addCommitsOneWithExclusionTag(record)
+
+        when:
+        record.parse(gitRemote)
+
+        then:
+        record.getCommits().size() == 1
+        record.getCommits().get(0).getFullMessage().equals('Just any old commit')
+        record.getExcludedCommits().size() == 1
+    }
+
+    def addCommitsOneWithExclusionTag(VersionRecord versionRecord) {
+        GitCommit commit1 = new GitCommit('Just any old commit')
+        GitCommit commit2 = new GitCommit('Just any old commit, but with an exclusion tag of {{javadoc}}')
+        versionRecord.addCommit(commit1)
+        versionRecord.addCommit(commit2)
+    }
+
+    def Tag newTag(String tagName) {
+        ZonedDateTime commitDate = ZonedDateTime.of(LocalDateTime.of(2010, 11, 11, 12, 2), ZoneId.systemDefault())
+        ZonedDateTime releaseDate = ZonedDateTime.of(LocalDateTime.of(2015, 1, 11, 12, 12), ZoneId.systemDefault())
+        return new Tag(tagName)
+                .commitDate(commitDate)
+                .releaseDate(releaseDate)
+                .commit(rc1)
+                .taggerIdent(personIdent)
+    }
 
     def addCommits(VersionRecord record, int i) {
         for (int j = 1; j <= i; j++) {

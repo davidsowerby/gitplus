@@ -22,11 +22,12 @@ public class VersionRecord {
     private static Logger log = getLogger(VersionRecord.class);
     private final Tag tag;
     private final String pullRequestsTitle;
+    private final ChangeLogConfiguration changeLogConfiguration;
     private List<GitCommit> commits;
+    private List<GitCommit> excludedCommits;
     private Map<String, Set<Issue>> fixesByGroup;
     private Map<String, String> labelLookup;
     private Set<Issue> pullRequests;
-
     public VersionRecord(@Nonnull Tag tag, @Nonnull ChangeLogConfiguration changeLogConfiguration) {
         checkNotNull(tag);
         checkNotNull(changeLogConfiguration);
@@ -34,11 +35,17 @@ public class VersionRecord {
         createLabelLookup(changeLogConfiguration.getLabelGroups());
         pullRequests = new TreeSet<>();
         commits = new ArrayList<>();
+        excludedCommits = new ArrayList<>();
         fixesByGroup = new LinkedHashMap<>();
         changeLogConfiguration.getLabelGroups()
                               .forEach((group, labels) -> fixesByGroup.put(group, new TreeSet<>()));
+        this.changeLogConfiguration = changeLogConfiguration;
         pullRequestsTitle = changeLogConfiguration.getPullRequestTitle();
 
+    }
+
+    public List<GitCommit> getExcludedCommits() {
+        return excludedCommits;
     }
 
     public Tag getTag() {
@@ -104,7 +111,11 @@ public class VersionRecord {
     }
 
     public void addCommit(GitCommit commit) {
-        commits.add(commit);
+        if (commit.excludedFromChangeLog(changeLogConfiguration)) {
+            excludedCommits.add(commit);
+        } else {
+            commits.add(commit);
+        }
     }
 
     /**
@@ -115,37 +126,58 @@ public class VersionRecord {
      */
     public void parse(@Nonnull GitRemote gitRemote) throws IOException {
         checkNotNull(gitRemote);
+        for (GitCommit c : commits) {
+            if (!c.excludedFromChangeLog(changeLogConfiguration)) {
+                c.extractIssueReferences(gitRemote);
+                c.getIssueReferences()
+                 .forEach(issue -> {
+                     if (issue.isPullRequest()) {
+                         pullRequests.add(issue);
+                     } else {
+                         mapIssueToGroups(issue);
+                     }
+                 });
+            }
+        }
+        mergePullRequests();
+        removeEmptyGroups();
+    }
 
-        commits.forEach(c -> {
-                    c.extractIssueReferences(gitRemote);
-                    c.getIssueReferences()
-                     .forEach(issue -> {
-                         if (issue.isPullRequest()) {
-                             pullRequests.add(issue);
-                         } else {
-                             issue.getLabels()
-                                  .forEach(l -> {
-                                      String group = labelLookup.get(l);
-                                      //if label in a group, add it, otherwise ignore
-                                      if (group != null) {
-                                          fixesByGroup.get(group)
-                                                      .add(issue);
-                                      }
-                                  });
-                         }
-                     });
-                }
-        );
+    /**
+     * Using the labels on an issue, attach the issue to any group for which it has a label
+     */
+    private void mapIssueToGroups(Issue issue) {
+        issue.getLabels()
+             .forEach(l -> {
+                 String group = labelLookup.get(l);
+                 //if label in a group, add it, otherwise ignore
+                 if (group != null) {
+                     fixesByGroup.get(group)
+                                 .add(issue);
+                 }
+             });
+    }
+
+    /**
+     * If pull requests are required in the output merge them in to the label groups
+     */
+    private void mergePullRequests() {
         if (fixesByGroup.containsKey(pullRequestsTitle)) {
             fixesByGroup.put(pullRequestsTitle, pullRequests);
         }
+    }
+
+    /**
+     * clear out any empty groups, so we don't just get headings with no entries
+     */
+    private void removeEmptyGroups() {
         List<String> toRemove = new ArrayList<>();
         fixesByGroup.forEach((group, issues) -> {
             if (issues.isEmpty()) {
                 toRemove.add(group);
             }
         });
-        toRemove.forEach(r -> fixesByGroup.remove(r));
+        toRemove.forEach(fixesByGroup::remove);
     }
 
     public PersonIdent getPersonIdent() {

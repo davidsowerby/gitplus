@@ -113,10 +113,20 @@ class GitHubRemoteIntegrationTest extends Specification {
         gitLocal.checkout(GitPlus.DEVELOP_BRANCH)
         createFileAndAddToGit(1)
         gitLocal.commit('Fix #1 commit 1')
+        modifyFile(1)
+        gitLocal.commit('{{javadoc}}')
         createFileAndAddToGit(2)
         gitLocal.commit('Fix #2 commit 2')
         gitLocal.tag(version)
         gitLocal.push(gitRemote, true)
+    }
+
+    def modifyFile(int index) {
+        File f = new File(gitPlusConfiguration.getProjectDir(), index + '.txt')
+        List<String> lines = FileUtils.readLines(f)
+        lines.add('modified')
+        FileUtils.writeLines(f, lines)
+        gitLocal.add(f)
     }
 
     def createFileAndAddToGit(int index) {

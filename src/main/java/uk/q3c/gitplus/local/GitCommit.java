@@ -7,6 +7,7 @@ import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.kohsuke.github.GHIssue;
 import org.slf4j.Logger;
+import uk.q3c.gitplus.changelog.ChangeLogConfiguration;
 import uk.q3c.gitplus.remote.GitRemote;
 import uk.q3c.gitplus.remote.Issue;
 
@@ -238,4 +239,19 @@ public class GitCommit {
                                       .toZoneId());
     }
 
+    /**
+     * Looks for any occurrence of an exclusion tag in {@link #fullMessage}, and returns true if it finds one, otherwise returns false
+     *
+     * @param changeLogConfiguration the configuration for the change log, which defines the exclusion tags and the opening and closing tag markers
+     * @return true if an exclusion tag is found
+     */
+    public boolean excludedFromChangeLog(ChangeLogConfiguration changeLogConfiguration) {
+        for (String exclusionTag : changeLogConfiguration.getExclusionTags()) {
+            String fullTag = changeLogConfiguration.getExclusionTagOpen() + exclusionTag + changeLogConfiguration.getExclusionTagClose();
+            if (fullMessage.contains(fullTag)) {
+                return true;
+            }
+        }
+        return false;
+    }
 }
