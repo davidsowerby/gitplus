@@ -7,4 +7,8 @@ public class GitPlusConfigurationException extends RuntimeException {
     public GitPlusConfigurationException(String msg) {
         super(msg);
     }
+
+    public GitPlusConfigurationException(String s, Exception e) {
+        super(s, e);
+    }
 }

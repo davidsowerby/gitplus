@@ -1,6 +1,7 @@
 package uk.q3c.gitplus.util;
 
 import com.google.common.collect.ImmutableList;
+import uk.q3c.gitplus.gitplus.GitPlusConfigurationException;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -15,7 +16,7 @@ import java.util.Properties;
 public class UserHomeBuildPropertiesLoader implements BuildPropertiesLoader {
     private static final String BINTRAY_KEY = "bintrayKey";
     private static final String GITHUB_KEY_RESTRICTED = "githubKeyRestricted";
-    public static final ImmutableList<String> requiredProperties = ImmutableList.of(BINTRAY_KEY, GITHUB_KEY_RESTRICTED);
+    private static final ImmutableList<String> requiredProperties = ImmutableList.of(BINTRAY_KEY, GITHUB_KEY_RESTRICTED);
     private static final String GITHUB_KEY_FULL_ACCESS = "gitHubKeyFullAccess";
     private Properties properties;
 
@@ -29,8 +30,12 @@ public class UserHomeBuildPropertiesLoader implements BuildPropertiesLoader {
         File userHome = new File(System.getProperty("user.home"));
         File gradlePropertiesFile = new File(userHome, ".gradle/gradle.properties");
         properties = new Properties();
-        properties.load(new FileInputStream(gradlePropertiesFile));
-        checkForRequiredProperties();
+        try (FileInputStream fis = new FileInputStream(gradlePropertiesFile)) {
+            properties.load(fis);
+            checkForRequiredProperties();
+        } catch (Exception e) {
+            throw new GitPlusConfigurationException("Unable to load build properties", e);
+        }
         return this;
     }
 
