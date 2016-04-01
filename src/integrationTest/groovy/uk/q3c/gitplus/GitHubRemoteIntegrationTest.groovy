@@ -10,6 +10,7 @@ import uk.q3c.gitplus.changelog.ChangeLogConfiguration
 import uk.q3c.gitplus.gitplus.GitPlus
 import uk.q3c.gitplus.gitplus.GitPlusConfiguration
 import uk.q3c.gitplus.local.GitLocal
+import uk.q3c.gitplus.local.GitLocalProvider
 import uk.q3c.gitplus.remote.GitHubProvider
 import uk.q3c.gitplus.remote.GitHubRemote
 import uk.q3c.gitplus.remote.GitRemote
@@ -18,7 +19,6 @@ import uk.q3c.gitplus.util.UserHomeBuildPropertiesLoader
 import uk.q3c.util.testutil.FileTestUtil
 
 import java.nio.file.Paths
-
 /**
  * This test needs to delete the 'dummy' repo in cleanup.  This test is a bit weird because it has to use deleteRepo to clean up, but also tests deleteRepo
  *
@@ -33,10 +33,10 @@ class GitHubRemoteIntegrationTest extends Specification {
     String fullAccessApiKey
     String apiKey
     GitPlusConfiguration gitPlusConfiguration
-    GitLocal gitLocal
     GitRemote gitRemote
     GitPlus gitPlus
-    GitLocal wikiLocal
+    GitLocalProvider gitLocalProvider
+    GitLocal gitLocal
 
     def setup() {
         def loader = new UserHomeBuildPropertiesLoader();
@@ -70,9 +70,9 @@ class GitHubRemoteIntegrationTest extends Specification {
                 .publicProject(true)
                 .projectDirParent(temp)
                 .useWiki(true)
-        gitLocal = new GitLocal(gitPlusConfiguration)
-        wikiLocal = new GitLocal(gitPlusConfiguration)
-        gitPlus = new GitPlus(gitPlusConfiguration, gitLocal, wikiLocal)
+        gitLocalProvider = new GitLocalProvider()
+        gitPlus = new GitPlus(gitPlusConfiguration, gitLocalProvider)
+        gitLocal = gitPlus.getGitLocal()
         ChangeLogConfiguration changeLogConfiguration = new ChangeLogConfiguration()
         gitRemote = gitPlus.getGitRemote()
 
@@ -89,9 +89,9 @@ class GitHubRemoteIntegrationTest extends Specification {
 
         then:
         FileTestUtil.compare(changeLog.getOutputFile(), expectedResult1)
-        wikiLocal.getProjectDir().exists()
-        new File(wikiLocal.getProjectDir(), '.git').exists()
-        new File(wikiLocal.getProjectDir(), 'changelog.md').exists()
+        gitPlus.getWikiLocal().getProjectDir().exists()
+        new File(gitPlus.getWikiLocal().getProjectDir(), '.git').exists()
+        new File(gitPlus.getWikiLocal().getProjectDir(), 'changelog.md').exists()
 
     }
 
@@ -110,6 +110,7 @@ class GitHubRemoteIntegrationTest extends Specification {
     }
 
     def createVersion(String version) {
+
         gitLocal.checkout(GitPlus.DEVELOP_BRANCH)
         createFileAndAddToGit(1)
         gitLocal.commit('Fix #1 commit 1')
@@ -136,51 +137,6 @@ class GitHubRemoteIntegrationTest extends Specification {
         FileUtils.writeLines(f, lines)
         gitLocal.add(f)
     }
-//
-//    def "create issue"() {
-//        given:
-//        remote = new GitHubRemote(scratchConfiguration, gitHubProvider)
-//        String title = "test issue"
-//        String body = "body"
-//        String label = "buglet"
-//        GHIssueBuilder issueBuilder = Mock(GHIssueBuilder)
-//
-//        when:
-//        GHIssue result = remote.createIssue(title, body, label)
-//
-//        then:
-//        result.getNumber() > 0
-//        result.getTitle().equals(title)
-//        result.getBody().equals(body)
-//        result.getLabels().size() == 1
-//        containsLabel(result.getLabels(), label)
-//    }
-//
-//    def "create repo with correct configuration"() {
-//        given:
-//        GitPlusConfiguration dummyConfiguration = new GitPlusConfiguration().apiToken(fullAccessApiKey)
-//                .publicProject(true).remoteRepoFullName('davidsowerby/dummy')
-//        GitRemote remote = new GitHubRemote(dummyConfiguration)
-//
-//        when:
-//        remote.createRepo()
-//        println 'created repo'
-//
-//        then:
-//        remote.getRepo().getName().equals("dummy")
-//        waitRemoteRepoExists("dummy")
-//        println 'repo exists'
-//
-//
-//        when:
-//        println 'pause for breath'
-//        Thread.sleep(4000) //sometimes fails if we rush straight in to delete
-//        deleteRepo()
-//        println 'deleted'
-//
-//        then:
-//        waitRemoteRepoNotExists("dummy")
-//    }
 
     /**
      * Delete repo using full access key

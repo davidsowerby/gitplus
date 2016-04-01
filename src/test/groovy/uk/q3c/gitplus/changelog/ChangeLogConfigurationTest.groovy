@@ -1,14 +1,15 @@
 package uk.q3c.gitplus.changelog
 
+import com.google.common.collect.ImmutableSet
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
 import uk.q3c.gitplus.gitplus.GitPlus
 import uk.q3c.gitplus.gitplus.GitPlusConfiguration
 import uk.q3c.gitplus.local.GitLocal
+import uk.q3c.gitplus.local.GitLocalProvider
 
 import static uk.q3c.gitplus.changelog.ChangeLogConfiguration.OutputTarget.USE_FILE_SPEC
-
 /**
  * Created by David Sowerby on 13 Mar 2016
  */
@@ -18,14 +19,18 @@ class ChangeLogConfigurationTest extends Specification {
     ChangeLogConfiguration config;
     GitPlusConfiguration gitPlusConfiguration
     GitPlus gitPlus;
+    GitLocalProvider gitLocalProvider = Mock(GitLocalProvider)
+    GitLocal gitLocal = Mock(GitLocal)
+    GitLocal wikiLocal = Mock(GitLocal)
     @Rule
     TemporaryFolder temporaryFolder = new TemporaryFolder();
 
     def setup() {
         gitPlusConfiguration = new GitPlusConfiguration().remoteRepoFullName('davidsowerby/scratch')
         gitPlusConfiguration.validate()
+        gitLocalProvider.get(_) >>> [gitLocal, wikiLocal]
         config = new ChangeLogConfiguration()
-        gitPlus = new GitPlus(gitPlusConfiguration, new GitLocal(gitPlusConfiguration), new GitLocal(gitPlusConfiguration))
+        gitPlus = new GitPlus(gitPlusConfiguration, gitLocalProvider)
     }
 
     def "defaults"() {
@@ -37,7 +42,7 @@ class ChangeLogConfigurationTest extends Specification {
         config.useTypoMap
         config.typoMap.equals(ChangeLogConfiguration.defaultTypoMap)
         config.getLabelGroups().equals(ChangeLogConfiguration.defaultLabelGroups)
-        config.getExclusionTags().isEmpty()
+        config.getExclusionTags().equals(ImmutableSet.of('javadoc'))
         config.getOutputFilename() == 'changelog.md'
     }
 

@@ -6,12 +6,12 @@ import org.eclipse.jgit.lib.Repository;
 import org.slf4j.Logger;
 import uk.q3c.gitplus.local.GitCommit;
 import uk.q3c.gitplus.local.GitLocal;
+import uk.q3c.gitplus.local.GitLocalProvider;
 import uk.q3c.gitplus.local.Tag;
 import uk.q3c.gitplus.remote.GitRemote;
 import uk.q3c.gitplus.remote.GitRemoteFactory;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -44,25 +44,19 @@ public class GitPlus implements AutoCloseable {
 
     private GitPlusConfiguration configuration;
 
-    public GitPlus(@Nonnull GitPlusConfiguration configuration, @Nonnull GitLocal gitLocal, @Nullable GitLocal wikiLocal) {
+    public GitPlus(@Nonnull GitPlusConfiguration configuration, @Nonnull GitLocalProvider gitLocalProvider) {
         checkNotNull(configuration);
-        checkNotNull(gitLocal);
-        this.gitLocal = gitLocal;
+        checkNotNull(gitLocalProvider);
         configuration.validate();
         this.configuration = new GitPlusConfiguration(configuration); // copy so that we can modify
+        this.gitLocal = gitLocalProvider.get(configuration);
         if (configuration.isUseWiki()) {
-            if (wikiLocal == null) {
-                throw new GitPlusConfigurationException("'useWiki' is true, therefore wikiLocal must not be null");
-            }
-            this.wikiLocal = wikiLocal;
+            this.wikiLocal = gitLocalProvider.get(configuration);
             wikiLocal.configureForWiki();
         }
 
     }
 
-    public GitPlus(@Nonnull GitPlusConfiguration configuration, @Nonnull GitLocal gitLocal) {
-        this(configuration, gitLocal, null);
-    }
 
 
     /**

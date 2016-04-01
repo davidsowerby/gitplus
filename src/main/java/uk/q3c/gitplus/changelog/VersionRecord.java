@@ -110,7 +110,8 @@ public class VersionRecord {
         return tag.getCommit();
     }
 
-    public void addCommit(GitCommit commit) {
+    public void addCommit(@Nonnull GitCommit commit) {
+        checkNotNull(commit);
         if (commit.excludedFromChangeLog(changeLogConfiguration)) {
             excludedCommits.add(commit);
         } else {

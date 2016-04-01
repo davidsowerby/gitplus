@@ -4,15 +4,15 @@ import com.google.common.collect.ImmutableSet
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.lib.Ref
 import org.eclipse.jgit.lib.Repository
-import org.eclipse.jgit.revwalk.RevCommit
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
+import uk.q3c.gitplus.local.GitCommit
 import uk.q3c.gitplus.local.GitLocal
 import uk.q3c.gitplus.local.GitLocalException
+import uk.q3c.gitplus.local.GitLocalProvider
 import uk.q3c.gitplus.remote.GitRemote
 import uk.q3c.gitplus.remote.GitRemoteFactory
-
 /**
  * Created by David Sowerby on 13 Mar 2016
  */
@@ -30,10 +30,13 @@ class GitPlusTest extends Specification {
     GitLocal gitLocal = Mock(GitLocal)
     GitPlusConfiguration configuration
     GitLocal wikiLocal = Mock(GitLocal)
+    GitLocalProvider gitLocalProvider = Mock(GitLocalProvider)
+
 
     def setup() {
         gitRemoteFactory.createRemoteInstance(_) >> gitRemote
         configuration = new GitPlusConfiguration()
+        gitLocalProvider.get(_) >>> [gitLocal, wikiLocal]
     }
 
 
@@ -45,7 +48,7 @@ class GitPlusTest extends Specification {
                 .projectDirParent(temporaryFolder.getRoot())
                 .gitRemoteFactory(gitRemoteFactory)
                 .useWiki(false)
-        gitplus = new GitPlus(configuration, gitLocal)
+        gitplus = new GitPlus(configuration, gitLocalProvider)
 
         when:
         gitplus.createOrVerifyRepos()
@@ -66,7 +69,7 @@ class GitPlusTest extends Specification {
                 .createLocalRepo(true)
                 .createProject(true)
                 .useWiki(false)
-        gitplus = new GitPlus(configuration, gitLocal)
+        gitplus = new GitPlus(configuration, gitLocalProvider)
 
         when:
         gitplus.createOrVerifyRepos()
@@ -93,7 +96,7 @@ class GitPlusTest extends Specification {
 
 
 
-        gitplus = new GitPlus(configuration, gitLocal, wikiLocal)
+        gitplus = new GitPlus(configuration, gitLocalProvider)
 
         when:
         gitplus.createOrVerifyRepos()
@@ -125,7 +128,7 @@ class GitPlusTest extends Specification {
                 .useWiki(false)
 
         when:
-        gitplus = new GitPlus(configuration, gitLocal)
+        gitplus = new GitPlus(configuration, gitLocalProvider)
         gitplus.createOrVerifyRepos()
 
         then:
@@ -155,7 +158,7 @@ class GitPlusTest extends Specification {
                 .apiToken("token")
 
         when:
-        gitplus = new GitPlus(configuration, gitLocal, wikiLocal)
+        gitplus = new GitPlus(configuration, gitLocalProvider)
         gitplus.createOrVerifyRepos()
 
         then:
@@ -184,7 +187,7 @@ class GitPlusTest extends Specification {
                 .apiToken("token")
                 .useWiki(false)
 
-        gitplus = new GitPlus(configuration, gitLocal)
+        gitplus = new GitPlus(configuration, gitLocalProvider)
         gitplus.createOrVerifyRepos()
 
         then:
@@ -206,7 +209,7 @@ class GitPlusTest extends Specification {
                 .apiToken("token")
                 .useWiki(false)
 
-        gitplus = new GitPlus(configuration, gitLocal)
+        gitplus = new GitPlus(configuration, gitLocalProvider)
 
         when:
         gitplus.createOrVerifyRepos()
@@ -234,7 +237,7 @@ class GitPlusTest extends Specification {
                 .apiToken("token")
                 .useWiki(false)
         configuration.validate()
-        gitplus = new GitPlus(configuration, gitLocal)
+        gitplus = new GitPlus(configuration, gitLocalProvider)
 
 
         when:
@@ -258,7 +261,7 @@ class GitPlusTest extends Specification {
                 .apiToken("token")
                 .useWiki(false)
 
-        gitplus = new GitPlus(configuration, gitLocal)
+        gitplus = new GitPlus(configuration, gitLocalProvider)
 
 
         when:
@@ -279,7 +282,7 @@ class GitPlusTest extends Specification {
                 .apiToken("token")
                 .useWiki(false)
 
-        gitplus = new GitPlus(configuration, gitLocal)
+        gitplus = new GitPlus(configuration, gitLocalProvider)
 
 
         when:
@@ -298,7 +301,7 @@ class GitPlusTest extends Specification {
                 .projectDir(projectDir)
 
 
-        gitplus = new GitPlus(configuration, gitLocal, wikiLocal)
+        gitplus = new GitPlus(configuration, gitLocalProvider)
 
         expect:
         gitplus.getProjectName().equals(projectName)
@@ -313,7 +316,7 @@ class GitPlusTest extends Specification {
         Repository repo = Mock(Repository)
 
         configuration.remoteRepoFullName(repoFullName)
-        gitplus = new GitPlus(configuration, gitLocal, wikiLocal)
+        gitplus = new GitPlus(configuration, gitLocalProvider)
 
         when:
         gitplus.getLocalRepo()
@@ -331,7 +334,7 @@ class GitPlusTest extends Specification {
         Repository repo = Mock(Repository)
 
         configuration.remoteRepoFullName(repoFullName)
-        gitplus = new GitPlus(configuration, gitLocal, wikiLocal)
+        gitplus = new GitPlus(configuration, gitLocalProvider)
 
         List<Ref> expectedTags = Mock(List)
 
@@ -343,6 +346,10 @@ class GitPlusTest extends Specification {
         tags == expectedTags
     }
 
+    /**
+     * All this tests is that GitLocal is called to provide the commits
+     * @return
+     */
     def "extract develop and master commits"() {
         given:
         final String repoFullName = 'davidsowerby/scratch'
@@ -350,14 +357,14 @@ class GitPlusTest extends Specification {
         Repository repo = Mock(Repository)
 
         configuration.remoteRepoFullName(repoFullName)
-        gitplus = new GitPlus(configuration, gitLocal, wikiLocal)
+        gitplus = new GitPlus(configuration, gitLocalProvider)
 
-        Set<RevCommit> expectedDevelopCommits = Mock(ImmutableSet)
-        Set<RevCommit> expectedMasterCommits = Mock(ImmutableSet)
+        Set<GitCommit> expectedDevelopCommits = Mock(ImmutableSet)
+        Set<GitCommit> expectedMasterCommits = Mock(ImmutableSet)
 
         when:
-        Set<RevCommit> developCommits = gitplus.extractDevelopCommits()
-        Set<RevCommit> masterCommits = gitplus.extractMasterCommits()
+        Set<GitCommit> developCommits = gitplus.extractDevelopCommits()
+        Set<GitCommit> masterCommits = gitplus.extractMasterCommits()
 
         then:
         1 * gitLocal.extractDevelopCommits() >> expectedDevelopCommits
@@ -378,7 +385,7 @@ class GitPlusTest extends Specification {
                 .gitRemoteFactory(gitRemoteFactory)
                 .remoteRepoFullName('davidsowerby/scratch')
                 .projectName('scratch')
-        gitplus = new GitPlus(configuration, gitLocal, wikiLocal)
+        gitplus = new GitPlus(configuration, gitLocalProvider)
 
         when:
         String tagUrl = gitplus.getRemoteTagUrl()
@@ -391,21 +398,7 @@ class GitPlusTest extends Specification {
         htmlUrl == expectedHtmlUrl
     }
 
-    def "constructor throws exception when useWiki true and wikiLocal null"() {
-        given:
-        final String repoFullName = 'davidsowerby/scratch'
-        configuration.remoteRepoFullName(repoFullName)
-                .gitRemoteFactory(gitRemoteFactory)
-                .remoteRepoFullName('davidsowerby/scratch')
-                .projectName('scratch')
-                .useWiki(true)
-        when:
-        gitplus = new GitPlus(configuration, gitLocal)
 
-        then:
-        thrown GitPlusConfigurationException
-
-    }
 
 
 }

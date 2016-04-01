@@ -1,13 +1,17 @@
 package uk.q3c.gitplus.local
 
+import com.google.common.collect.ImmutableList
 import com.google.common.collect.ImmutableSet
 import org.eclipse.jgit.api.Git
+import org.eclipse.jgit.api.PushCommand
+import org.eclipse.jgit.transport.CredentialsProvider
+import org.eclipse.jgit.transport.PushResult
+import org.eclipse.jgit.transport.RemoteRefUpdate
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
 import uk.q3c.gitplus.gitplus.GitPlusConfiguration
 import uk.q3c.gitplus.remote.GitRemote
-
 /**
  * Created by David Sowerby on 17 Mar 2016
  */
@@ -46,8 +50,8 @@ class GitLocalTest extends Specification {
 
         then:
         new File(temp, ".git").exists()
-
     }
+
 
     def "create local repo"() {
         given:
@@ -60,6 +64,37 @@ class GitLocalTest extends Specification {
 
         then:
         new File(temp, "scratch/.git").exists()
+    }
+
+    def "set origin"() {
+        given:
+        configuration.createLocalRepo(true).remoteRepoFullName("davidsowerby/scratch").projectDirParent(temp).createLocalRepo(true)
+        configuration.validate()
+        gitLocal = new GitLocal(configuration)
+        gitLocal.createLocalRepo()
+
+        when:
+        gitLocal.setOrigin()
+
+        then:
+        gitLocal.getOrigin().equals('https://github.com/davidsowerby/scratch.git')
+    }
+
+
+    def "set origin from remote"() {
+        given:
+        final String remoteUrl = 'https://github.com/davidsowerby/scratch.git'
+        configuration.createLocalRepo(true).remoteRepoFullName("davidsowerby/scratch").projectDirParent(temp).createLocalRepo(true)
+        configuration.validate()
+        gitRemote.getCloneUrl() >> remoteUrl
+        gitLocal = new GitLocal(configuration)
+        gitLocal.createLocalRepo()
+
+        when:
+        gitLocal.setOrigin(gitRemote)
+
+        then:
+        gitLocal.getOrigin().equals(remoteUrl)
     }
 
     def "create local repo failure throws GitLocalException"() {
@@ -102,6 +137,38 @@ class GitLocalTest extends Specification {
 
     }
 
+    def "push"() {
+        given:
+        PushCommand pc = Mock(PushCommand)
+        CredentialsProvider credentialsProvider = Mock(CredentialsProvider)
+        gitRemote.getCredentialsProvider() >> credentialsProvider
+        gitLocal = new GitLocal(mockGit, configuration)
+        PushResult pushResult1 = Mock(PushResult)
+        PushResult pushResult2 = Mock(PushResult)
+        RemoteRefUpdate update1 = Mock(RemoteRefUpdate)
+        RemoteRefUpdate update2 = Mock(RemoteRefUpdate)
+        RemoteRefUpdate update3 = Mock(RemoteRefUpdate)
+        RemoteRefUpdate update4 = Mock(RemoteRefUpdate)
+        List<RemoteRefUpdate> updates1 = ImmutableList.of(update1)
+        List<RemoteRefUpdate> updates2 = ImmutableList.of(update2, update3, update4)
+        Iterable<PushResult> results = ImmutableList.of(pushResult1, pushResult2)
+        pushResult1.getRemoteUpdates() >> updates1
+        pushResult2.getRemoteUpdates() >> updates2
+
+        when:
+        PushResponse response = gitLocal.push(gitRemote, true)
+
+        then:
+        mockGit.push() >> pc
+        pc.setCredentialsProvider(gitRemote.getCredentialsProvider()) >> pc
+        1 * pc.setPushTags()
+        1 * pc.call() >> results
+
+        response.getUpdates().size() == 4
+        response.getUpdates().containsAll(ImmutableList.of(update1, update2, update3, update4))
+
+
+    }
 
     def "add file to git, commit, branch and checkout"() {
         given:
@@ -342,6 +409,16 @@ class GitLocalTest extends Specification {
         tags.get(0).getReleaseDate() != null
         tags.get(1).getReleaseDate() != null
 
+    }
+
+    def "projectDir supplied by configuration"() {
+        given:
+        File f = new File('.')
+        configuration.projectDir(f)
+        gitLocal = new GitLocal(configuration)
+
+        expect:
+        gitLocal.getProjectDir() == f
     }
 
     def "configure for wiki"() {

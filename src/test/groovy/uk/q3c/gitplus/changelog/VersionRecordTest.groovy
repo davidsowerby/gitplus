@@ -117,6 +117,7 @@ class VersionRecordTest extends Specification {
         ZonedDateTime releaseDate = ZonedDateTime.of(LocalDateTime.of(2015, 1, 11, 12, 12), ZoneId.systemDefault())
         ChangeLogConfiguration changeLogConfiguration = Mock(ChangeLogConfiguration)
         changeLogConfiguration.getLabelGroups() >> ChangeLogConfiguration.defaultLabelGroups
+        changeLogConfiguration.getExclusionTags() >> ImmutableSet.of('javadoc')
         Tag tag = new Tag(tagName)
                 .commitDate(commitDate)
                 .releaseDate(releaseDate)
@@ -143,6 +144,7 @@ class VersionRecordTest extends Specification {
         ChangeLogConfiguration changeLogConfiguration = Mock(ChangeLogConfiguration)
         changeLogConfiguration.getLabelGroups() >> ChangeLogConfiguration.defaultLabelGroups
         changeLogConfiguration.getPullRequestTitle() >> ChangeLogConfiguration.DEFAULT_PULL_REQUESTS_TITLE
+        changeLogConfiguration.getExclusionTags() >> ImmutableSet.of('javadoc')
         Tag tag = newTag("0.1")
 
         Issue issue1 = newIssue(1, 'Making unnecessary calls', 'documentation')
