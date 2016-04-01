@@ -131,10 +131,10 @@ public class GitPlus implements AutoCloseable {
         gitLocal.commit("Initial commit");
         createRemoteRepo();
         gitLocal.setOrigin();
-        gitLocal.push(getGitRemote(), false);
+        push(false);
         gitLocal.createBranch(DEVELOP_BRANCH);
         gitLocal.checkout(DEVELOP_BRANCH);
-        gitLocal.push(getGitRemote(), false);
+        push(false);
         if (configuration.isUseWiki()) {
             wikiLocal.createLocalRepo();
             wikiLocal.setOrigin();
@@ -229,5 +229,13 @@ public class GitPlus implements AutoCloseable {
 
     public GitLocal getWikiLocal() {
         return wikiLocal;
+    }
+
+    public void push(boolean pushTags) throws IOException {
+        getGitLocal().push(getGitRemote(), pushTags);
+    }
+
+    public void pushWiki() throws IOException {
+        getWikiLocal().push(getGitRemote(), false);
     }
 }

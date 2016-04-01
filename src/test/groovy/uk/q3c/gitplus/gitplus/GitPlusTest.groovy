@@ -13,6 +13,7 @@ import uk.q3c.gitplus.local.GitLocalException
 import uk.q3c.gitplus.local.GitLocalProvider
 import uk.q3c.gitplus.remote.GitRemote
 import uk.q3c.gitplus.remote.GitRemoteFactory
+
 /**
  * Created by David Sowerby on 13 Mar 2016
  */
@@ -22,6 +23,7 @@ class GitPlusTest extends Specification {
 
     @Rule
     TemporaryFolder temporaryFolder = new TemporaryFolder();
+    File temp
 
     GitPlus gitplus
     ProjectCreator projectCreator = Mock(ProjectCreator)
@@ -37,6 +39,7 @@ class GitPlusTest extends Specification {
         gitRemoteFactory.createRemoteInstance(_) >> gitRemote
         configuration = new GitPlusConfiguration()
         gitLocalProvider.get(_) >>> [gitLocal, wikiLocal]
+        temp = temporaryFolder.getRoot()
     }
 
 
@@ -383,7 +386,6 @@ class GitPlusTest extends Specification {
         gitRemoteFactory.createRemoteInstance(_) >> gitRemote
         configuration.remoteRepoFullName(repoFullName)
                 .gitRemoteFactory(gitRemoteFactory)
-                .remoteRepoFullName('davidsowerby/scratch')
                 .projectName('scratch')
         gitplus = new GitPlus(configuration, gitLocalProvider)
 
@@ -398,7 +400,32 @@ class GitPlusTest extends Specification {
         htmlUrl == expectedHtmlUrl
     }
 
+    def "push"() {
+        given:
+        final String repoFullName = 'davidsowerby/scratch'
+        configuration.remoteRepoFullName(repoFullName).gitRemoteFactory(gitRemoteFactory).projectDir(new File(temp, 'scratch'))
+        gitRemoteFactory.createRemoteInstance(_) >> gitRemote
+        gitplus = new GitPlus(configuration, gitLocalProvider)
 
+        when:
+        gitplus.push(false)
 
+        then:
+        1 * gitLocal.push(gitRemote, false)
+    }
+
+    def "push wiki"() {
+        given:
+        final String repoFullName = 'davidsowerby/scratch'
+        configuration.remoteRepoFullName(repoFullName).gitRemoteFactory(gitRemoteFactory).projectDir(new File(temp, 'scratch'))
+        gitRemoteFactory.createRemoteInstance(_) >> gitRemote
+        gitplus = new GitPlus(configuration, gitLocalProvider)
+
+        when:
+        gitplus.pushWiki()
+
+        then:
+        1 * wikiLocal.push(gitRemote, false)
+    }
 
 }
