@@ -301,6 +301,7 @@ class ChangeLogTest extends Specification {
         tags.add(tag)
         tag.getCommit() >> commit
         tag.getTagName() >> tagNames.get(index)
+        tag.getUrlSegment() >> tagNames.get(index)
         tag.getReleaseDate() >> releaseDates.get(index)
     }
 

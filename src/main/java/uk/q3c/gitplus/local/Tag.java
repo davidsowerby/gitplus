@@ -116,4 +116,8 @@ public class Tag {
     public boolean isPseudoTag() {
         return tagType == TagType.PSEUDO;
     }
+
+    public String getUrlSegment() {
+        return getTagName();
+    }
 }

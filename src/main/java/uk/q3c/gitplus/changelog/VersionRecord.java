@@ -77,6 +77,10 @@ public class VersionRecord {
         return tag.getTagName();
     }
 
+    public String getTagUrlSegment() {
+        return tag.getUrlSegment();
+    }
+
     public ZonedDateTime getReleaseDate() {
         if (tag.getReleaseDate() == null) {
             return getCommitDate();

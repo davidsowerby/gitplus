@@ -2,7 +2,7 @@
 # Change Log for Dummy
 
 
-## [current build](https://github.com/davidsowerby/dummy/tree/current build)(2015-03-13)
+## [current build](https://github.com/davidsowerby/dummy/tree/develop)(2015-03-13)
 
 ### Summary
 
