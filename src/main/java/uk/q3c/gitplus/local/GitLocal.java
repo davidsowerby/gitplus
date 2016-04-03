@@ -1,6 +1,6 @@
 package uk.q3c.gitplus.local;
 
-import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableList;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.internal.storage.file.FileRepository;
@@ -248,6 +248,19 @@ public class GitLocal implements AutoCloseable {
         }
     }
 
+    public void setOrigin(@Nonnull String origin) {
+        checkNotNull(origin);
+        try {
+            StoredConfig config = getGit().getRepository()
+                                          .getConfig();
+            config.setString("remote", "origin", "url", origin);
+            config.save();
+
+        } catch (IOException e) {
+            throw new GitLocalException("Unable to set origin", e);
+        }
+    }
+
     public void setOrigin(@Nonnull GitRemote gitRemote) {
         checkNotNull(gitRemote);
         try {
@@ -260,19 +273,6 @@ public class GitLocal implements AutoCloseable {
 
     public void setOrigin() {
         setOrigin(configuration.getCloneUrl());
-    }
-
-    public void setOrigin(@Nonnull String origin) {
-        checkNotNull(origin);
-        try {
-            StoredConfig config = getGit().getRepository()
-                                     .getConfig();
-            config.setString("remote", "origin", "url", origin);
-            config.save();
-
-        } catch (IOException e) {
-            throw new GitLocalException("Unable to set origin", e);
-        }
     }
 
     /**
@@ -369,11 +369,11 @@ public class GitLocal implements AutoCloseable {
                                       .toZoneId());
     }
 
-    public ImmutableSet<GitCommit> extractDevelopCommits() {
+    public ImmutableList<GitCommit> extractDevelopCommits() {
         return extractCommitsFor("refs/heads/develop");
     }
 
-    private ImmutableSet<GitCommit> extractCommitsFor(String ref) {
+    private ImmutableList<GitCommit> extractCommitsFor(String ref) {
         try {
             Repository repo = getGit().getRepository();
             RevWalk walk = new RevWalk(repo);
@@ -391,13 +391,13 @@ public class GitLocal implements AutoCloseable {
                     branchCommits.add(gitCommit);
                 }
             }
-            return ImmutableSet.copyOf(branchCommits);
+            return ImmutableList.copyOf(branchCommits);
         } catch (Exception e) {
             throw new GitLocalException("Reading commits for " + ref + " failed", e);
         }
     }
 
-    public ImmutableSet<GitCommit> extractMasterCommits() {
+    public ImmutableList<GitCommit> extractMasterCommits() {
         return extractCommitsFor("refs/heads/master");
     }
 

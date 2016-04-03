@@ -2,13 +2,6 @@
 # Change Log for Dummy
 
 
-## [2.0](https://github.com/davidsowerby/dummy/tree/2.0)(2016-02-07)
-
-### Summary
-
-- commit 9 short message
-
-
 ## [1.3.12](https://github.com/davidsowerby/dummy/tree/1.3.12)(2016-02-06)
 
 ### Summary

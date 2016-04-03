@@ -6,28 +6,33 @@
 
 ### Summary
 
-- commit 9 short message
+- commit 8 short message
+
+
+### Fixes
+- [17](https:/github.com/davidsowerby/dummy/issues/17) issue 17
+- [19](https:/github.com/davidsowerby/dummy/issues/19) issue 19
+
+
+### Enhancements
+- [18](https:/github.com/davidsowerby/dummy/issues/18) issue 18
 
 
 ## [1.3.12](https://github.com/davidsowerby/dummy/tree/1.3.12)(2016-02-06)
 
 ### Summary
 
-- commit 8 short message
 - commit 7 short message
 - commit 6 short message
 
 
 ### Fixes
 - [14](https:/github.com/davidsowerby/dummy/issues/14) issue 14
-- [17](https:/github.com/davidsowerby/dummy/issues/17) issue 17
-- [19](https:/github.com/davidsowerby/dummy/issues/19) issue 19
 
 
 ### Enhancements
 - [15](https:/github.com/davidsowerby/dummy/issues/15) issue 15
 - [16](https:/github.com/davidsowerby/dummy/issues/16) issue 16
-- [18](https:/github.com/davidsowerby/dummy/issues/18) issue 18
 
 
 ### Documentation
@@ -65,7 +70,6 @@
 ### Summary
 
 - commit 3 short message
-- commit 2 short message
 
 
 ### Quality
@@ -84,6 +88,7 @@
 
 ### Summary
 
+- commit 2 short message
 - commit 1 short message
 - commit 0 short message
 

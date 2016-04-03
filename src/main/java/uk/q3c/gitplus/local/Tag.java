@@ -112,4 +112,8 @@ public class Tag {
         fullMessage = "No tag message available";
         return this;
     }
+
+    public boolean isPseudoTag() {
+        return tagType == TagType.PSEUDO;
+    }
 }

@@ -188,4 +188,8 @@ public class VersionRecord {
     public Set<Issue> getPullRequests() {
         return pullRequests;
     }
+
+    public boolean hasCommits() {
+        return !commits.isEmpty();
+    }
 }

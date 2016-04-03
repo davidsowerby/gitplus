@@ -1,7 +1,6 @@
 package uk.q3c.gitplus.local
 
 import com.google.common.collect.ImmutableList
-import com.google.common.collect.ImmutableSet
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.PushCommand
 import org.eclipse.jgit.transport.CredentialsProvider
@@ -344,8 +343,8 @@ class GitLocalTest extends Specification {
         gitLocal.commit('commit 2')
 
         when:
-        ImmutableSet<GitCommit> developCommits = gitLocal.extractDevelopCommits()
-        Set<GitCommit> masterCommits = gitLocal.extractMasterCommits()
+        ImmutableList<GitCommit> developCommits = gitLocal.extractDevelopCommits()
+        List<GitCommit> masterCommits = gitLocal.extractMasterCommits()
         def iterator = developCommits.iterator()
 
 

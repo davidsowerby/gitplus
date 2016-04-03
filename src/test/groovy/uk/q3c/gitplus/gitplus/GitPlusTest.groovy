@@ -1,6 +1,6 @@
 package uk.q3c.gitplus.gitplus
 
-import com.google.common.collect.ImmutableSet
+import com.google.common.collect.ImmutableList
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.lib.Ref
 import org.eclipse.jgit.lib.Repository
@@ -13,7 +13,6 @@ import uk.q3c.gitplus.local.GitLocalException
 import uk.q3c.gitplus.local.GitLocalProvider
 import uk.q3c.gitplus.remote.GitRemote
 import uk.q3c.gitplus.remote.GitRemoteFactory
-
 /**
  * Created by David Sowerby on 13 Mar 2016
  */
@@ -362,12 +361,12 @@ class GitPlusTest extends Specification {
         configuration.remoteRepoFullName(repoFullName)
         gitplus = new GitPlus(configuration, gitLocalProvider)
 
-        Set<GitCommit> expectedDevelopCommits = Mock(ImmutableSet)
-        Set<GitCommit> expectedMasterCommits = Mock(ImmutableSet)
+        List<GitCommit> expectedDevelopCommits = Mock(ImmutableList)
+        List<GitCommit> expectedMasterCommits = Mock(ImmutableList)
 
         when:
-        Set<GitCommit> developCommits = gitplus.extractDevelopCommits()
-        Set<GitCommit> masterCommits = gitplus.extractMasterCommits()
+        List<GitCommit> developCommits = gitplus.extractDevelopCommits()
+        List<GitCommit> masterCommits = gitplus.extractMasterCommits()
 
         then:
         1 * gitLocal.extractDevelopCommits() >> expectedDevelopCommits

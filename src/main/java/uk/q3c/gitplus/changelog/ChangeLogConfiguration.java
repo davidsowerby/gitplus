@@ -17,6 +17,7 @@ import static uk.q3c.gitplus.changelog.ChangeLogConfiguration.OutputTarget.USE_F
  */
 
 public class ChangeLogConfiguration {
+
     /**
      * The {@link #outputFilename} is referenced to an OutputTarget directory, unless USE_FILE_SPEC is selected, in which case the {@link #outputFile} must
      * be specified
@@ -25,6 +26,8 @@ public class ChangeLogConfiguration {
         PROJECT_ROOT, PROJECT_BUILD_ROOT, WIKI_ROOT, CURRENT_DIR, USE_FILE_SPEC
     }
 
+    public static final String LATEST_COMMIT = "latest commit";
+    public static final String LATEST_VERSION = "latest version";
     public static final String DEFAULT_PULL_REQUESTS_TITLE = "Pull Requests";
     public static final ImmutableMap<String, String> defaultTypoMap = new ImmutableMap.Builder<String, String>().put("Fix#", "Fix #")
                                                                                                                 .put("fix#", "fix #")
@@ -78,7 +81,36 @@ public class ChangeLogConfiguration {
     private String pullRequestTitle = DEFAULT_PULL_REQUESTS_TITLE;
     private OutputTarget outputDirectory = OutputTarget.WIKI_ROOT;
     private File outputFile;
+    private String fromVersion = LATEST_COMMIT;
+    private String toVersion = null;
+    private int numberOfVersions = 0;
 
+    public ChangeLogConfiguration fromVersion(final String fromVersion) {
+        this.fromVersion = fromVersion;
+        return this;
+    }
+
+    public ChangeLogConfiguration toVersion(final String toVersion) {
+        this.toVersion = toVersion;
+        return this;
+    }
+
+    public ChangeLogConfiguration numberOfVersions(final int numberOfVersions) {
+        this.numberOfVersions = numberOfVersions;
+        return this;
+    }
+
+    public String getFromVersion() {
+        return fromVersion;
+    }
+
+    public String getToVersion() {
+        return toVersion;
+    }
+
+    public int getNumberOfVersions() {
+        return numberOfVersions;
+    }
 
     public ChangeLogConfiguration outputFile(final File outputFile) {
         this.outputFile = outputFile;
@@ -223,5 +255,21 @@ public class ChangeLogConfiguration {
         if (outputDirectory == USE_FILE_SPEC && outputFile == null) {
             throw new ChangeLogConfigurationException("When output target is " + USE_FILE_SPEC.name() + " outputFile must be specified");
         }
+    }
+
+    public boolean fromLatestCommit() {
+        return fromVersion.equals(LATEST_COMMIT);
+    }
+
+    public boolean fromLatestVersion() {
+        return fromVersion.equals(LATEST_VERSION);
+    }
+
+    public boolean isFromVersion(String version) {
+        return fromVersion.equals(version);
+    }
+
+    public boolean isToVersion(String version) {
+        return toVersion.equals(version);
     }
 }

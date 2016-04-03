@@ -16,7 +16,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -215,11 +214,11 @@ public class GitPlus implements AutoCloseable {
         return gitLocal.getTags();
     }
 
-    public Set<GitCommit> extractDevelopCommits() {
+    public List<GitCommit> extractDevelopCommits() {
         return gitLocal.extractDevelopCommits();
     }
 
-    public Set<GitCommit> extractMasterCommits() {
+    public List<GitCommit> extractMasterCommits() {
         return gitLocal.extractMasterCommits();
     }
 

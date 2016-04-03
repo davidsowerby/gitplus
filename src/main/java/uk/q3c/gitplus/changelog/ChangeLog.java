@@ -137,26 +137,90 @@ public class ChangeLog {
     private void assembleVersionRecords() {
         buildTagMap();
         versionRecords = new ArrayList<>();
-        Set<GitCommit> commits = gitPlus.extractDevelopCommits();
-        Iterator<GitCommit> commitIterator = commits.iterator();
-        GitCommit firstCommit = commitIterator.next();
+        List<GitCommit> commits = gitPlus.extractDevelopCommits();
+        int index = scrollToStartCommit(commits);
+
+
         //If constructing changelog for a released version, most recent commit has a tag
         //if not yet released use 'current build' pseudo tag for most recent commit
-        Optional<Tag> tagForFirstsCommit = tagForCommit(firstCommit);
-        Tag tag = tagForFirstsCommit.isPresent() ? tagForFirstsCommit.get() : new DefaultCurrentBuildTag(firstCommit);
+        GitCommit firstCommit = commits.get(index);
+        Optional<Tag> tagForFirstCommit = tagForCommit(firstCommit);
+        Tag tag = tagForFirstCommit.isPresent() ? tagForFirstCommit.get() : new DefaultCurrentBuildTag(firstCommit);
+
         VersionRecord currentVersionRecord = new VersionRecord(tag, configuration);
         currentVersionRecord.addCommit(firstCommit);
         versionRecords.add(currentVersionRecord);
 
-        while (commitIterator.hasNext()) {
-            GitCommit currentCommit = commitIterator.next();
+        //We need to count versions, but tagCount does not include pseudo tag, as that is not a version
+        int tagCount = tag.isPseudoTag() ? 0 : 1;
+        boolean parseComplete = false;
+        boolean onFinalTag = false;
+        while (index < commits.size() - 1 && !parseComplete) {
+            index++;
+            GitCommit currentCommit = commits.get(index);
             Optional<Tag> tagForCommit = tagForCommit(currentCommit);
-            if (tagForCommit.isPresent()) {
-                currentVersionRecord = new VersionRecord(tagForCommit.get(), configuration);
-                versionRecords.add(currentVersionRecord);
+            if (tagForCommit.isPresent() && isVersionTag(tagForCommit.get())) {
+                if (onFinalTag) {
+                    parseComplete = true;
+                } else {
+                    currentVersionRecord = new VersionRecord(tagForCommit.get(), configuration);
+                    versionRecords.add(currentVersionRecord);
+                    tagCount++;
+                    onFinalTag = isFinalTag(tagForCommit.get(), tagCount);
+                    currentVersionRecord.addCommit(currentCommit);
+                }
+            } else {
+                currentVersionRecord.addCommit(currentCommit);
             }
-            currentVersionRecord.addCommit(currentCommit);
         }
+
+    }
+
+    private boolean isFinalTag(Tag tag, int tagCount) {
+        final int numberOfVersions = configuration.getNumberOfVersions();
+        return (configuration.isToVersion(tag.getTagName()) || (numberOfVersions > 0 && tagCount >= numberOfVersions));
+    }
+
+    /**
+     * returns the index to the first selected commit (where selected is determined by the setting of configuration.getFromVersion())
+     */
+    private int scrollToStartCommit(List<GitCommit> commits) {
+        int index = 0;
+        GitCommit commit = commits.get(index);
+
+        boolean startFound = false;
+        if (configuration.fromLatestCommit()) {
+            startFound = true;
+        }
+        while (!startFound && index < commits.size()) {
+            Optional<Tag> tagForCommit = tagForCommit(commit);
+            if (tagForCommit.isPresent() && isVersionTag(tagForCommit.get())) {
+                if (configuration.fromLatestVersion() || configuration.isFromVersion(tagForCommit.get()
+                                                                                                 .getTagName())) {
+                    startFound = true;
+                } else {
+                    index++;
+                    commit = commits.get(index);
+                }
+            } else {
+                index++;
+                commit = commits.get(index);
+            }
+        }
+        if (!startFound) {
+            throw new ChangeLogConfigurationException("Unable to find the 'fromVersion' of " + configuration.getFromVersion());
+        }
+        return index;
+    }
+
+    /**
+     * to be replaced by a filter
+     *
+     * @param tagForCommit
+     * @return
+     */
+    private boolean isVersionTag(Tag tagForCommit) {
+        return true;
     }
 
 

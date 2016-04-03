@@ -2,13 +2,6 @@
 # Change Log for Dummy
 
 
-## [2.0](https://github.com/davidsowerby/dummy/tree/2.0)(2016-02-07)
-
-### Summary
-
-- commit 9 short message
-
-
 ## [1.3.12](https://github.com/davidsowerby/dummy/tree/1.3.12)(2016-02-06)
 
 ### Summary
@@ -78,21 +71,4 @@
 
 ### Tasks
 - [7](https:/github.com/davidsowerby/dummy/issues/7) issue 7
-
-
-## [0.1](https://github.com/davidsowerby/dummy/tree/0.1)(2016-02-03)
-
-### Summary
-
-- commit 1 short message
-- commit 0 short message
-
-
-### Pull Requests
-- [2](https:/github.com/davidsowerby/dummy/issues/2) issue 2
-
-
-### Fixes
-- [0](https:/github.com/davidsowerby/dummy/issues/0) issue 0
-- [1](https:/github.com/davidsowerby/dummy/issues/1) issue 1
 
