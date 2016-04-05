@@ -1,11 +1,16 @@
 package uk.q3c.gitplus.gitplus;
 
 import uk.q3c.gitplus.remote.DefaultGitRemoteFactory;
+import uk.q3c.gitplus.remote.DefaultRemoteRepoDeleteApprover;
 import uk.q3c.gitplus.remote.GitRemote.ServiceProvider;
 import uk.q3c.gitplus.remote.GitRemoteFactory;
+import uk.q3c.gitplus.remote.RemoteRepoDeleteApprover;
+import uk.q3c.gitplus.util.BuildPropertiesLoader;
+import uk.q3c.gitplus.util.FileBuildPropertiesLoader;
 
 import javax.annotation.Nonnull;
 import java.io.File;
+import java.io.IOException;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -15,7 +20,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class GitPlusConfiguration {
 
     private File projectDir;
-    private String apiToken;
     private boolean createLocalRepo;
     private boolean createRemoteRepo;
     private boolean cloneRemoteRepo;
@@ -33,7 +37,8 @@ public class GitPlusConfiguration {
     private boolean useWiki = true;
     private ServiceProvider remoteServiceProvider = ServiceProvider.GITHUB;
     private String cloneUrl;
-
+    private BuildPropertiesLoader propertiesLoader;
+    private RemoteRepoDeleteApprover repoDeleteApprover;
 
     public GitPlusConfiguration() {
         //required
@@ -42,7 +47,6 @@ public class GitPlusConfiguration {
     public GitPlusConfiguration(@Nonnull GitPlusConfiguration other) {
         checkNotNull(other);
         this.projectDir = other.projectDir;
-        this.apiToken = other.apiToken;
         this.createLocalRepo = other.createLocalRepo;
         this.createRemoteRepo = other.createRemoteRepo;
         this.cloneRemoteRepo = other.cloneRemoteRepo;
@@ -59,6 +63,23 @@ public class GitPlusConfiguration {
         this.remoteServiceProvider = other.remoteServiceProvider;
         this.remoteRepoHtmlUrl = other.remoteRepoHtmlUrl;
         this.useWiki = other.useWiki;
+        this.propertiesLoader = other.propertiesLoader;
+        this.repoDeleteApprover = other.repoDeleteApprover;
+        this.cloneUrl = other.cloneUrl;
+    }
+
+    public RemoteRepoDeleteApprover getRepoDeleteApprover() {
+        if (repoDeleteApprover == null) {
+            repoDeleteApprover = new DefaultRemoteRepoDeleteApprover();
+        }
+        return repoDeleteApprover;
+    }
+
+    public BuildPropertiesLoader getPropertiesLoader() {
+        if (propertiesLoader == null) {
+            propertiesLoader = new FileBuildPropertiesLoader();
+        }
+        return propertiesLoader;
     }
 
     public ServiceProvider getRemoteServiceProvider() {
@@ -76,6 +97,9 @@ public class GitPlusConfiguration {
     }
 
     public GitRemoteFactory getGitRemoteFactory() {
+        if (gitRemoteFactory == null) {
+            gitRemoteFactory = new DefaultGitRemoteFactory();
+        }
         return gitRemoteFactory;
     }
 
@@ -115,11 +139,6 @@ public class GitPlusConfiguration {
     }
 
 
-    public String getApiToken() {
-        return apiToken;
-    }
-
-
     public boolean isCreateLocalRepo() {
         return createLocalRepo;
     }
@@ -152,10 +171,7 @@ public class GitPlusConfiguration {
 
     public void validate() {
 
-        if (gitRemoteFactory == null) {
-            gitRemoteFactory = new DefaultGitRemoteFactory();
-        }
-        gitRemoteFactory.setRemoteServiceProvider(getRemoteServiceProvider());
+        getGitRemoteFactory().setRemoteServiceProvider(getRemoteServiceProvider());
 
         if (createProject) {
             exceptionIfNull("createProject", "projectCreator", projectCreator);
@@ -180,7 +196,6 @@ public class GitPlusConfiguration {
         }
 
         if (createRemoteRepo || cloneRemoteRepo) {
-            exceptionIfNull("createRemoteRepo OR cloneRemoteRepo", "apiToken", apiToken);
             exceptionIfNull("createRemoteRepo OR cloneRemoteRepo", "remoteRepoFullName", remoteRepoFullName);
             remoteRepoHtmlUrl = gitRemoteFactory.htmlUrlFromFullRepoName(remoteRepoFullName);
         }
@@ -208,12 +223,6 @@ public class GitPlusConfiguration {
         if (propertyValue == null) {
             throw new GitPlusConfigurationException("When " + flagName + " is true, " + propertyName + " is required");
         }
-    }
-
-
-    public GitPlusConfiguration apiToken(final String apiToken) {
-        this.apiToken = apiToken;
-        return this;
     }
 
 
@@ -358,9 +367,6 @@ public class GitPlusConfiguration {
         if (projectDir != null ? !projectDir.equals(that.projectDir) : that.projectDir != null) {
             return false;
         }
-        if (apiToken != null ? !apiToken.equals(that.apiToken) : that.apiToken != null) {
-            return false;
-        }
         if (projectName != null ? !projectName.equals(that.projectName) : that.projectName != null) {
             return false;
         }
@@ -395,7 +401,6 @@ public class GitPlusConfiguration {
     @Override
     public int hashCode() {
         int result = projectDir != null ? projectDir.hashCode() : 0;
-        result = 31 * result + (apiToken != null ? apiToken.hashCode() : 0);
         result = 31 * result + (createLocalRepo ? 1 : 0);
         result = 31 * result + (createRemoteRepo ? 1 : 0);
         result = 31 * result + (cloneRemoteRepo ? 1 : 0);
@@ -424,6 +429,32 @@ public class GitPlusConfiguration {
 
     public GitPlusConfiguration cloneUrl(String cloneUrl) {
         this.cloneUrl = cloneUrl;
+        return this;
+    }
+
+    public GitPlusConfiguration propertiesLoader(final BuildPropertiesLoader propertiesLoader) {
+        this.propertiesLoader = propertiesLoader;
+        return this;
+    }
+
+    public String getApiTokenRestricted() throws IOException {
+        return getPropertiesLoader().apiTokenRestricted(remoteServiceProvider);
+    }
+
+    public String getApiTokenCreateRepo() throws IOException {
+        return getPropertiesLoader().apiTokenRepoCreate(remoteServiceProvider);
+    }
+
+    public String getApiTokenDeleteRepo() throws IOException {
+        return getPropertiesLoader().apiTokenRepoDelete(remoteServiceProvider);
+    }
+
+    public boolean deleteRepoApproved() {
+        return getRepoDeleteApprover().isApproved(this);
+    }
+
+    public GitPlusConfiguration repoDeleteApprover(final RemoteRepoDeleteApprover repoDeleteApprover) {
+        this.repoDeleteApprover = repoDeleteApprover;
         return this;
     }
 }

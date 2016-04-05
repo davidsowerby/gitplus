@@ -12,7 +12,9 @@ import java.util.Set;
  */
 public interface GitRemote {
 
-    enum ServiceProvider {GITHUB}
+    enum ServiceProvider {GITHUB, BITBUCKET}
+
+    enum TokenScope {RESTRICTED, CREATE_REPO, DELETE_REPO}
 
     boolean isIssueFixWord(String previousToken);
 

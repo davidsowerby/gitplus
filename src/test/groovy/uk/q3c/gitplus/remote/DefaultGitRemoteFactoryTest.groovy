@@ -13,7 +13,7 @@ class DefaultGitRemoteFactoryTest extends Specification {
     GitRemote.ServiceProvider provider = GitRemote.ServiceProvider.GITHUB
 
     def setup() {
-        gitPlusConfiguration = new GitPlusConfiguration().apiToken('xxxxxxxxx')
+        gitPlusConfiguration = new GitPlusConfiguration()
     }
 
     def "create"() {

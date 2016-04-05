@@ -17,6 +17,7 @@ import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.slf4j.LoggerFactory.getLogger;
+import static uk.q3c.gitplus.remote.GitRemote.TokenScope.*;
 
 /**
  * Created by David Sowerby on 12 Feb 2016
@@ -28,12 +29,11 @@ public class GitHubRemote implements GitRemote {
     private static final ImmutableList<String> fixWords = ImmutableList.of("fix", "fixes", "fixed", "resolve", "resolves", "resolved", "close", "closes",
             "closed");
     private static Logger log = getLogger(GitHubRemote.class);
-    @Nonnull
     private final RemoteRequest remoteRequest;
     private final GitHubProvider gitHubProvider;
-    private GHRepository repository;
     private GitHub gitHub;
     private GitPlusConfiguration configuration;
+    private TokenScope currentTokenScope;
 
     public GitHubRemote(@Nonnull GitPlusConfiguration gitPlusConfiguration, @Nonnull GitHubProvider gitHubProvider, @Nonnull RemoteRequest remoteRequest) throws
             IOException {
@@ -48,11 +48,7 @@ public class GitHubRemote implements GitRemote {
 
     @Override
     public boolean isIssueFixWord(String word) {
-        //noinspection SimplifiableIfStatement clearer in this form
-        if (word == null) {
-            return false;
-        }
-        return fixWords.contains(word.toLowerCase());
+        return word != null && fixWords.contains(word.toLowerCase());
     }
 
 
@@ -66,8 +62,8 @@ public class GitHubRemote implements GitRemote {
         log.debug("Retrieving issue {} from {}", issueNumber, repoName);
         try {
             String rName = (repoName == null || repoName.isEmpty()) ? configuration.getRemoteRepoFullName() : repoName;
-            return new Issue(getGitHub().getRepository(rName)
-                                        .getIssue(issueNumber));
+            return new Issue(getGitHub(RESTRICTED).getRepository(rName)
+                                                  .getIssue(issueNumber));
         } catch (Exception e) {
             throw new GitRemoteException("Unable to retrieve issue " + issueNumber + " from " + repoName, e);
         }
@@ -75,17 +71,21 @@ public class GitHubRemote implements GitRemote {
 
     @Override
     public CredentialsProvider getCredentialsProvider() {
-        if (configuration.getApiToken() != null) {
-            return new UsernamePasswordCredentialsProvider(configuration.getApiToken(), "");
+        try {
+            String token = configuration.getApiTokenRestricted();
+            return new UsernamePasswordCredentialsProvider(token, "");
+        } catch (Exception e) {
+            throw new GitRemoteException("An api token is required in order to enable credentials", e);
         }
-        throw new GitRemoteException("An api token must be provided in order to provide credentials");
     }
 
     @Override
     public Status apiStatus() {
 
         try {
-            JsonReader response = remoteRequest.request(Request.GET, STATUS_API_URL, configuration.getApiToken());
+            String token = configuration.getApiTokenRestricted();
+
+            JsonReader response = remoteRequest.request(Request.GET, STATUS_API_URL, token);
             String status = response
                     .readObject()
                     .getString("status");
@@ -99,7 +99,7 @@ public class GitHubRemote implements GitRemote {
                 default:
                     return Status.RED;
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             log.error("Unable to retrieve status from online service", e);
             return Status.RED;
         }
@@ -112,27 +112,25 @@ public class GitHubRemote implements GitRemote {
         checkNotNull(issueTitle);
         checkNotNull(body);
         checkNotNull(label);
-        return getRepo().createIssue(issueTitle)
-                        .body(body)
-                        .assignee(getGitHub().getMyself())
-                        .label(label)
-                        .create();
+        return getRepo(RESTRICTED).createIssue(issueTitle)
+                                  .body(body)
+                                  .assignee(getGitHub(RESTRICTED).getMyself())
+                                  .label(label)
+                                  .create();
 
     }
 
-    protected GitHub getGitHub() throws IOException {
-        if (gitHub == null) {
-            this.gitHub = gitHubProvider.get(configuration.getApiToken());
+    private GitHub getGitHub(TokenScope tokenScope) throws IOException {
+        if (gitHub == null || currentTokenScope != tokenScope) {
+            this.gitHub = gitHubProvider.get(configuration, tokenScope);
+            currentTokenScope = tokenScope;
         }
         return gitHub;
     }
 
 
-    public GHRepository getRepo() throws IOException {
-        if (repository == null) {
-            repository = getGitHub().getRepository(configuration.getRemoteRepoFullName());
-        }
-        return repository;
+    public GHRepository getRepo(TokenScope tokenScope) throws IOException {
+        return getGitHub(tokenScope).getRepository(configuration.getRemoteRepoFullName());
     }
 
     /**
@@ -142,7 +140,7 @@ public class GitHubRemote implements GitRemote {
     @Override
     public void createRepo() {
         try {
-            this.repository = getGitHub().createRepository(configuration.getProjectName(), configuration.getProjectDescription(), configuration
+            getGitHub(CREATE_REPO).createRepository(configuration.getProjectName(), configuration.getProjectDescription(), configuration
                             .getProjectHomePage(),
                     configuration.isPublicProject());
         } catch (Exception e) {
@@ -153,10 +151,9 @@ public class GitHubRemote implements GitRemote {
 
     @Override
     public void deleteRepo() {
-        String confirmationMessage = "I really, really want to delete the " + configuration.getRemoteRepoFullName() + " repo from GitHub";
         try {
-            if (confirmationMessage.equals(configuration.getConfirmRemoteDelete())) {
-                getRepo().delete();
+            if (configuration.deleteRepoApproved()) {
+                getRepo(DELETE_REPO).delete();
             } else {
                 throw new GitRemoteException("Repo deletion not confirmed");
             }
@@ -173,9 +170,9 @@ public class GitHubRemote implements GitRemote {
 
     @Override
     public Set<String> listRepositoryNames() throws IOException {
-        return getGitHub().getMyself()
-                          .getRepositories()
-                          .keySet();
+        return getGitHub(RESTRICTED).getMyself()
+                                    .getRepositories()
+                                    .keySet();
     }
 
     @Override
@@ -185,8 +182,8 @@ public class GitHubRemote implements GitRemote {
 
     @Override
     public String getHtmlUrl() throws IOException {
-        return getRepo().getHtmlUrl()
-                        .toExternalForm();
+        return getRepo(RESTRICTED).getHtmlUrl()
+                                  .toExternalForm();
     }
 
     @Override

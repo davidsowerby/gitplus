@@ -94,7 +94,6 @@ class GitPlusTest extends Specification {
                 .createLocalRepo(true)
                 .createProject(true)
                 .cloneRemoteRepo(true)
-                .apiToken("token")
 
 
 
@@ -126,7 +125,6 @@ class GitPlusTest extends Specification {
                 .gitRemoteFactory(gitRemoteFactory)
                 .createProject(true)
                 .projectCreator(projectCreator)
-                .apiToken("token")
                 .useWiki(false)
 
         when:
@@ -157,7 +155,6 @@ class GitPlusTest extends Specification {
                 .gitRemoteFactory(gitRemoteFactory)
                 .createProject(true)
                 .projectCreator(projectCreator)
-                .apiToken("token")
 
         when:
         gitplus = new GitPlus(configuration, gitLocalProvider)
@@ -186,7 +183,6 @@ class GitPlusTest extends Specification {
                 .createLocalRepo(true)
                 .createRemoteRepo(true)
                 .gitRemoteFactory(gitRemoteFactory)
-                .apiToken("token")
                 .useWiki(false)
 
         gitplus = new GitPlus(configuration, gitLocalProvider)
@@ -208,7 +204,6 @@ class GitPlusTest extends Specification {
                 .projectName(projectName)
                 .projectDirParent(temporaryFolder.getRoot())
                 .gitRemoteFactory(gitRemoteFactory)
-                .apiToken("token")
                 .useWiki(false)
 
         gitplus = new GitPlus(configuration, gitLocalProvider)
@@ -236,7 +231,6 @@ class GitPlusTest extends Specification {
                 .projectName(projectName)
                 .projectDirParent(temporaryFolder.getRoot())
                 .gitRemoteFactory(gitRemoteFactory)
-                .apiToken("token")
                 .useWiki(false)
         configuration.validate()
         gitplus = new GitPlus(configuration, gitLocalProvider)
@@ -260,7 +254,6 @@ class GitPlusTest extends Specification {
                 .projectName(projectName)
                 .projectDirParent(temporaryFolder.getRoot())
                 .gitRemoteFactory(gitRemoteFactory)
-                .apiToken("token")
                 .useWiki(false)
 
         gitplus = new GitPlus(configuration, gitLocalProvider)
@@ -281,7 +274,6 @@ class GitPlusTest extends Specification {
                 .projectName(projectName)
                 .projectDirParent(temporaryFolder.getRoot())
                 .gitRemoteFactory(gitRemoteFactory)
-                .apiToken("token")
                 .useWiki(false)
 
         gitplus = new GitPlus(configuration, gitLocalProvider)

@@ -44,6 +44,7 @@ class ChangeLogConfigurationTest extends Specification {
         config.getLabelGroups().equals(ChangeLogConfiguration.defaultLabelGroups)
         config.getExclusionTags().equals(ImmutableSet.of('javadoc'))
         config.getOutputFilename() == 'changelog.md'
+        config.getFromVersion().equals(ChangeLogConfiguration.LATEST_COMMIT)
     }
 
     def "set get"() {
@@ -69,6 +70,9 @@ class ChangeLogConfigurationTest extends Specification {
         config.useTypoMap(false)
         config.exclusionTags(excludedMessageTags)
         config.pullRequestTitle(pullRequestTitle)
+        config.fromVersion('0.1')
+        config.toVersion('0.2')
+        config.numberOfVersions(33)
 
         then:
         config.getOutputFile().equals(new File('.'))
@@ -82,6 +86,13 @@ class ChangeLogConfigurationTest extends Specification {
         config.getExclusionTags() == excludedMessageTags
         config.pullRequestTitle.equals(pullRequestTitle)
         config.getOutputFilename().equals(outputFilename)
+        config.getFromVersion().equals('0.1')
+        config.isFromVersion('0.1')
+        !config.isFromVersion('0.2')
+        config.getToVersion().equals('0.2')
+        config.isToVersion('0.2')
+        !config.isToVersion('0.1')
+        config.getNumberOfVersions() == 33
     }
 
     def "validate empty"() {

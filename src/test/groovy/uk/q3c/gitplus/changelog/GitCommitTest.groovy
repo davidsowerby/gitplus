@@ -1,5 +1,6 @@
 package uk.q3c.gitplus.changelog
 
+import org.eclipse.jgit.lib.PersonIdent
 import org.eclipse.jgit.revwalk.RevCommit
 import spock.lang.Specification
 import uk.q3c.gitplus.local.GitCommit
@@ -220,6 +221,40 @@ class GitCommitTest extends Specification {
 
         then:
         println s.length()
+    }
+
+    def "equals and hashcode"() {
+        given:
+        GitCommit commit1 = new GitCommit('a')
+        GitCommit commit2 = new GitCommit('b')
+        GitCommit commit3 = new GitCommit('c')
+        commit1.setHash('hash1')
+        commit2.setHash('hash1')
+        commit3.setHash('hash2')
+
+        expect:
+        commit1.equals(commit2)
+        !commit3.equals(commit2)
+        commit1.hashCode() == commit2.hashCode()
+        commit3.hashCode() != commit2.hashCode()
+    }
+
+    def "set and get"() {
+        given:
+        GitCommit commit = new GitCommit('a')
+        PersonIdent ident = Mock(PersonIdent)
+        ident.getWhen() >> new Date()
+        ident.getTimeZone() >> TimeZone.getTimeZone('Z')
+
+        when:
+        commit.setHash('a')
+        commit.setAuthor(ident)
+        commit.setCommitter(ident)
+
+        then:
+        commit.getHash().equals('a')
+        commit.getAuthor() == ident
+        commit.getCommitter() == ident
     }
 
 

@@ -15,10 +15,10 @@ import uk.q3c.gitplus.remote.GitHubProvider
 import uk.q3c.gitplus.remote.GitHubRemote
 import uk.q3c.gitplus.remote.GitRemote
 import uk.q3c.gitplus.remote.RemoteRequest
-import uk.q3c.gitplus.util.UserHomeBuildPropertiesLoader
 import uk.q3c.util.testutil.FileTestUtil
 
 import java.nio.file.Paths
+
 /**
  * This test needs to delete the 'dummy' repo in cleanup.  This test is a bit weird because it has to use deleteRepo to clean up, but also tests deleteRepo
  *
@@ -27,11 +27,9 @@ import java.nio.file.Paths
 class GitHubRemoteIntegrationTest extends Specification {
 
     @Rule
-    TemporaryFolder temproraryFolder
+    TemporaryFolder temporaryFolder
     File temp
 
-    String fullAccessApiKey
-    String apiKey
     GitPlusConfiguration gitPlusConfiguration
     GitRemote gitRemote
     GitPlus gitPlus
@@ -39,16 +37,12 @@ class GitHubRemoteIntegrationTest extends Specification {
     GitLocal gitLocal
 
     def setup() {
-        def loader = new UserHomeBuildPropertiesLoader();
-        loader.load()
-        fullAccessApiKey = loader.githubKeyFullAccess()
-        apiKey = loader.githubKeyRestricted()
         println 'cleaning up at start'
         if (remoteRepoExists('dummy')) {
             deleteRepo()
             waitRemoteRepoNotExists('dummy')
         }
-        temp = temproraryFolder.getRoot()
+        temp = temporaryFolder.getRoot()
     }
 
 
@@ -64,7 +58,6 @@ class GitHubRemoteIntegrationTest extends Specification {
         given:
         gitPlusConfiguration = new GitPlusConfiguration()
                 .remoteRepoFullName('davidsowerby/dummy')
-                .apiToken(fullAccessApiKey)
                 .createLocalRepo(true)
                 .createRemoteRepo(true)
                 .publicProject(true)
@@ -142,8 +135,7 @@ class GitHubRemoteIntegrationTest extends Specification {
      * Delete repo using full access key
      */
     private void deleteRepo() {
-        GitPlusConfiguration dummyConfiguration = new GitPlusConfiguration().apiToken(fullAccessApiKey)
-                .publicProject(true).remoteRepoFullName('davidsowerby/dummy')
+        GitPlusConfiguration dummyConfiguration = new GitPlusConfiguration().remoteRepoFullName('davidsowerby/dummy')
                 .confirmRemoteDelete("I really, really want to delete the davidsowerby/dummy repo from GitHub")
         GitRemote remote = new GitHubRemote(dummyConfiguration, new GitHubProvider(), new RemoteRequest())
         println 'deleting repo'
@@ -157,8 +149,7 @@ class GitHubRemoteIntegrationTest extends Specification {
  */
     private void waitRemoteRepoExists(String repoName) {
         println 'waiting for repo to exist'
-        GitPlusConfiguration dummyConfiguration = new GitPlusConfiguration().apiToken(apiKey)
-                .remoteRepoFullName('davidsowerby/dummy')
+        GitPlusConfiguration dummyConfiguration = new GitPlusConfiguration().remoteRepoFullName('davidsowerby/dummy')
         GitRemote remote = new GitHubRemote(dummyConfiguration, new GitHubProvider(), new RemoteRequest())
         def timeout = 20
         Set<String> names = remote.listRepositoryNames()
@@ -174,8 +165,7 @@ class GitHubRemoteIntegrationTest extends Specification {
     }
 
     private boolean remoteRepoExists(String repoName) {
-        GitPlusConfiguration dummyConfiguration = new GitPlusConfiguration().apiToken(apiKey)
-                .remoteRepoFullName('davidsowerby/dummy')
+        GitPlusConfiguration dummyConfiguration = new GitPlusConfiguration().remoteRepoFullName('davidsowerby/dummy')
         GitRemote remote = new GitHubRemote(dummyConfiguration, new GitHubProvider(), new RemoteRequest())
         println 'getting repo names'
         Set<String> names = remote.listRepositoryNames()
@@ -190,8 +180,7 @@ class GitHubRemoteIntegrationTest extends Specification {
  */
     private void waitRemoteRepoNotExists(String repoName) {
         println 'waiting for repo not to exist'
-        GitPlusConfiguration dummyConfiguration = new GitPlusConfiguration().apiToken(apiKey)
-                .remoteRepoFullName('davidsowerby/dummy')
+        GitPlusConfiguration dummyConfiguration = new GitPlusConfiguration().remoteRepoFullName('davidsowerby/dummy')
         GitRemote remote = new GitHubRemote(dummyConfiguration, new GitHubProvider(), new RemoteRequest())
         def timeout = 20
         Set<String> names = remote.listRepositoryNames()

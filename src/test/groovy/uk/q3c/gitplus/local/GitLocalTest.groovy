@@ -363,7 +363,7 @@ class GitLocalTest extends Specification {
 
     def "clone"() {
         given:
-        configuration.cloneRemoteRepo(true).remoteRepoFullName('davidsowerby/scratch').projectDirParent(temp).apiToken('x')
+        configuration.cloneRemoteRepo(true).remoteRepoFullName('davidsowerby/scratch').projectDirParent(temp)
         configuration.validate()
         gitLocal = new GitLocal(configuration)
 
@@ -376,7 +376,7 @@ class GitLocalTest extends Specification {
 
     def "getTags() fails"() {
         given:
-        configuration.cloneRemoteRepo(true).remoteRepoFullName('davidsowerby/scratch').projectDirParent(temp).apiToken('x')
+        configuration.cloneRemoteRepo(true).remoteRepoFullName('davidsowerby/scratch').projectDirParent(temp)
         configuration.validate()
         gitLocal = new GitLocal(mockGit, configuration)
 
@@ -422,7 +422,7 @@ class GitLocalTest extends Specification {
 
     def "configure for wiki"() {
         given:
-        configuration.remoteRepoFullName('davidsowerby/scratch').projectDirParent(temp).apiToken('x')
+        configuration.remoteRepoFullName('davidsowerby/scratch').projectDirParent(temp)
         configuration.validate()
         gitLocal = new GitLocal(configuration)
 

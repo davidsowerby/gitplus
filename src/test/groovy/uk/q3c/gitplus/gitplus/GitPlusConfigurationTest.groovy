@@ -4,7 +4,11 @@ import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
 import uk.q3c.gitplus.remote.DefaultGitRemoteFactory
+import uk.q3c.gitplus.remote.DefaultRemoteRepoDeleteApprover
 import uk.q3c.gitplus.remote.GitRemoteFactory
+import uk.q3c.gitplus.remote.RemoteRepoDeleteApprover
+import uk.q3c.gitplus.util.BuildPropertiesLoader
+import uk.q3c.gitplus.util.FileBuildPropertiesLoader
 
 import static uk.q3c.gitplus.remote.GitRemote.ServiceProvider.GITHUB
 
@@ -30,7 +34,6 @@ class GitPlusConfigurationTest extends Specification {
     def "defaults"() {
         expect:
         config.projectDir == null
-        config.apiToken == null
         !config.createLocalRepo
         !config.cloneRemoteRepo
         !config.createProject
@@ -38,6 +41,8 @@ class GitPlusConfigurationTest extends Specification {
         !config.isCreateRemoteRepo()
         !config.isPublicProject()
         config.getRemoteServiceProvider().equals(GITHUB)
+        config.getPropertiesLoader() instanceof FileBuildPropertiesLoader
+        config.getRepoDeleteApprover() instanceof DefaultRemoteRepoDeleteApprover
 
     }
 
@@ -68,7 +73,7 @@ class GitPlusConfigurationTest extends Specification {
     def "cloning a remote repo throws exception if no remote repo url"() {
 
         given:
-        config.cloneRemoteRepo(true).apiToken("token")
+        config.cloneRemoteRepo(true)
 
         when:
         config.validate()
@@ -112,7 +117,7 @@ class GitPlusConfigurationTest extends Specification {
 
     def "clone remote repo uses current directory if projectDirParent is null"() {
         given:
-        config.cloneRemoteRepo(true).apiToken("token").projectName("dummy").remoteRepoFullName('davidsowerby/scratch')
+        config.cloneRemoteRepo(true).projectName("dummy").remoteRepoFullName('davidsowerby/scratch')
 
         when:
         config.validate()
@@ -257,14 +262,15 @@ class GitPlusConfigurationTest extends Specification {
 
     def "copy constructor"() {
         given:
-        config.apiToken('x')
-                .createLocalRepo(true)
+        BuildPropertiesLoader propertiesLoader = Mock(BuildPropertiesLoader)
+        config.createLocalRepo(true)
                 .confirmRemoteDelete('dd')
                 .createProject(true)
                 .useWiki(false)
                 .createRemoteRepo(true)
                 .projectCreator(projectCreator)
                 .gitRemoteFactory(remoteFactory)
+                .propertiesLoader(propertiesLoader)
 
         when:
         GitPlusConfiguration newConfig = new GitPlusConfiguration(config)
@@ -312,16 +318,8 @@ class GitPlusConfigurationTest extends Specification {
         configuration1.hashCode() != configuration2.hashCode()
 
         when:
-        configuration1.createRemoteRepo(false).apiToken('a')
-        configuration2.createRemoteRepo(false).apiToken('aa')
-
-        then:
-        !configuration1.equals(configuration2)
-        configuration1.hashCode() != configuration2.hashCode()
-
-        when:
-        configuration1.apiToken('a').cloneRemoteRepo(true)
-        configuration2.apiToken('a').cloneRemoteRepo(false)
+        configuration1.createRemoteRepo(false).cloneRemoteRepo(true)
+        configuration2.createRemoteRepo(false).cloneRemoteRepo(false)
 
         then:
         !configuration1.equals(configuration2)
@@ -451,6 +449,24 @@ class GitPlusConfigurationTest extends Specification {
         !configuration1.equals(configuration2)
         configuration1.hashCode() != configuration2.hashCode()
 
+    }
+
+    def "getApiTokenRestricted"() {
+        expect:
+        config.getApiTokenRestricted() != null
+        config.getApiTokenDeleteRepo() != null
+        config.getApiTokenCreateRepo() != null
+    }
+
+    def "set delete approver"() {
+        given:
+        RemoteRepoDeleteApprover approver = Mock(RemoteRepoDeleteApprover)
+
+        when:
+        config.repoDeleteApprover(approver)
+
+        then:
+        config.getRepoDeleteApprover() == approver
     }
 
 
