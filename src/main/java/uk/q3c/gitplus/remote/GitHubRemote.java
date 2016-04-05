@@ -5,6 +5,7 @@ import com.jcabi.http.Request;
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.kohsuke.github.GHIssue;
+import org.kohsuke.github.GHIssueBuilder;
 import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GitHub;
 import org.slf4j.Logger;
@@ -107,16 +108,21 @@ public class GitHubRemote implements GitRemote {
 
 
     @Override
-    public GHIssue createIssue(@Nonnull String issueTitle, @Nonnull String body, @Nonnull String label) throws
+    public GHIssue createIssue(@Nonnull String issueTitle, @Nonnull String body, @Nonnull String... labels) throws
             IOException {
         checkNotNull(issueTitle);
         checkNotNull(body);
-        checkNotNull(label);
-        return getRepo(RESTRICTED).createIssue(issueTitle)
-                                  .body(body)
-                                  .assignee(getGitHub(RESTRICTED).getMyself())
-                                  .label(label)
-                                  .create();
+        checkNotNull(labels);
+        GHIssueBuilder issueBuilder = getRepo(RESTRICTED).createIssue(issueTitle)
+                                                         .body(body)
+                                                         .assignee(getGitHub(RESTRICTED).getMyself());
+
+        for (String label : labels) {
+            issueBuilder.label(label);
+        }
+
+        return issueBuilder
+                .create();
 
     }
 

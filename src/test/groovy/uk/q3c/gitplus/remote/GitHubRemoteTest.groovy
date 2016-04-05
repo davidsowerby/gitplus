@@ -184,9 +184,9 @@ class GitHubRemoteTest extends Specification {
         given:
         gitHubProvider.get(scratchConfiguration, RESTRICTED) >> gitHub
         remote = new GitHubRemote(scratchConfiguration, gitHubProvider, remoteRequest)
-        String title = "test issue"
-        String body = "body"
-        String label = "buglet"
+        String title = 'test issue'
+        String body = 'body'
+        String label = 'buglet'
         GHMyself ghUser = Mock(GHMyself)
         GHIssueBuilder issueBuilder = Mock(GHIssueBuilder)
 
@@ -201,6 +201,32 @@ class GitHubRemoteTest extends Specification {
         1 * gitHub.getMyself() >> ghUser
         1 * issueBuilder.assignee(ghUser) >> issueBuilder
         1 * issueBuilder.label(label) >> issueBuilder
+        1 * issueBuilder.create() >> ghIssue1
+        result == ghIssue1
+    }
+
+    def "create issue with multiple labels"() {
+        given:
+        gitHubProvider.get(scratchConfiguration, RESTRICTED) >> gitHub
+        remote = new GitHubRemote(scratchConfiguration, gitHubProvider, remoteRequest)
+        String title = 'test issue'
+        String body = 'body'
+        String[] label = ['buglet', 'build']
+        GHMyself ghUser = Mock(GHMyself)
+        GHIssueBuilder issueBuilder = Mock(GHIssueBuilder)
+
+
+        when:
+        GHIssue result = remote.createIssue(title, body, label)
+
+        then:
+        1 * gitHub.getRepository('davidsowerby/scratch') >> repo
+        1 * repo.createIssue(title) >> issueBuilder
+        1 * issueBuilder.body(body) >> issueBuilder
+        1 * gitHub.getMyself() >> ghUser
+        1 * issueBuilder.assignee(ghUser) >> issueBuilder
+        1 * issueBuilder.label('buglet') >> issueBuilder
+        1 * issueBuilder.label('build') >> issueBuilder
         1 * issueBuilder.create() >> ghIssue1
         result == ghIssue1
     }

@@ -86,6 +86,7 @@ class GitHubRemoteIntegrationTest extends Specification {
         new File(gitPlus.getWikiLocal().getProjectDir(), '.git').exists()
         new File(gitPlus.getWikiLocal().getProjectDir(), 'changelog.md').exists()
 
+
     }
 
     def ChangeLog generateChangeLog(ChangeLogConfiguration changeLogConfiguration) {

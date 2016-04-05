@@ -45,7 +45,7 @@ public interface GitRemote {
     GitHubRemote.Status apiStatus();
 
 
-    GHIssue createIssue(@Nonnull String issueTitle, @Nonnull String body, @Nonnull String label) throws
+    GHIssue createIssue(@Nonnull String issueTitle, @Nonnull String body, @Nonnull String... labels) throws
             IOException;
 
     void createRepo() throws IOException;
