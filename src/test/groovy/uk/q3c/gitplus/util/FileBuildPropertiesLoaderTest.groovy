@@ -8,7 +8,6 @@ import java.nio.file.Paths
 
 import static uk.q3c.gitplus.remote.GitRemote.ServiceProvider.BITBUCKET
 import static uk.q3c.gitplus.remote.GitRemote.ServiceProvider.GITHUB
-
 /**
  * Created by David Sowerby on 22 Mar 2016
  */
@@ -54,9 +53,97 @@ class FileBuildPropertiesLoaderTest extends Specification {
 
     }
 
-    def "required property missing"() {
+
+    def "Missing Property Exception if create token absent"() {
+        given:
+        loader.source(testResource('test3.properties'))
+
+
+        when:
+        loader.apiTokenRepoCreate(GITHUB)
+
+        then:
+        thrown(MissingPropertyException)
+    }
+
+    def "Missing Property Exception delete token absent"() {
+        given:
+        loader.source(testResource('test3.properties'))
+
+
+        when:
+        loader.apiTokenRepoDelete(GITHUB)
+
+        then:
+        thrown(MissingPropertyException)
+    }
+
+    def "Missing Property Exception restricted token absent"() {
+        given:
+        loader.source(testResource('test3.properties'))
+
+
+        when:
+        loader.apiTokenRestricted(GITHUB)
+
+        then:
+        thrown(MissingPropertyException)
+    }
+
+    def "tagger name and email"() {
         given:
         loader.source(testResource('test1.properties'))
+
+        expect:
+        loader.taggerName().equals('Ronnie Corbett')
+        loader.taggerEmail().equals('forkhandles@there.com')
+    }
+
+    def "tagger name or email missing"() {
+        given:
+        loader.source(testResource('test3.properties'))
+
+
+        when:
+        loader.taggerName()
+
+        then:
+        thrown(MissingPropertyException)
+
+        when:
+        loader.taggerEmail()
+
+        then:
+        thrown(MissingPropertyException)
+    }
+
+    def "unsupported provider"() {
+        given:
+        loader.source(testResource('test3.properties'))
+
+        when:
+        loader.apiTokenRepoCreate(BITBUCKET)
+
+        then:
+        thrown UnsupportedServiceProviderException
+
+        when:
+        loader.apiTokenRepoDelete(BITBUCKET)
+
+        then:
+        thrown UnsupportedServiceProviderException
+
+        when:
+        loader.apiTokenRestricted(BITBUCKET)
+
+        then:
+        thrown UnsupportedServiceProviderException
+
+    }
+
+    def "invalid file"() {
+        given:
+        loader.source(new File('test4.properties'))
 
         when:
         loader.load()
@@ -65,18 +152,6 @@ class FileBuildPropertiesLoaderTest extends Specification {
         thrown GitPlusConfigurationException
     }
 
-    def "Missing Property Exception if absent"() {
-        given:
-        loader.source(testResource('test3.properties')).load()
-
-
-        when:
-        loader.apiTokenRepoCreate(GITHUB)
-
-        then:
-        thrown(MissingPropertyException)
-        true // bizarre way of making this test work - really should raise an issue on this
-    }
 
     private File testResource(String fileName) {
         URL url = this.getClass()

@@ -39,11 +39,12 @@ public class GitPlusConfiguration {
     private String cloneUrl;
     private BuildPropertiesLoader propertiesLoader;
     private RemoteRepoDeleteApprover repoDeleteApprover;
+    private String taggerName;
+    private String taggerEmail;
 
     public GitPlusConfiguration() {
         //required
     }
-
     public GitPlusConfiguration(@Nonnull GitPlusConfiguration other) {
         checkNotNull(other);
         this.projectDir = other.projectDir;
@@ -66,6 +67,22 @@ public class GitPlusConfiguration {
         this.propertiesLoader = other.propertiesLoader;
         this.repoDeleteApprover = other.repoDeleteApprover;
         this.cloneUrl = other.cloneUrl;
+        this.taggerName = other.taggerName;
+        this.taggerEmail = other.taggerEmail;
+    }
+
+    public String getTaggerName() throws IOException {
+        if (taggerName == null) {
+            taggerName = getPropertiesLoader().taggerName();
+        }
+        return taggerName;
+    }
+
+    public String getTaggerEmail() throws IOException {
+        if (taggerEmail == null) {
+            taggerEmail = getPropertiesLoader().taggerEmail();
+        }
+        return taggerEmail;
     }
 
     public RemoteRepoDeleteApprover getRepoDeleteApprover() {
@@ -370,6 +387,15 @@ public class GitPlusConfiguration {
         if (projectName != null ? !projectName.equals(that.projectName) : that.projectName != null) {
             return false;
         }
+
+        if (taggerName != null ? !taggerName.equals(that.taggerName) : that.taggerName != null) {
+            return false;
+        }
+
+        if (taggerEmail != null ? !taggerEmail.equals(that.taggerEmail) : that.taggerEmail != null) {
+            return false;
+        }
+
         if (remoteRepoFullName != null ? !remoteRepoFullName.equals(that.remoteRepoFullName) : that.remoteRepoFullName != null) {
             return false;
         }
@@ -405,6 +431,8 @@ public class GitPlusConfiguration {
         result = 31 * result + (createRemoteRepo ? 1 : 0);
         result = 31 * result + (cloneRemoteRepo ? 1 : 0);
         result = 31 * result + (projectName != null ? projectName.hashCode() : 0);
+        result = 31 * result + (taggerName != null ? taggerName.hashCode() : 0);
+        result = 31 * result + (taggerEmail != null ? taggerEmail.hashCode() : 0);
         result = 31 * result + (createProject ? 1 : 0);
         result = 31 * result + (remoteRepoFullName != null ? remoteRepoFullName.hashCode() : 0);
         result = 31 * result + (projectDirParent != null ? projectDirParent.hashCode() : 0);
@@ -455,6 +483,16 @@ public class GitPlusConfiguration {
 
     public GitPlusConfiguration repoDeleteApprover(final RemoteRepoDeleteApprover repoDeleteApprover) {
         this.repoDeleteApprover = repoDeleteApprover;
+        return this;
+    }
+
+    public GitPlusConfiguration taggerEmail(final String taggerEmail) {
+        this.taggerEmail = taggerEmail;
+        return this;
+    }
+
+    public GitPlusConfiguration taggerName(final String taggerName) {
+        this.taggerName = taggerName;
         return this;
     }
 }

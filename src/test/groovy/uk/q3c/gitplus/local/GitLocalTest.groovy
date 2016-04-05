@@ -79,6 +79,27 @@ class GitLocalTest extends Specification {
         gitLocal.getOrigin().equals('https://github.com/davidsowerby/scratch.git')
     }
 
+    def "set origin, git throws exception"() {
+        given:
+        configuration.createLocalRepo(true).remoteRepoFullName("davidsowerby/scratch").projectDirParent(temp).createLocalRepo(true)
+        configuration.validate()
+        mockGit.getRepository() >> { throw new IOException() }
+        gitLocal = new GitLocal(mockGit, configuration)
+        gitRemote.getCloneUrl() >> { throw new NullPointerException() }
+
+        when:
+        gitLocal.setOrigin()
+
+        then:
+        thrown GitLocalException
+
+        when:
+        gitLocal.setOrigin(gitRemote)
+
+        then:
+        thrown GitLocalException
+    }
+
 
     def "set origin from remote"() {
         given:

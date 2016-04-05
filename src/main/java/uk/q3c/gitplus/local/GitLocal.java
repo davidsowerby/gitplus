@@ -248,6 +248,16 @@ public class GitLocal implements AutoCloseable {
         }
     }
 
+    public void setOrigin(@Nonnull GitRemote gitRemote) {
+        checkNotNull(gitRemote);
+        try {
+            String originUrl = gitRemote.getCloneUrl();
+            setOrigin(originUrl);
+        } catch (Exception e) {
+            throw new GitLocalException("Unable to set origin", e);
+        }
+    }
+
     public void setOrigin(@Nonnull String origin) {
         checkNotNull(origin);
         try {
@@ -256,17 +266,7 @@ public class GitLocal implements AutoCloseable {
             config.setString("remote", "origin", "url", origin);
             config.save();
 
-        } catch (IOException e) {
-            throw new GitLocalException("Unable to set origin", e);
-        }
-    }
-
-    public void setOrigin(@Nonnull GitRemote gitRemote) {
-        checkNotNull(gitRemote);
-        try {
-            String originUrl = gitRemote.getCloneUrl();
-            setOrigin(originUrl);
-        } catch (IOException e) {
+        } catch (Exception e) {
             throw new GitLocalException("Unable to set origin", e);
         }
     }
@@ -410,7 +410,7 @@ public class GitLocal implements AutoCloseable {
         try {
             TagCommand tagCommand = git.tag();
             Date tagDate = new Date();
-            PersonIdent personalIdent = new PersonIdent("David Sowerby", "X@X");
+            PersonIdent personalIdent = new PersonIdent(configuration.getTaggerName(), configuration.getTaggerEmail());
             tagCommand.setMessage("Released at version " + tag)
                       .setAnnotated(true)
                       .setName(tag)

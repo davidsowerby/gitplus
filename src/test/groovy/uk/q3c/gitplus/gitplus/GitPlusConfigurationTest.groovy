@@ -458,15 +458,22 @@ class GitPlusConfigurationTest extends Specification {
         config.getApiTokenCreateRepo() != null
     }
 
-    def "set delete approver"() {
+    def "set and get"() {
         given:
         RemoteRepoDeleteApprover approver = Mock(RemoteRepoDeleteApprover)
+        String taggerName = 'a'
+        String taggerEmail = 'b'
+        String cloneUrl = 'url'
 
         when:
-        config.repoDeleteApprover(approver)
+        config.repoDeleteApprover(approver).taggerName(taggerName).taggerEmail(taggerEmail).cloneUrl(cloneUrl)
+
 
         then:
         config.getRepoDeleteApprover() == approver
+        config.getTaggerName().equals(taggerName)
+        config.getTaggerEmail().equals(taggerEmail)
+        config.getCloneUrl().equals(cloneUrl)
     }
 
 

@@ -65,5 +65,17 @@ public interface BuildPropertiesLoader {
      */
     String apiTokenRepoDelete(@Nonnull ServiceProvider serviceProvider) throws IOException;
 
+    /**
+     * Returns the email of the user to associate with a Git tag
+     *
+     * @return the email of the user to associate with a Git tag
+     */
+    String taggerEmail() throws IOException;
 
+    /**
+     * Returns the name of the user to associate with a Git tag
+     *
+     * @return the name of the user to associate with a Git tag
+     */
+    String taggerName() throws IOException;
 }
