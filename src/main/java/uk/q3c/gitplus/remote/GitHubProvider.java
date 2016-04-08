@@ -1,15 +1,13 @@
 package uk.q3c.gitplus.remote;
 
-import org.kohsuke.github.GitHub;
-import org.kohsuke.github.GitHubBuilder;
-import org.kohsuke.github.RateLimitHandler;
+import com.jcabi.github.Github;
+import com.jcabi.github.RtGithub;
 import uk.q3c.gitplus.gitplus.GitPlusConfiguration;
 import uk.q3c.gitplus.gitplus.GitPlusConfigurationException;
 import uk.q3c.gitplus.remote.GitRemote.TokenScope;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
-import java.util.Properties;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -18,7 +16,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public class GitHubProvider {
 
-    public GitHub get(@Nonnull GitPlusConfiguration configuration, @Nonnull TokenScope tokenScope) throws IOException {
+    public Github get(@Nonnull GitPlusConfiguration configuration, @Nonnull TokenScope tokenScope) throws IOException {
         checkNotNull(configuration);
         checkNotNull(tokenScope);
         String token;
@@ -35,10 +33,7 @@ public class GitHubProvider {
             default:
                 throw new GitPlusConfigurationException("Unrecognised TokenScope");
         }
-        Properties properties = new Properties();
-        properties.put("oauth", token);
-        return GitHubBuilder.fromProperties(properties)
-                            .withRateLimitHandler(RateLimitHandler.FAIL)
-                            .build();
+        return new RtGithub(token);
+
     }
 }

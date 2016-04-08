@@ -1,14 +1,16 @@
 package uk.q3c.gitplus.remote
 
 import com.google.common.collect.ImmutableList
-import com.google.common.collect.ImmutableMap
 import com.google.common.collect.ImmutableSet
+import com.jcabi.github.Coordinates
+import com.jcabi.github.Github
+import com.jcabi.github.Repo
+import com.jcabi.github.Repos
+import com.jcabi.github.mock.MkGithub
 import org.eclipse.jgit.transport.CredentialItem
 import org.eclipse.jgit.transport.URIish
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider
-import org.kohsuke.github.*
 import spock.lang.Specification
-import spock.lang.Unroll
 import uk.q3c.gitplus.gitplus.GitPlusConfiguration
 import uk.q3c.gitplus.util.FileBuildPropertiesLoader
 
@@ -23,34 +25,31 @@ import static uk.q3c.gitplus.remote.GitRemote.TokenScope.*
  */
 class GitHubRemoteTest extends Specification {
 
+
+    final String USER = 'davidsowerby'
+    Coordinates dummyCoordinates = new Coordinates.Simple(USER, 'dummy')
+
+
     GitRemote remote
     GitPlusConfiguration krailConfiguration
     GitPlusConfiguration scratchConfiguration
     GitPlusConfiguration emptyConfiguration
     GitPlusConfiguration dummyConfiguration
-    String apiKey
-    GitHub gitHub = Mock(GitHub)
+
+    Github gitHub = new MkGithub()
     GitHubProvider gitHubProvider = Mock(GitHubProvider)
-    GHRepository repo = Mock(GHRepository)
-    Issue issue1 = Mock(Issue)
-    GHIssue ghIssue1 = Mock(GHIssue)
-    GHLabel ghLabel = Mock(GHLabel)
-    URL htmlUrl1 = new URL("https://github.com/davidsowerby/scratch/issues/1")
     RemoteRequest remoteRequest = Mock(RemoteRequest)
+    Repo repo
 
 
     def setup() {
-        def loader = new FileBuildPropertiesLoader();
-        loader.load()
-        apiKey = loader.apiTokenRestricted(GITHUB)
-        krailConfiguration = new GitPlusConfiguration().remoteRepoFullName('davidsowerby/krail')
-        scratchConfiguration = new GitPlusConfiguration().remoteRepoFullName('davidsowerby/scratch')
-        dummyConfiguration = new GitPlusConfiguration().remoteRepoFullName('davidsowerby/dummy')
+        gitHub = new MkGithub(USER);
+        Repos.RepoCreate repoCreate = new Repos.RepoCreate('dummy', false)
+        repo = gitHub.repos().create(repoCreate)
+        krailConfiguration = new GitPlusConfiguration().remoteRepoUser(USER).remoteRepoName('krail')
+        scratchConfiguration = new GitPlusConfiguration().remoteRepoUser(USER).remoteRepoName('scratch')
+        dummyConfiguration = new GitPlusConfiguration().remoteRepoUser(USER).remoteRepoName('dummy')
         emptyConfiguration = new GitPlusConfiguration()
-        ghIssue1.getLabels() >> ImmutableSet.of(ghLabel)
-        ghIssue1.getHtmlUrl() >> htmlUrl1
-        ghIssue1.getNumber() >> 1
-
     }
 
 
@@ -90,54 +89,57 @@ class GitHubRemoteTest extends Specification {
 
     }
 
-    @Unroll
-    def "get issue, number only, or null or empty repo name"() {
-        given:
-        gitHubProvider.get(krailConfiguration, RESTRICTED) >> gitHub
-        remote = new GitHubRemote(krailConfiguration, gitHubProvider, remoteRequest)
 
+    def "get issue, user repo and issue number"() {
+        given:
+        repo.issues().create('title', 'body')
+        gitHubProvider.get(dummyConfiguration, RESTRICTED) >> gitHub
+        remote = new GitHubRemote(dummyConfiguration, gitHubProvider, remoteRequest)
 
         when:
-        Issue issue = remote.getIssue(rname, 1)
+        GPIssue issue = remote.getIssue(USER, 'dummy', 1)
 
         then:
-        1 * gitHub.getRepository('davidsowerby/krail') >> repo
-        1 * repo.getIssue(1) >> ghIssue1
         issue.getNumber() == 1
 
-
-        where:
-        rname                | _
-        'davidsowerby/krail' | _
-        null                 | _
-        ""                   | _
-    }
-
-    def "get issue, number only"() {
-        given:
-        gitHubProvider.get(krailConfiguration, RESTRICTED) >> gitHub
-        remote = new GitHubRemote(krailConfiguration, gitHubProvider, remoteRequest)
-
-        when:
-        Issue issue = remote.getIssue(1)
+        when: //number not valid
+        remote.getIssue(USER, 'dummy', 2)
 
         then:
-        1 * gitHub.getRepository('davidsowerby/krail') >> repo
-        1 * repo.getIssue(1) >> ghIssue1
-
-    }
-
-    def "get issues, invalid repo"() {
-        given:
-        gitHubProvider.get(krailConfiguration, RESTRICTED) >> gitHub
-        remote = new GitHubRemote(krailConfiguration, gitHubProvider, remoteRequest)
-
-        when:
-        remote.getIssue(1)
-
-        then:
-        1 * gitHub.getRepository('davidsowerby/krail') >> { throw new IOException() }
         thrown GitRemoteException
+
+        when: //repo not valid
+        remote.getIssue(USER, 'rubbish', 1)
+
+        then:
+        thrown GitRemoteException
+    }
+
+    def "get issue, user repo and issue number, not current repo"() {
+        given:
+        repo.issues().create('title', 'body')
+        gitHubProvider.get(scratchConfiguration, RESTRICTED) >> gitHub
+        remote = new GitHubRemote(scratchConfiguration, gitHubProvider, remoteRequest)
+
+        when:
+        GPIssue issue = remote.getIssue(USER, 'dummy', 1)
+
+        then:
+        issue.getNumber() == 1
+    }
+
+    def "get issue, issue number only, assumes current repo"() {
+        given:
+
+        repo.issues().create('title', 'body')
+        gitHubProvider.get(dummyConfiguration, RESTRICTED) >> gitHub
+        remote = new GitHubRemote(dummyConfiguration, gitHubProvider, remoteRequest)
+
+        when:
+        GPIssue issue = remote.getIssue(1)
+
+        then:
+        issue.getNumber() == 1
     }
 
 
@@ -147,6 +149,7 @@ class GitHubRemoteTest extends Specification {
         JsonReader jsonReader = Mock(JsonReader)
         JsonObject jsonObject = Mock(JsonObject)
         remote = new GitHubRemote(krailConfiguration, gitHubProvider, remoteRequest)
+        String apiKey = new FileBuildPropertiesLoader().apiTokenRestricted(GITHUB)
 
         when:
         GitHubRemote.Status result = remote.apiStatus()
@@ -167,9 +170,8 @@ class GitHubRemoteTest extends Specification {
 
     def "api not available to return status"() {
         given:
-        JsonReader jsonReader = Mock(JsonReader)
-        JsonObject jsonObject = Mock(JsonObject)
         remote = new GitHubRemote(krailConfiguration, gitHubProvider, remoteRequest)
+        String apiKey = new FileBuildPropertiesLoader().apiTokenRestricted(GITHUB)
 
         when:
         GitHubRemote.Status result = remote.apiStatus()
@@ -179,66 +181,33 @@ class GitHubRemoteTest extends Specification {
         result == GitHubRemote.Status.RED
     }
 
-
     def "create issue"() {
         given:
-        gitHubProvider.get(scratchConfiguration, RESTRICTED) >> gitHub
-        remote = new GitHubRemote(scratchConfiguration, gitHubProvider, remoteRequest)
-        String title = 'test issue'
-        String body = 'body'
-        String label = 'buglet'
-        GHMyself ghUser = Mock(GHMyself)
-        GHIssueBuilder issueBuilder = Mock(GHIssueBuilder)
-
+        gitHubProvider.get(dummyConfiguration, RESTRICTED) >> gitHub
+        remote = new GitHubRemote(dummyConfiguration, gitHubProvider, remoteRequest)
+        final String TITLE = 'title'
+        final String BODY = 'body'
+        final String[] LABELS = ['bug', 'build'] as String
 
         when:
-        GHIssue result = remote.createIssue(title, body, label)
+        remote.createIssue(TITLE, BODY, LABELS)
+        GPIssue result = remote.getIssue(1)
 
         then:
-        1 * gitHub.getRepository('davidsowerby/scratch') >> repo
-        1 * repo.createIssue(title) >> issueBuilder
-        1 * issueBuilder.body(body) >> issueBuilder
-        1 * gitHub.getMyself() >> ghUser
-        1 * issueBuilder.assignee(ghUser) >> issueBuilder
-        1 * issueBuilder.label(label) >> issueBuilder
-        1 * issueBuilder.create() >> ghIssue1
-        result == ghIssue1
+        result.getTitle().equals(TITLE)
+        result.getBody().equals(BODY)
+        result.getLabels().equals(ImmutableSet.copyOf(LABELS))
     }
 
-    def "create issue with multiple labels"() {
-        given:
-        gitHubProvider.get(scratchConfiguration, RESTRICTED) >> gitHub
-        remote = new GitHubRemote(scratchConfiguration, gitHubProvider, remoteRequest)
-        String title = 'test issue'
-        String body = 'body'
-        String[] label = ['buglet', 'build']
-        GHMyself ghUser = Mock(GHMyself)
-        GHIssueBuilder issueBuilder = Mock(GHIssueBuilder)
-
-
-        when:
-        GHIssue result = remote.createIssue(title, body, label)
-
-        then:
-        1 * gitHub.getRepository('davidsowerby/scratch') >> repo
-        1 * repo.createIssue(title) >> issueBuilder
-        1 * issueBuilder.body(body) >> issueBuilder
-        1 * gitHub.getMyself() >> ghUser
-        1 * issueBuilder.assignee(ghUser) >> issueBuilder
-        1 * issueBuilder.label('buglet') >> issueBuilder
-        1 * issueBuilder.label('build') >> issueBuilder
-        1 * issueBuilder.create() >> ghIssue1
-        result == ghIssue1
-    }
 
     def "credentials provider"() {
         given:
-        gitHubProvider.get(krailConfiguration, RESTRICTED) >> gitHub
-        remote = new GitHubRemote(krailConfiguration, gitHubProvider, remoteRequest)
+        gitHubProvider.get(dummyConfiguration, RESTRICTED) >> gitHub
+        remote = new GitHubRemote(dummyConfiguration, gitHubProvider, remoteRequest)
 
         expect:
         remote.getCredentialsProvider() instanceof UsernamePasswordCredentialsProvider
-        passwordMatches(remote.getCredentialsProvider() as UsernamePasswordCredentialsProvider, krailConfiguration.getApiTokenRestricted())
+        passwordMatches(remote.getCredentialsProvider() as UsernamePasswordCredentialsProvider, dummyConfiguration.getApiTokenRestricted())
     }
 
 
@@ -255,144 +224,96 @@ class GitHubRemoteTest extends Specification {
         thrown GitRemoteException
     }
 
+
     def "delete repo without confirmation throws GitRemoteException"() {
         given:
-        remote = new GitHubRemote(scratchConfiguration, gitHubProvider, remoteRequest)
+        Repos repos = Mock(Repos)
+        Github gitHub1 = Mock(Github)
+        gitHub1.repos() >> repos
+        gitHubProvider.get(dummyConfiguration, RESTRICTED) >> gitHub1
+        remote = new GitHubRemote(dummyConfiguration, gitHubProvider, remoteRequest)
 
         when:
         remote.deleteRepo()
 
         then:
-        0 * gitHub.getRepository(_)
+        0 * gitHub1.repos()
         thrown GitRemoteException
     }
 
     def "delete repo"() {
         given:
         dummyConfiguration.confirmRemoteDelete("I really, really want to delete the davidsowerby/dummy repo from GitHub")
+        gitHubProvider.get(dummyConfiguration, DELETE_REPO) >> gitHub
         remote = new GitHubRemote(dummyConfiguration, gitHubProvider, remoteRequest)
+        repo = gitHub.repos().get(dummyCoordinates) // make sure set up is correct
 
         when:
         remote.deleteRepo()
+        repo = gitHub.repos().get(dummyCoordinates) // cause exception
 
         then:
-        1 * gitHubProvider.get(dummyConfiguration, DELETE_REPO) >> gitHub
-        1 * gitHub.getRepository('davidsowerby/dummy') >> repo
-        1 * repo.delete()
-    }
+        thrown IllegalArgumentException
 
+    }
 
     def "create repo remote throws exception"() {
         given:
-        dummyConfiguration.publicProject(true).remoteRepoFullName('davidsowerby/dummy')
+        Repos repos = Mock(Repos)
+        repos.create(_) >> { throw new IOException() }
+        Github gitHub1 = Mock(Github)
+        gitHub1.repos() >> repos
+        gitHubProvider.get(dummyConfiguration, CREATE_REPO) >> gitHub1
+
+        dummyConfiguration.publicProject(true)
         remote = new GitHubRemote(dummyConfiguration, gitHubProvider, remoteRequest)
 
         when:
         remote.createRepo()
 
         then:
-        1 * gitHubProvider.get(dummyConfiguration, CREATE_REPO) >> gitHub
-        1 * gitHub.createRepository('dummy', '', null, true) >> { throw new IOException() }
         thrown GitRemoteException
     }
 
+
     def "create repo successful"() {
         given:
+        gitHubProvider.get(dummyConfiguration, CREATE_REPO) >> gitHub
         remote = new GitHubRemote(dummyConfiguration, gitHubProvider, remoteRequest)
 
         when:
         remote.createRepo()
 
         then:
-        1 * gitHubProvider.get(dummyConfiguration, CREATE_REPO) >> gitHub
-        1 * gitHub.createRepository('dummy', '', null, false) >> repo
+        gitHub.repos().get(dummyCoordinates) != null
     }
 
 
-    def "list repos for this user"() {
+    def "get urls"() {
         given:
-        gitHubProvider.get(krailConfiguration, RESTRICTED) >> gitHub
-        remote = new GitHubRemote(krailConfiguration, gitHubProvider, remoteRequest)
-        GHMyself ghMyself = Mock(GHMyself)
-        GHRepository ghRepository1 = Mock(GHRepository)
-        GHRepository ghRepository2 = Mock(GHRepository)
-        Map<String, GHRepository> repos = ImmutableMap.of('repo1', ghRepository1, 'repo2', ghRepository2)
-
-        when:
-        Set<String> result = remote.listRepositoryNames()
-
-        then:
-        1 * gitHub.getMyself() >> ghMyself
-        1 * ghMyself.getRepositories() >> repos
-        result.containsAll(ImmutableList.of('repo1', 'repo2'))
-        result.size() == 2
-    }
-
-    def "get tag url"() {
-        given:
-        gitHubProvider.get(krailConfiguration, RESTRICTED) >> gitHub
-        remote = new GitHubRemote(krailConfiguration, gitHubProvider, remoteRequest)
-        URL url = new URL("https://github.com/davidsowerby/krail")
-
-        when:
-        String result = remote.getTagUrl()
-
-        then:
-        1 * gitHub.getRepository('davidsowerby/krail') >> repo
-        1 * repo.getHtmlUrl() >> url
-        result.equals("https://github.com/davidsowerby/krail/tree")
-
-    }
-
-    def "get http url and clone url"() {
-        given:
-        gitHubProvider.get(krailConfiguration, RESTRICTED) >> gitHub
-        remote = new GitHubRemote(krailConfiguration, gitHubProvider, remoteRequest)
-        URL url = new URL("https://github.com/davidsowerby/krail")
-
-        when:
-        String htmlUrl = remote.getHtmlUrl()
-        String cloneUrl = remote.getCloneUrl()
-
-        then:
-        2 * gitHub.getRepository('davidsowerby/krail') >> repo
-        2 * repo.getHtmlUrl() >> url
-        htmlUrl.equals("https://github.com/davidsowerby/krail")
-        cloneUrl.equals("https://github.com/davidsowerby/krail.git")
-    }
-
-    def "getGitHub new instance if previously different tokenScope"() {
-        given:
-        GHRepository repo1 = Mock(GHRepository)
-        GHRepository repo2 = Mock(GHRepository)
-        GHRepository repo3 = Mock(GHRepository)
-        GHRepository repo4 = Mock(GHRepository)
-        GitHub gitHub1 = Mock(GitHub)
-        GitHub gitHub2 = Mock(GitHub)
-        GitHub gitHub3 = Mock(GitHub)
-        GitHub gitHub4 = Mock(GitHub)
-        final String fullRepoName = 'davidsowerby/dummy'
-        gitHub1.getRepository(fullRepoName) >> repo1
-        gitHub2.getRepository(fullRepoName) >> repo2
-        gitHub3.getRepository(fullRepoName) >> repo3
-        gitHub4.getRepository(fullRepoName) >> repo4
-
-        gitHubProvider.get(dummyConfiguration, RESTRICTED) >>> [gitHub1, gitHub2]
-        gitHubProvider.get(dummyConfiguration, CREATE_REPO) >> gitHub3
-        gitHubProvider.get(dummyConfiguration, DELETE_REPO) >> gitHub4
+        dummyConfiguration.validate()
+        gitHubProvider.get(dummyConfiguration, RESTRICTED) >> gitHub
         remote = new GitHubRemote(dummyConfiguration, gitHubProvider, remoteRequest)
 
-        when:
-        GHRepository call1 = remote.getRepo(RESTRICTED)
-        GHRepository call2 = remote.getRepo(RESTRICTED)
-        GHRepository call3 = remote.getRepo(CREATE_REPO)
-        GHRepository call4 = remote.getRepo(DELETE_REPO)
+        expect:
+        remote.getTagUrl().equals("https://github.com/davidsowerby/dummy/tree")
+        remote.getCloneUrl().equals("https://github.com/davidsowerby/dummy.git")
+        remote.getHtmlUrl().equals("https://github.com/davidsowerby/dummy")
 
-        then:
-        call1 == call2
-        call3 != call2
-        call4 != call3
     }
+
+    def "listRepoNames"() {
+        given:
+        dummyConfiguration.validate()
+        createSomeRepos()
+        gitHubProvider.get(dummyConfiguration, RESTRICTED) >> gitHub
+        remote = new GitHubRemote(dummyConfiguration, gitHubProvider, remoteRequest)
+
+        expect:
+        remote.listRepositoryNames().containsAll(ImmutableList.of('krail', 'krail-jpa', 'scratch', 'dummy'))
+        remote.listRepositoryNames().size() == 4
+    }
+
 
 
     boolean passwordMatches(UsernamePasswordCredentialsProvider credentialsProvider, String apiToken) {
@@ -401,14 +322,13 @@ class GitHubRemoteTest extends Specification {
         return apiToken.equals(username.getValue())
     }
 
-    boolean containsLabel(Collection<GHLabel> ghLabels, String labelName) {
-        for (GHLabel label : ghLabels) {
-            if (label.name.equals(labelName)) {
-                return true
-            }
+    private void createSomeRepos() {
+        List<String> repoNames = ImmutableList.of('krail', 'krail-jpa', 'scratch')
+        for (String repoName : repoNames) {
+            Repos.RepoCreate repoCreate = new Repos.RepoCreate(repoName, false)
+            repo = gitHub.repos().create(repoCreate)
         }
-        return false
-    }
 
+    }
 
 }

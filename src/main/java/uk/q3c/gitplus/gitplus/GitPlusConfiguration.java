@@ -25,7 +25,6 @@ public class GitPlusConfiguration {
     private boolean cloneRemoteRepo;
     private String projectName;
     private boolean createProject;
-    private String remoteRepoFullName;
     private File projectDirParent;
     private ProjectCreator projectCreator;
     private GitRemoteFactory gitRemoteFactory;
@@ -41,10 +40,13 @@ public class GitPlusConfiguration {
     private RemoteRepoDeleteApprover repoDeleteApprover;
     private String taggerName;
     private String taggerEmail;
+    private String remoteRepoUser;
+    private String remoteRepoName;
 
     public GitPlusConfiguration() {
         //required
     }
+
     public GitPlusConfiguration(@Nonnull GitPlusConfiguration other) {
         checkNotNull(other);
         this.projectDir = other.projectDir;
@@ -53,7 +55,8 @@ public class GitPlusConfiguration {
         this.cloneRemoteRepo = other.cloneRemoteRepo;
         this.projectName = other.projectName;
         this.createProject = other.createProject;
-        this.remoteRepoFullName = other.remoteRepoFullName;
+        this.remoteRepoName = other.remoteRepoName;
+        this.remoteRepoUser = other.remoteRepoUser;
         this.projectDirParent = other.projectDirParent;
         this.projectCreator = other.projectCreator;
         this.gitRemoteFactory = other.gitRemoteFactory;
@@ -69,6 +72,25 @@ public class GitPlusConfiguration {
         this.cloneUrl = other.cloneUrl;
         this.taggerName = other.taggerName;
         this.taggerEmail = other.taggerEmail;
+
+    }
+
+    public GitPlusConfiguration remoteRepoName(final String remoteRepoName) {
+        this.remoteRepoName = remoteRepoName;
+        return this;
+    }
+
+    public GitPlusConfiguration remoteRepoUser(final String remoteRepoUser) {
+        this.remoteRepoUser = remoteRepoUser;
+        return this;
+    }
+
+    public String getRemoteRepoUser() {
+        return remoteRepoUser;
+    }
+
+    public String getRemoteRepoName() {
+        return remoteRepoName;
     }
 
     public String getTaggerName() throws IOException {
@@ -104,15 +126,6 @@ public class GitPlusConfiguration {
     }
 
 
-    public String getRemoteRepoFullName() {
-        return remoteRepoFullName;
-    }
-
-    public GitPlusConfiguration remoteRepoFullName(final String remoteRepoFullName) {
-        this.remoteRepoFullName = remoteRepoFullName;
-        return this;
-    }
-
     public GitRemoteFactory getGitRemoteFactory() {
         if (gitRemoteFactory == null) {
             gitRemoteFactory = new DefaultGitRemoteFactory();
@@ -145,7 +158,7 @@ public class GitPlusConfiguration {
             throw new GitPlusConfigurationException("gitRemoteFactory has not been set, have you forgotten to call validate()?");
         }
         if (remoteRepoHtmlUrl == null) {
-            remoteRepoHtmlUrl = gitRemoteFactory.htmlUrlFromFullRepoName(remoteRepoFullName);
+            remoteRepoHtmlUrl = gitRemoteFactory.htmlUrlFromRepoName(remoteRepoUser, remoteRepoName);
         }
         return remoteRepoHtmlUrl;
     }
@@ -173,8 +186,9 @@ public class GitPlusConfiguration {
 
     public String getProjectName() {
         if (projectName == null) {
-            if (remoteRepoFullName != null) {
-                projectName = remoteRepoFullName.split("/")[1];
+            projectName = remoteRepoName;
+            if (projectName == null) {
+                throw new GitPlusConfigurationException("projectName cannot be null.  It can be set directly or it will use remoteRepoName");
             }
         }
         return projectName;
@@ -198,7 +212,7 @@ public class GitPlusConfiguration {
         checkProjectDir();
 
         if (createLocalRepo) {
-            exceptionIfNull("createLocalRepo", "projectName", projectName);
+            exceptionIfNull("createLocalRepo", "projectName", getProjectName());
         }
     }
 
@@ -213,8 +227,9 @@ public class GitPlusConfiguration {
         }
 
         if (createRemoteRepo || cloneRemoteRepo) {
-            exceptionIfNull("createRemoteRepo OR cloneRemoteRepo", "remoteRepoFullName", remoteRepoFullName);
-            remoteRepoHtmlUrl = gitRemoteFactory.htmlUrlFromFullRepoName(remoteRepoFullName);
+            exceptionIfNull("createRemoteRepo OR cloneRemoteRepo", "remoteRepoUser", remoteRepoUser);
+            exceptionIfNull("createRemoteRepo OR cloneRemoteRepo", "remoteRepoName", remoteRepoName);
+            remoteRepoHtmlUrl = gitRemoteFactory.htmlUrlFromRepoName(remoteRepoUser, remoteRepoName);
         }
     }
 
@@ -225,9 +240,8 @@ public class GitPlusConfiguration {
                 projectDirParent = new File(".");
             }
             if (projectName == null) {
-                if (remoteRepoFullName != null) {
-                    projectName = gitRemoteFactory.projectNameFromFullRepoName(remoteRepoFullName);
-                } else {
+                projectName = remoteRepoName;
+                if (projectName == null) {
                     throw new GitPlusConfigurationException("If projectDir is null, projectName cannot be null");
                 }
             }
@@ -396,7 +410,11 @@ public class GitPlusConfiguration {
             return false;
         }
 
-        if (remoteRepoFullName != null ? !remoteRepoFullName.equals(that.remoteRepoFullName) : that.remoteRepoFullName != null) {
+        if (remoteRepoName != null ? !remoteRepoName.equals(that.remoteRepoName) : that.remoteRepoName != null) {
+            return false;
+        }
+
+        if (remoteRepoUser != null ? !remoteRepoUser.equals(that.remoteRepoUser) : that.remoteRepoUser != null) {
             return false;
         }
         if (projectDirParent != null ? !projectDirParent.equals(that.projectDirParent) : that.projectDirParent != null) {
@@ -434,7 +452,8 @@ public class GitPlusConfiguration {
         result = 31 * result + (taggerName != null ? taggerName.hashCode() : 0);
         result = 31 * result + (taggerEmail != null ? taggerEmail.hashCode() : 0);
         result = 31 * result + (createProject ? 1 : 0);
-        result = 31 * result + (remoteRepoFullName != null ? remoteRepoFullName.hashCode() : 0);
+        result = 31 * result + (remoteRepoUser != null ? remoteRepoUser.hashCode() : 0);
+        result = 31 * result + (remoteRepoName != null ? remoteRepoName.hashCode() : 0);
         result = 31 * result + (projectDirParent != null ? projectDirParent.hashCode() : 0);
         result = 31 * result + (projectCreator != null ? projectCreator.hashCode() : 0);
         result = 31 * result + (gitRemoteFactory != null ? gitRemoteFactory.hashCode() : 0);
@@ -493,6 +512,24 @@ public class GitPlusConfiguration {
 
     public GitPlusConfiguration taggerName(final String taggerName) {
         this.taggerName = taggerName;
+        return this;
+    }
+
+
+    public String getRemoteRepoFullName() {
+        if (remoteRepoUser == null || remoteRepoName == null) {
+            return null;
+        }
+        return remoteRepoUser + "/" + remoteRepoName;
+    }
+
+    public GitPlusConfiguration remoteRepoFullName(String fullRepoName) {
+        String[] splitRepoName = fullRepoName.split("/");
+        if (splitRepoName.length != 2) {
+            throw new GitPlusConfigurationException("Structure of full repo name is invalid, '" + fullRepoName + "', it must be of the form 'user/repo'");
+        }
+        remoteRepoUser = splitRepoName[0];
+        remoteRepoName = splitRepoName[1];
         return this;
     }
 }

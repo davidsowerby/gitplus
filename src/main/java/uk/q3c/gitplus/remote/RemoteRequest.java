@@ -21,5 +21,4 @@ public class RemoteRequest {
         return response.as(JsonResponse.class)
                        .json();
     }
-
 }

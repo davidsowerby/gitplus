@@ -25,17 +25,16 @@ public interface GitRemoteFactory {
 
     String htmlUrlStem();
 
-    String htmlUrlFromFullRepoName(@Nonnull String fullRepoName);
+    String htmlUrlFromRepoName(@Nonnull String remoteRepoUser, @Nonnull String remoteRepoName);
 
-    String htmlTagUrlFromFullRepoName(@Nonnull String fullRepoName);
+
+    String htmlTagUrlFromFullRepoName(@Nonnull String remoteRepoUser, @Nonnull String remoteRepoName);
 
     String apiUrlStem();
 
-    String cloneUrlFromFullRepoName(@Nonnull String fullRepoName);
 
     String fullRepoNameFromHtmlUrl(@Nonnull String htmlUrl);
 
-    String projectNameFromFullRepoName(@Nonnull String remoteRepoFullName);
 
     String fullRepoNameFromCloneUrl(@Nonnull String origin);
 

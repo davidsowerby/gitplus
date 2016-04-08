@@ -11,8 +11,8 @@ import uk.q3c.gitplus.gitplus.GitPlus
 import uk.q3c.gitplus.local.GitCommit
 import uk.q3c.gitplus.local.GitLocal
 import uk.q3c.gitplus.local.Tag
+import uk.q3c.gitplus.remote.GPIssue
 import uk.q3c.gitplus.remote.GitRemote
-import uk.q3c.gitplus.remote.Issue
 import uk.q3c.util.testutil.FileTestUtil
 
 import java.nio.file.Paths
@@ -38,7 +38,7 @@ class ChangeLogTest extends Specification {
     GitLocal wikiLocal = Mock(GitLocal)
     List<Tag> tags
     List<GitCommit> commits
-    List<Issue> issues
+    List<GPIssue> issues
     List<Set<String>> labels
     GitRemote gitRemote = Mock(GitRemote)
     final String projectFolderName = 'project'
@@ -273,7 +273,7 @@ class ChangeLogTest extends Specification {
             commit.getShortMessage() >> 'commit ' + i + ' short message'
             commit.getCommitDate() >> startCommitDate.plusDays(i)
             commit.getCommitter() >> personIdent
-            List<Issue> issueReferences = new ArrayList<>()
+            List<GPIssue> issueReferences = new ArrayList<>()
             for (int j = 0; j < numberOfIssuesToAssign.get(i); j++) {
                 issueReferences.add(issues.get(issueIndex))
                 issueIndex++
@@ -348,7 +348,7 @@ class ChangeLogTest extends Specification {
         labels = createLabels()
         issues = new ArrayList<>()
         for (int i = 0; i < 20; i++) {
-            Issue issue = new Issue(i)
+            GPIssue issue = new GPIssue(i)
             issue.title("issue " + i)
                     .labels(labels.get(i))
                     .htmlUrl("https:/github.com/davidsowerby/dummy/issues/" + i)

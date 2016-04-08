@@ -5,11 +5,10 @@ import org.apache.commons.lang3.text.StrMatcher;
 import org.apache.commons.lang3.text.StrTokenizer;
 import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.revwalk.RevCommit;
-import org.kohsuke.github.GHIssue;
 import org.slf4j.Logger;
 import uk.q3c.gitplus.changelog.ChangeLogConfiguration;
+import uk.q3c.gitplus.remote.GPIssue;
 import uk.q3c.gitplus.remote.GitRemote;
-import uk.q3c.gitplus.remote.Issue;
 
 import javax.annotation.Nonnull;
 import java.time.ZonedDateTime;
@@ -30,7 +29,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class GitCommit {
     private static final String TOKEN_SPLIT_CHARS = " \t\n\r\f,.:;*?`![]'";
     private static Logger log = getLogger(GitCommit.class);
-    private final List<Issue> fixReferences;
+    private final List<GPIssue> fixReferences;
 
     private String fullMessage;
     private String shortMessage;
@@ -82,7 +81,7 @@ public class GitCommit {
         return shortMessage;
     }
 
-    public List<Issue> getIssueReferences() {
+    public List<GPIssue> getIssueReferences() {
         return fixReferences;
     }
 
@@ -131,7 +130,7 @@ public class GitCommit {
         if (s.length != 2) {
             return currentToken;
         }
-        String repoName = s[0];
+        String fullRepoName = s[0];
         String issueNumberStr = s[1];
 
         int issueNumber;
@@ -142,29 +141,36 @@ public class GitCommit {
             return currentToken;
         }
 
-        return captureFixesAndExpandReference(gitRemote, repoName, issueNumber, previousToken, currentToken);
+        return captureFixesAndExpandReference(gitRemote, fullRepoName, issueNumber, previousToken, currentToken);
 
     }
 
-    private String captureFixesAndExpandReference(GitRemote gitRemote, String repoName, int issueNumber, String previousToken, String
+    private String captureFixesAndExpandReference(GitRemote gitRemote, String fullRepoName, int issueNumber, String previousToken, String
             currentToken) {
+        GPIssue gpIssue;
         try {
-            Issue issue = gitRemote.getIssue(repoName, issueNumber);
+            if (fullRepoName == null || fullRepoName.isEmpty()) {
+                gpIssue = gitRemote.getIssue(issueNumber);
+            } else {
+                String[] splitRepoName = fullRepoName.split("/");
+                gpIssue = gitRemote.getIssue(splitRepoName[0], splitRepoName[1], issueNumber);
+            }
+
             //remove issue reference from short message
             shortMessage = shortMessage.replaceFirst(previousToken + " " + currentToken, "");
             shortMessage = StringUtils.stripStart(shortMessage, TOKEN_SPLIT_CHARS);
             if (gitRemote.isIssueFixWord(previousToken)) {
-                fixReferences.add(issue);
+                fixReferences.add(gpIssue);
             }
-            return expandedIssue(issue);
+            return expandedIssue(gpIssue);
         } catch (Exception e) {
-            log.warn("Issue {} not found in repo {}", issueNumber, repoName, e);
+            log.warn("Issue {} not found in repo {}", issueNumber, fullRepoName, e);
             return currentToken;
         }
     }
 
-    private String expandedIssue(Issue issue) {
-        return "[" + issue.getNumber() + "](" + issue.getHtmlUrl() + ")";
+    private String expandedIssue(GPIssue gpIssue) {
+        return "[" + gpIssue.getNumber() + "](" + gpIssue.getHtmlUrl() + ")";
     }
 
     @Override

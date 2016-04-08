@@ -1,7 +1,6 @@
 package uk.q3c.gitplus.remote;
 
 import uk.q3c.gitplus.gitplus.GitPlusConfiguration;
-import uk.q3c.gitplus.gitplus.GitPlusConfigurationException;
 import uk.q3c.gitplus.remote.GitRemote.ServiceProvider;
 
 import javax.annotation.Nonnull;
@@ -40,15 +39,15 @@ public class DefaultGitRemoteFactory implements GitRemoteFactory {
     }
 
     @Override
-    public String htmlUrlFromFullRepoName(@Nonnull String fullRepoName) {
-        checkNotNull(fullRepoName);
-        return htmlUrlStem() + '/' + fullRepoName;
+    public String htmlUrlFromRepoName(@Nonnull String remoteRepoUser, @Nonnull String remoteRepoName) {
+        checkNotNull(remoteRepoName);
+        checkNotNull(remoteRepoUser);
+        return htmlUrlStem() + '/' + remoteRepoUser + '/' + remoteRepoName;
     }
 
     @Override
-    public String htmlTagUrlFromFullRepoName(@Nonnull String fullRepoName) {
-        checkNotNull(fullRepoName);
-        return htmlUrlFromFullRepoName(fullRepoName) + "/tree";
+    public String htmlTagUrlFromFullRepoName(@Nonnull String remoteRepoUser, @Nonnull String remoteRepoName) {
+        return htmlUrlFromRepoName(remoteRepoUser, remoteRepoName) + "/tree";
     }
 
     @Override
@@ -56,24 +55,11 @@ public class DefaultGitRemoteFactory implements GitRemoteFactory {
         return "https://api.github.com";
     }
 
-    @Override
-    public String cloneUrlFromFullRepoName(@Nonnull String fullRepoName) {
-        checkNotNull(fullRepoName);
-        return htmlUrlStem() + '/' + fullRepoName + ".git";
-    }
 
     @Override
     public String fullRepoNameFromHtmlUrl(@Nonnull String htmlUrl) {
         checkNotNull(htmlUrl);
         return htmlUrl.replaceFirst(htmlUrlStem() + '/', "");
-    }
-
-    @Override
-    public String projectNameFromFullRepoName(@Nonnull String remoteRepoFullName) {
-        if (!remoteRepoFullName.contains("/")) {
-            throw new GitPlusConfigurationException("Repo full name must be of the form 'owner/repo' ");
-        }
-        return remoteRepoFullName.split("/")[1];
     }
 
     @Override

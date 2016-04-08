@@ -4,8 +4,8 @@ import org.eclipse.jgit.lib.PersonIdent
 import org.eclipse.jgit.revwalk.RevCommit
 import spock.lang.Specification
 import uk.q3c.gitplus.local.GitCommit
+import uk.q3c.gitplus.remote.GPIssue
 import uk.q3c.gitplus.remote.GitRemote
-import uk.q3c.gitplus.remote.Issue
 
 /**
  * Created by David Sowerby on 09 Mar 2016
@@ -13,29 +13,30 @@ import uk.q3c.gitplus.remote.Issue
 class GitCommitTest extends Specification {
 
     GitRemote remote = Mock(GitRemote)
-    Issue issue1 = Mock(Issue)
-    Issue issue2 = Mock(Issue)
-    Issue issue3 = Mock(Issue)
-    Issue issue18 = Mock(Issue)
+    GPIssue issue1 = Mock(GPIssue)
+    GPIssue issue2 = Mock(GPIssue)
+    GPIssue issue3 = Mock(GPIssue)
+    GPIssue issue18 = Mock(GPIssue)
     RevCommit revCommit = Mock(RevCommit)
     final String fullMessage = 'full message'
+    final String USER = 'davidsowerby'
 
     def setup() {
-        String repoName = 'davidsowerby/scratch'
-        String otherRepoName = 'davidsowerby/other'
+        String repoName = 'scratch'
+        String otherRepoName = 'other'
         String issuesUrl = "https://github.com/davidsowerby/scratch/issues"
         String otherIssuesUrl = "https://api.github.com/davidsowerby/other/issues"
         remote.getRepoName() >> repoName
-        remote.getIssue(repoName, 1) >> issue1
-        remote.getIssue("", 1) >> issue1
-        remote.getIssue(repoName, 2) >> issue2
-        remote.getIssue("", 2) >> issue2
-        remote.getIssue(repoName, 3) >> issue3
-        remote.getIssue("", 3) >> issue3
-        remote.getIssue(repoName, 99) >> { throw (new IOException()) }
-        remote.getIssue("", 99) >> { throw (new IOException()) }
+        remote.getIssue(USER, repoName, 1) >> issue1
+        remote.getIssue(1) >> issue1
+        remote.getIssue(USER, repoName, 2) >> issue2
+        remote.getIssue(2) >> issue2
+        remote.getIssue(USER, repoName, 3) >> issue3
+        remote.getIssue(3) >> issue3
+        remote.getIssue(USER, repoName, 99) >> { throw (new IOException()) }
+        remote.getIssue(99) >> { throw (new IOException()) }
 
-        remote.getIssue(otherRepoName, 18) >> issue18
+        remote.getIssue(USER, otherRepoName, 18) >> issue18
 
         remote.isIssueFixWord('fix') >> true
         remote.isIssueFixWord('Fix') >> true

@@ -1,6 +1,6 @@
 package uk.q3c.gitplus.remote
 
-import org.kohsuke.github.GitHub
+import com.jcabi.github.RtGithub
 import spock.lang.Specification
 import uk.q3c.gitplus.gitplus.GitPlusConfiguration
 /**
@@ -13,9 +13,9 @@ class GitHubServiceProviderTest extends Specification {
         GitPlusConfiguration dummyConfiguration = new GitPlusConfiguration()
 
         expect:
-        new GitHubProvider().get(dummyConfiguration, GitRemote.TokenScope.RESTRICTED) instanceof GitHub
-        new GitHubProvider().get(dummyConfiguration, GitRemote.TokenScope.CREATE_REPO) instanceof GitHub
-        new GitHubProvider().get(dummyConfiguration, GitRemote.TokenScope.DELETE_REPO) instanceof GitHub
+        new GitHubProvider().get(dummyConfiguration, GitRemote.TokenScope.RESTRICTED) instanceof RtGithub
+        new GitHubProvider().get(dummyConfiguration, GitRemote.TokenScope.CREATE_REPO) instanceof RtGithub
+        new GitHubProvider().get(dummyConfiguration, GitRemote.TokenScope.DELETE_REPO) instanceof RtGithub
 
     }
 }

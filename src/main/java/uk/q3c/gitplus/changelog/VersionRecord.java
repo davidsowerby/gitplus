@@ -4,8 +4,8 @@ import org.eclipse.jgit.lib.PersonIdent;
 import org.slf4j.Logger;
 import uk.q3c.gitplus.local.GitCommit;
 import uk.q3c.gitplus.local.Tag;
+import uk.q3c.gitplus.remote.GPIssue;
 import uk.q3c.gitplus.remote.GitRemote;
-import uk.q3c.gitplus.remote.Issue;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
@@ -25,9 +25,9 @@ public class VersionRecord {
     private final ChangeLogConfiguration changeLogConfiguration;
     private List<GitCommit> commits;
     private List<GitCommit> excludedCommits;
-    private Map<String, Set<Issue>> fixesByGroup;
+    private Map<String, Set<GPIssue>> fixesByGroup;
     private Map<String, String> labelLookup;
-    private Set<Issue> pullRequests;
+    private Set<GPIssue> pullRequests;
     public VersionRecord(@Nonnull Tag tag, @Nonnull ChangeLogConfiguration changeLogConfiguration) {
         checkNotNull(tag);
         checkNotNull(changeLogConfiguration);
@@ -65,7 +65,7 @@ public class VersionRecord {
         });
     }
 
-    public Map<String, Set<Issue>> getFixesByGroup() {
+    public Map<String, Set<GPIssue>> getFixesByGroup() {
         return fixesByGroup;
     }
 
@@ -151,14 +151,14 @@ public class VersionRecord {
     /**
      * Using the labels on an issue, attach the issue to any group for which it has a label
      */
-    private void mapIssueToGroups(Issue issue) {
-        issue.getLabels()
-             .forEach(l -> {
+    private void mapIssueToGroups(GPIssue GPIssue) {
+        GPIssue.getLabels()
+               .forEach(l -> {
                  String group = labelLookup.get(l);
                  //if label in a group, add it, otherwise ignore
                  if (group != null) {
                      fixesByGroup.get(group)
-                                 .add(issue);
+                                 .add(GPIssue);
                  }
              });
     }
@@ -189,7 +189,7 @@ public class VersionRecord {
         return tag.getTaggerIdent();
     }
 
-    public Set<Issue> getPullRequests() {
+    public Set<GPIssue> getPullRequests() {
         return pullRequests;
     }
 

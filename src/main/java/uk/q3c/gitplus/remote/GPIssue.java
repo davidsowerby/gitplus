@@ -1,6 +1,7 @@
 package uk.q3c.gitplus.remote;
 
-import org.kohsuke.github.GHIssue;
+import com.jcabi.github.Issue;
+import com.jcabi.github.IssueLabels;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
@@ -10,11 +11,12 @@ import java.util.Set;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * A non-remote specific Issue - it does not carry everytihng a 'native' issue does, but could be extended if need arises
+ * A generic Issue (one that is not specific to a remote provider) - it does not carry everything the 'native' issue does, just what is required for the
+ * GitPlus build and changelog functions.
  * <p>
  * Created by David Sowerby on 22 Mar 2016
  */
-public class Issue implements Comparable<Issue> {
+public class GPIssue implements Comparable<GPIssue> {
 
     private String title;
     private Set<String> labels = new HashSet<>();
@@ -23,23 +25,26 @@ public class Issue implements Comparable<Issue> {
     private String htmlUrl;
     private boolean pullRequest;
 
-    public Issue(@Nonnull GHIssue ghIssue) throws IOException {
-        checkNotNull(ghIssue);
-        title = ghIssue.getTitle();
-        ghIssue.getLabels()
-               .forEach(l -> labels.add(l.getName()));
-        body = ghIssue.getBody();
-        number = ghIssue.getNumber();
-        htmlUrl = ghIssue.getHtmlUrl()
+    public GPIssue(@Nonnull Issue jIssue) throws IOException {
+        checkNotNull(jIssue);
+        Issue.Smart jsIssue = new Issue.Smart(jIssue);
+
+        title = jsIssue.title();
+        IssueLabels.Smart jLabels = new IssueLabels.Smart(jsIssue.labels());
+        jLabels.iterate()
+               .forEach(l -> this.labels.add(l.name()));
+        body = jsIssue.body();
+        number = jsIssue.number();
+        htmlUrl = jsIssue.htmlUrl()
                          .toExternalForm();
-        pullRequest = ghIssue.isPullRequest();
+        pullRequest = jsIssue.isPull();
     }
 
-    public Issue(int number) {
+    public GPIssue(int number) {
         this.number = number;
     }
 
-    public Issue title(final String title) {
+    public GPIssue title(final String title) {
         this.title = title;
         return this;
     }
@@ -71,12 +76,12 @@ public class Issue implements Comparable<Issue> {
     }
 
 
-    public Issue labels(final Set<String> labels) {
+    public GPIssue labels(final Set<String> labels) {
         this.labels = labels;
         return this;
     }
 
-    public Issue body(final String body) {
+    public GPIssue body(final String body) {
         this.body = body;
         return this;
     }
@@ -90,12 +95,12 @@ public class Issue implements Comparable<Issue> {
             return false;
         }
 
-        Issue issue = (Issue) o;
+        GPIssue GPIssue = (GPIssue) o;
 
-        if (number != issue.number) {
+        if (number != GPIssue.number) {
             return false;
         }
-        return htmlUrl.equals(issue.htmlUrl);
+        return htmlUrl.equals(GPIssue.htmlUrl);
 
     }
 
@@ -107,18 +112,18 @@ public class Issue implements Comparable<Issue> {
     }
 
 
-    public Issue htmlUrl(final String htmlUrl) {
+    public GPIssue htmlUrl(final String htmlUrl) {
         this.htmlUrl = htmlUrl;
         return this;
     }
 
-    public Issue pullRequest(boolean pullRequest) {
+    public GPIssue pullRequest(boolean pullRequest) {
         this.pullRequest = pullRequest;
         return this;
     }
 
     @Override
-    public int compareTo(Issue o) {
+    public int compareTo(GPIssue o) {
         if (o == null) {
             return -1;
         }

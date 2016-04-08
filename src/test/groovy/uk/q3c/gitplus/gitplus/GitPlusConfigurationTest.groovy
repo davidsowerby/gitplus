@@ -417,8 +417,8 @@ class GitPlusConfigurationTest extends Specification {
         configuration1.hashCode() != configuration2.hashCode()
 
         when:
-        configuration1.projectDirParent(f1).remoteRepoFullName('a')
-        configuration2.projectDirParent(f1).remoteRepoFullName('b')
+        configuration1.projectDirParent(f1).remoteRepoFullName('a/b')
+        configuration2.projectDirParent(f1).remoteRepoFullName('b/b')
 
         then:
         !configuration1.equals(configuration2)
@@ -426,8 +426,8 @@ class GitPlusConfigurationTest extends Specification {
         !configuration1.getRemoteRepoFullName().equals(configuration2.getRemoteRepoFullName())
 
         when:
-        configuration1.remoteRepoFullName('a').projectName('a')
-        configuration2.remoteRepoFullName('a').projectName('b')
+        configuration1.remoteRepoFullName('a/b').projectName('a')
+        configuration2.remoteRepoFullName('a/b').projectName('b')
 
         then:
         !configuration1.equals(configuration2)
@@ -476,5 +476,46 @@ class GitPlusConfigurationTest extends Specification {
         config.getCloneUrl().equals(cloneUrl)
     }
 
+    def "getRemoteRepoFullName(), return null if either user or repoName null"() {
+        when:
+        String result = config.getRemoteRepoFullName()
 
+        then:
+        result == null
+
+        when:
+        config.remoteRepoName('repo')
+        result = config.getRemoteRepoFullName()
+
+        then:
+        result == null
+
+        when:
+        config.remoteRepoName(null).remoteRepoUser('me')
+        result = config.getRemoteRepoFullName()
+
+        then:
+        result == null
+
+    }
+
+    def "getRemoteRepoFullName() combines user and repoName"() {
+        given:
+        config.remoteRepoUser('me').remoteRepoName('repo')
+
+        expect:
+        config.getRemoteRepoFullName().equals('me/repo')
+    }
+
+    def "remoteRepoFullName(fullName) sets user and repoName"() {
+        given:
+        config.remoteRepoFullName('me/repo')
+
+        expect:
+        config.getRemoteRepoUser().equals('me')
+        config.getRemoteRepoName().equals('repo')
+        config.getRemoteRepoFullName().equals('me/repo')
+
+
+    }
 }

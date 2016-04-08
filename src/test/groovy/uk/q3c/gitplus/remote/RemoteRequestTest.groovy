@@ -5,7 +5,6 @@ import spock.lang.Specification
 import uk.q3c.gitplus.util.FileBuildPropertiesLoader
 
 import static uk.q3c.gitplus.remote.GitRemote.ServiceProvider.GITHUB
-
 /**
  * Created by David Sowerby on 26 Mar 2016
  */
@@ -18,4 +17,5 @@ class RemoteRequestTest extends Specification {
         expect:
         new RemoteRequest().request(Request.GET, GitHubRemote.STATUS_API_URL, apiToken) != null
     }
+
 }

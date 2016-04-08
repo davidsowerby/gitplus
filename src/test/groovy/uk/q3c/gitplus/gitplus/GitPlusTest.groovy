@@ -132,7 +132,6 @@ class GitPlusTest extends Specification {
         gitplus.createOrVerifyRepos()
 
         then:
-        1 * gitRemoteFactory.projectNameFromFullRepoName(remoteRepoName) >> 'scratch'
         1 * gitLocal.createLocalRepo()
         1 * projectCreator.execute(new File(temporaryFolder.getRoot(), "scratch"))
         1 * gitRemote.createRepo()
@@ -161,7 +160,6 @@ class GitPlusTest extends Specification {
         gitplus.createOrVerifyRepos()
 
         then:
-        1 * gitRemoteFactory.projectNameFromFullRepoName(remoteRepoName) >> 'scratch'
         1 * gitLocal.createLocalRepo()
         1 * projectCreator.execute(new File(temporaryFolder.getRoot(), "scratch"))
         1 * gitRemote.createRepo()
@@ -189,7 +187,6 @@ class GitPlusTest extends Specification {
         gitplus.createOrVerifyRepos()
 
         then:
-        1 * gitRemoteFactory.projectNameFromFullRepoName(remoteRepoName) >> 'scratch'
         1 * gitLocal.createLocalRepo()
         0 * projectCreator.execute(configuration.getProjectDir())
         1 * gitRemote.createRepo()

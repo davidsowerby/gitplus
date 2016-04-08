@@ -1,13 +1,10 @@
 package uk.q3c.gitplus.remote;
 
 import com.google.common.collect.ImmutableList;
+import com.jcabi.github.*;
 import com.jcabi.http.Request;
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
-import org.kohsuke.github.GHIssue;
-import org.kohsuke.github.GHIssueBuilder;
-import org.kohsuke.github.GHRepository;
-import org.kohsuke.github.GitHub;
 import org.slf4j.Logger;
 import uk.q3c.gitplus.gitplus.GitPlusConfiguration;
 
@@ -15,6 +12,7 @@ import javax.annotation.Nonnull;
 import javax.json.JsonReader;
 import java.io.IOException;
 import java.util.Set;
+import java.util.TreeSet;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -32,7 +30,7 @@ public class GitHubRemote implements GitRemote {
     private static Logger log = getLogger(GitHubRemote.class);
     private final RemoteRequest remoteRequest;
     private final GitHubProvider gitHubProvider;
-    private GitHub gitHub;
+    private Github gitHub;
     private GitPlusConfiguration configuration;
     private TokenScope currentTokenScope;
 
@@ -54,19 +52,22 @@ public class GitHubRemote implements GitRemote {
 
 
     @Override
-    public Issue getIssue(int issueNumber) {
-        return getIssue(configuration.getRemoteRepoFullName(), issueNumber);
+    public GPIssue getIssue(int issueNumber) {
+        return getIssue(configuration.getRemoteRepoUser(), configuration.getRemoteRepoName(), issueNumber);
     }
 
     @Override
-    public Issue getIssue(String repoName, int issueNumber) {
-        log.debug("Retrieving issue {} from {}", issueNumber, repoName);
+    public GPIssue getIssue(@Nonnull String remoteRepoUser, @Nonnull String remoteRepoName, int issueNumber) {
+        checkNotNull(remoteRepoName);
+        checkNotNull(remoteRepoUser);
+        log.debug("Retrieving issue {} from {}", issueNumber, remoteRepoName);
         try {
-            String rName = (repoName == null || repoName.isEmpty()) ? configuration.getRemoteRepoFullName() : repoName;
-            return new Issue(getGitHub(RESTRICTED).getRepository(rName)
-                                                  .getIssue(issueNumber));
+            Repo repo = getGitHub(RESTRICTED).repos()
+                                             .get(new Coordinates.Simple(remoteRepoUser, remoteRepoName));
+            return new GPIssue(repo.issues()
+                                   .get(issueNumber));
         } catch (Exception e) {
-            throw new GitRemoteException("Unable to retrieve issue " + issueNumber + " from " + repoName, e);
+            throw new GitRemoteException("Unable to retrieve issue " + issueNumber + " from " + remoteRepoName, e);
         }
     }
 
@@ -108,25 +109,22 @@ public class GitHubRemote implements GitRemote {
 
 
     @Override
-    public GHIssue createIssue(@Nonnull String issueTitle, @Nonnull String body, @Nonnull String... labels) throws
+    public GPIssue createIssue(@Nonnull String issueTitle, @Nonnull String body, @Nonnull String... labels) throws
             IOException {
         checkNotNull(issueTitle);
         checkNotNull(body);
         checkNotNull(labels);
-        GHIssueBuilder issueBuilder = getRepo(RESTRICTED).createIssue(issueTitle)
-                                                         .body(body)
-                                                         .assignee(getGitHub(RESTRICTED).getMyself());
+        final Issue issue = getRepo(RESTRICTED).issues()
+                                               .create(issueTitle, body);
 
-        for (String label : labels) {
-            issueBuilder.label(label);
-        }
-
-        return issueBuilder
-                .create();
-
+        final Issue.Smart jsIssue = new Issue.Smart(issue);
+        jsIssue.assign(configuration.getRemoteRepoUser());
+        jsIssue.labels()
+               .add(ImmutableList.copyOf(labels));
+        return new GPIssue(jsIssue);
     }
 
-    private GitHub getGitHub(TokenScope tokenScope) throws IOException {
+    private Github getGitHub(TokenScope tokenScope) throws IOException {
         if (gitHub == null || currentTokenScope != tokenScope) {
             this.gitHub = gitHubProvider.get(configuration, tokenScope);
             currentTokenScope = tokenScope;
@@ -135,20 +133,24 @@ public class GitHubRemote implements GitRemote {
     }
 
 
-    public GHRepository getRepo(TokenScope tokenScope) throws IOException {
-        return getGitHub(tokenScope).getRepository(configuration.getRemoteRepoFullName());
+    public Repo getRepo(TokenScope tokenScope) throws IOException {
+        Repos repos = getGitHub(tokenScope).repos();
+        return repos.get(new Coordinates.Simple(configuration.getRemoteRepoUser(), configuration.getRemoteRepoName()));
     }
 
     /**
-     * Creates the remote repo from the information in {@link #configuration}.  Note that the {@link GitHub#createRepository} methods called does not allow
-     * for any option to control creation of a wiki - it is always created, even if {@link #configuration} has useWiki set to false.
+     * Creates the remote repo from the information in {@link #configuration}.  Note that there is no setting
+     * for any option to control creation of a wiki - it is always created, even if {@link #configuration} has useWiki set to false.  That said, you still
+     * wll not be able to access the wiki via the API until you manually create the first page.
      */
     @Override
     public void createRepo() {
         try {
-            getGitHub(CREATE_REPO).createRepository(configuration.getProjectName(), configuration.getProjectDescription(), configuration
-                            .getProjectHomePage(),
-                    configuration.isPublicProject());
+            Repos.RepoCreate settings = new Repos.RepoCreate(configuration.getRemoteRepoName(), !configuration.isPublicProject());
+            settings.withDescription(configuration.getProjectDescription())
+                    .withHomepage(configuration.getProjectHomePage());
+            getGitHub(CREATE_REPO).repos()
+                                  .create(settings);
         } catch (Exception e) {
             throw new GitRemoteException("Unable to create Repo", e);
         }
@@ -159,7 +161,8 @@ public class GitHubRemote implements GitRemote {
     public void deleteRepo() {
         try {
             if (configuration.deleteRepoApproved()) {
-                getRepo(DELETE_REPO).delete();
+                getGitHub(DELETE_REPO).repos()
+                                      .remove(new Coordinates.Simple(configuration.getRemoteRepoUser(), configuration.getRemoteRepoName()));
             } else {
                 throw new GitRemoteException("Repo deletion not confirmed");
             }
@@ -170,15 +173,7 @@ public class GitHubRemote implements GitRemote {
 
     @Override
     public String getRepoName() {
-        return configuration.getRemoteRepoFullName();
-    }
-
-
-    @Override
-    public Set<String> listRepositoryNames() throws IOException {
-        return getGitHub(RESTRICTED).getMyself()
-                                    .getRepositories()
-                                    .keySet();
+        return configuration.getRemoteRepoName();
     }
 
     @Override
@@ -188,13 +183,25 @@ public class GitHubRemote implements GitRemote {
 
     @Override
     public String getHtmlUrl() throws IOException {
-        return getRepo(RESTRICTED).getHtmlUrl()
-                                  .toExternalForm();
+        return configuration.getRemoteRepoHtmlUrl();
     }
 
     @Override
     public String getCloneUrl() throws IOException {
         return getHtmlUrl() + ".git";
+    }
+
+    @Override
+    public Set<String> listRepositoryNames() throws IOException {
+        String qualifier = "user:" + getRepo(RESTRICTED).coordinates()
+                                                        .user();
+        Set<String> repoNames = new TreeSet<>();
+        final Iterable<Repo> repos = getGitHub(RESTRICTED).search()
+                                                          .repos(qualifier, "coordinates", Search.Order.ASC);
+        repos.iterator()
+             .forEachRemaining(r -> repoNames.add(r.coordinates()
+                                                   .repo()));
+        return repoNames;
     }
 
 }

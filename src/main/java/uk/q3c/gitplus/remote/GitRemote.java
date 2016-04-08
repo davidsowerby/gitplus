@@ -1,7 +1,6 @@
 package uk.q3c.gitplus.remote;
 
 import org.eclipse.jgit.transport.CredentialsProvider;
-import org.kohsuke.github.GHIssue;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
@@ -10,7 +9,7 @@ import java.util.Set;
 /**
  * Created by David Sowerby on 08 Mar 2016
  */
-public interface GitRemote {
+public interface GitRemote<ISSUE, LABEL> {
 
     enum ServiceProvider {GITHUB, BITBUCKET}
 
@@ -26,26 +25,27 @@ public interface GitRemote {
      * @return the issue for the given number
      * @throws GitRemoteException if the issue cannot be retrieved for any reason
      */
-    Issue getIssue(int issueNumber);
+    GPIssue getIssue(int issueNumber);
 
     /**
-     * Note that this returns a {@link GHIssue}, which is GitHub specific.  If other providers - BitBucket for example - are implemented, their issues will
-     * need to be mapped to {@link GHIssue} (or maybe do something smart with generics, but there would be no common interface).  If {@code repoName} is null
-     * or empty the current repo is assumed (which makes it the same as calling {@link #getIssue(int)}
+     * Note that this returns a {@link GPIssue}, which contains only a subset of the information available - this is intended for use with the changelog.  You
+     * can access the full issue implementation by accessing the underlying repository.  If {@code repoName} is null or empty the current repo is assumed
+     * (which makes it the same as calling {@link #getIssue(int)}
      *
-     * @param repoName    the repo to get the issue from
-     * @param issueNumber the issue number to get
+     * @param remoteRepoUser user name for the repo to get the issue from
+     * @param remoteRepoName repo name for the repo to get the issue from
+     * @param issueNumber    the issue number to get
      * @return the issue for the given number
      * @throws GitRemoteException if the issue cannot be retrieved for any reason
      */
-    Issue getIssue(String repoName, int issueNumber);
+    GPIssue getIssue(@Nonnull String remoteRepoUser, @Nonnull String remoteRepoName, int issueNumber);
 
     CredentialsProvider getCredentialsProvider();
 
     GitHubRemote.Status apiStatus();
 
 
-    GHIssue createIssue(@Nonnull String issueTitle, @Nonnull String body, @Nonnull String... labels) throws
+    GPIssue createIssue(@Nonnull String issueTitle, @Nonnull String body, @Nonnull String... labels) throws
             IOException;
 
     void createRepo() throws IOException;
@@ -53,14 +53,6 @@ public interface GitRemote {
     void deleteRepo() throws IOException;
 
     String getRepoName();
-
-    /**
-     * Lists the names of repositories belonging to this user
-     *
-     * @return the names of repositories belonging to this user
-     * @throws IOException
-     */
-    Set<String> listRepositoryNames() throws IOException;
 
     /**
      * Returns the base url for tags
@@ -78,4 +70,6 @@ public interface GitRemote {
     String getHtmlUrl() throws IOException;
 
     String getCloneUrl() throws IOException;
+
+    Set<String> listRepositoryNames() throws IOException;
 }

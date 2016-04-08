@@ -5,8 +5,8 @@ import org.eclipse.jgit.lib.PersonIdent
 import spock.lang.Specification
 import uk.q3c.gitplus.local.GitCommit
 import uk.q3c.gitplus.local.Tag
+import uk.q3c.gitplus.remote.GPIssue
 import uk.q3c.gitplus.remote.GitRemote
-import uk.q3c.gitplus.remote.Issue
 
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -124,17 +124,17 @@ class VersionRecordTest extends Specification {
                 .commit(rc1)
                 .taggerIdent(personIdent)
         final String msgNormalShort = 'Fix #1 Removed redundant call'
-        Issue issue1 = newIssue(1, 'Making unnecessary calls', 'bug')
+        GPIssue issue1 = newIssue(1, 'Making unnecessary calls', 'bug')
         record = new VersionRecord(tag, changeLogConfiguration)
         record.addCommit(new GitCommit(msgNormalShort))
         gitRemote.isIssueFixWord('Fix') >> true
 
         when:
         record.parse(gitRemote)
-        Map<String, Set<Issue>> fixes = record.getFixesByGroup()
+        Map<String, Set<GPIssue>> fixes = record.getFixesByGroup()
 
         then:
-        1 * gitRemote.getIssue('', 1) >> issue1
+        1 * gitRemote.getIssue(1) >> issue1
         fixes.size() == 1
     }
 
@@ -147,11 +147,11 @@ class VersionRecordTest extends Specification {
         changeLogConfiguration.getExclusionTags() >> ImmutableSet.of('javadoc')
         Tag tag = newTag("0.1")
 
-        Issue issue1 = newIssue(1, 'Making unnecessary calls', 'documentation')
-        Issue issue2 = newIssue(2, 'Making unnecessary calls', 'task')
-        Issue issue3 = newIssue(3, 'Making unnecessary calls', 'quality')
-        Issue issue4 = newIssue(4, 'Making unnecessary calls', 'quality').pullRequest(true)
-        Issue issue5 = newIssue(5, 'Making unnecessary calls', 'bug')
+        GPIssue issue1 = newIssue(1, 'Making unnecessary calls', 'documentation')
+        GPIssue issue2 = newIssue(2, 'Making unnecessary calls', 'task')
+        GPIssue issue3 = newIssue(3, 'Making unnecessary calls', 'quality')
+        GPIssue issue4 = newIssue(4, 'Making unnecessary calls', 'quality').pullRequest(true)
+        GPIssue issue5 = newIssue(5, 'Making unnecessary calls', 'bug')
 
         record = new VersionRecord(tag, changeLogConfiguration)
         addCommits(record, 5)
@@ -159,15 +159,15 @@ class VersionRecordTest extends Specification {
 
         when:
         record.parse(gitRemote)
-        Map<String, Set<Issue>> fixes = record.getFixesByGroup()
-        Set<Issue> pullRequests = record.getPullRequests();
+        Map<String, Set<GPIssue>> fixes = record.getFixesByGroup()
+        Set<GPIssue> pullRequests = record.getPullRequests();
 
         then:
-        1 * gitRemote.getIssue('', 1) >> issue1
-        1 * gitRemote.getIssue('', 2) >> issue2
-        1 * gitRemote.getIssue('', 3) >> issue3
-        1 * gitRemote.getIssue('', 4) >> issue4
-        2 * gitRemote.getIssue('', 5) >> issue5 // deliberately added twice to ensure output not duplicated
+        1 * gitRemote.getIssue(1) >> issue1
+        1 * gitRemote.getIssue(2) >> issue2
+        1 * gitRemote.getIssue(3) >> issue3
+        1 * gitRemote.getIssue(4) >> issue4
+        2 * gitRemote.getIssue(5) >> issue5 // deliberately added twice to ensure output not duplicated
         fixes.size() == 5
         assertThat(fixes.keySet()).containsExactly(ChangeLogConfiguration.DEFAULT_PULL_REQUESTS_TITLE, 'Fixes', 'Quality', 'Tasks', 'Documentation')
         assertThat(pullRequests).containsOnly(issue4)
@@ -231,7 +231,7 @@ class VersionRecordTest extends Specification {
 
     }
 
-    private Issue newIssue(int number, String title, String label) {
-        return new Issue(number).title(title).htmlUrl('https:/github.com/davidsowerby/dummy/issues/1').labels(ImmutableSet.of(label))
+    private GPIssue newIssue(int number, String title, String label) {
+        return new GPIssue(number).title(title).htmlUrl('https:/github.com/davidsowerby/dummy/issues/1').labels(ImmutableSet.of(label))
     }
 }

@@ -2,8 +2,6 @@ package uk.q3c.gitplus.remote
 
 import spock.lang.Specification
 import uk.q3c.gitplus.gitplus.GitPlusConfiguration
-import uk.q3c.gitplus.gitplus.GitPlusConfigurationException
-
 /**
  * Created by David Sowerby on 18 Mar 2016
  */
@@ -23,13 +21,14 @@ class DefaultGitRemoteFactoryTest extends Specification {
 
     def "Urls"() {
         given:
+        final String USER = 'davidsowerby'
         final String cloneUrl = 'https://github.com/davidsowerby/krail.git'
         final String htmlUrlStem = 'https://github.com'
         final String apiUrlStem = 'https://api.github.com'
         final String htmlUrl = 'https://github.com/davidsowerby/krail'
         final String htmlTagUrl = 'https://github.com/davidsowerby/krail/tree'
+        final String repoName = 'krail'
         final String fullRepoName = 'davidsowerby/krail'
-        final String projectName = 'krail'
         final String wikiHtmlUrl = 'https://github.com/davidsowerby/krail/wiki'
         final String wikiCloneUrl = 'https://github.com/davidsowerby/krail.wiki.git'
 
@@ -38,11 +37,9 @@ class DefaultGitRemoteFactoryTest extends Specification {
         expect:
         factory.htmlUrlStem().equals(htmlUrlStem)
         factory.apiUrlStem().equals(apiUrlStem)
-        factory.cloneUrlFromFullRepoName(fullRepoName).equals(cloneUrl)
-        factory.htmlUrlFromFullRepoName(fullRepoName).equals(htmlUrl)
-        factory.htmlTagUrlFromFullRepoName(fullRepoName).equals(htmlTagUrl)
-        factory.fullRepoNameFromHtmlUrl(fullRepoName).equals(fullRepoName)
-        factory.projectNameFromFullRepoName(fullRepoName).equals(projectName)
+        factory.htmlUrlFromRepoName(USER, repoName).equals(htmlUrl)
+        factory.htmlTagUrlFromFullRepoName(USER, repoName).equals(htmlTagUrl)
+        factory.fullRepoNameFromHtmlUrl(htmlUrl).equals(fullRepoName)
         factory.htmlUrlFromCloneUrl(cloneUrl).equals(htmlUrl)
         factory.fullRepoNameFromCloneUrl(cloneUrl).equals(fullRepoName)
         factory.wikiHtmlUrlFromCoreHtmlUrl(htmlUrl).equals(wikiHtmlUrl)
@@ -61,15 +58,5 @@ class DefaultGitRemoteFactoryTest extends Specification {
         factory.getRemoteServiceProvider() == GitRemote.ServiceProvider.GITHUB
     }
 
-    def "malformed full repo name throws NPE"() {
-        given:
-        GitRemoteFactory factory = new DefaultGitRemoteFactory()
-        String fullRepoName = 'davidsowerbykrail'
 
-        when:
-        factory.projectNameFromFullRepoName(fullRepoName)
-
-        then:
-        thrown GitPlusConfigurationException
-    }
 }
