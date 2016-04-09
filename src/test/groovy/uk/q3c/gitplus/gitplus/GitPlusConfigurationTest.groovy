@@ -10,6 +10,7 @@ import uk.q3c.gitplus.remote.RemoteRepoDeleteApprover
 import uk.q3c.gitplus.util.BuildPropertiesLoader
 import uk.q3c.gitplus.util.FileBuildPropertiesLoader
 
+import static uk.q3c.gitplus.gitplus.GitPlusConfiguration.CloneExistsResponse.*
 import static uk.q3c.gitplus.remote.GitRemote.ServiceProvider.BITBUCKET
 import static uk.q3c.gitplus.remote.GitRemote.ServiceProvider.GITHUB
 
@@ -46,6 +47,7 @@ class GitPlusConfigurationTest extends Specification {
         config.getRepoDeleteApprover() instanceof DefaultRemoteRepoDeleteApprover
         config.getIssueLabels().equals(GitPlusConfiguration.defaultIssueLabels)
         !config.isMergeIssueLabels()
+        config.getCloneExistsResponse() == EXCEPTION
 
     }
 
@@ -180,6 +182,24 @@ class GitPlusConfigurationTest extends Specification {
         config.getGitRemoteFactory().getRemoteServiceProvider() == GITHUB
     }
 
+    def "validate throes exception if clone DELETE is set without safeApproval"() {
+        given:
+        FileDeleteApprover deleteApprover = Mock(FileDeleteApprover)
+        config.cloneExistsResponse(DELETE)
+
+        when:
+        config.validate()
+
+        then:
+        thrown GitPlusConfigurationException
+
+        when:
+        config.fileDeleteApprover(deleteApprover)
+
+        then:
+        noExceptionThrown()
+    }
+
 
     def "project description and homepage are data only"() {
         when:
@@ -305,6 +325,7 @@ class GitPlusConfigurationTest extends Specification {
         String cloneUrl = 'url'
         Map<String, String> labels = Mock(Map)
         File projectDir = new File('.')
+        FileDeleteApprover deleteApprover = Mock()
 
         when:
         config.repoDeleteApprover(approver)
@@ -319,6 +340,8 @@ class GitPlusConfigurationTest extends Specification {
                 .remoteRepoHtmlUrl('thingy')
                 .projectDir(projectDir)
                 .useWiki(true)
+                .cloneExistsResponse(PULL)
+                .fileDeleteApprover(deleteApprover)
 
 
         then:
@@ -333,6 +356,8 @@ class GitPlusConfigurationTest extends Specification {
         config.getRemoteServiceProvider() == BITBUCKET
         config.getProjectDir().equals(projectDir)
         config.isUseWiki()
+        config.getCloneExistsResponse() == PULL
+        config.getFileDeleteApprover() == deleteApprover
     }
 
     def "force load from properties"() {

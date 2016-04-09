@@ -3,6 +3,7 @@ package uk.q3c.gitplus.local;
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.*;
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.internal.storage.file.FileRepository;
 import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.lib.Ref;
@@ -94,20 +95,75 @@ public class GitLocal implements AutoCloseable {
         git = null;
     }
 
-
+    /**
+     * Clones the remote repo to local.  The clone url is taken from {@link #configuration}.  If a local directory already exists which would have to be
+     * overwritten (presumably because of an earlier clone), the outcome is determined by {@link GitPlusConfiguration#getCloneExistsResponse()}:<ol>
+     * <li>DELETE - deletes the local copy and clones from remote</li>
+     * <li>PULL - executes a Git 'pull' instead of a clone</li>
+     * <li>EXCEPTION - throws a GitLocalException</li>
+     * <p>
+     * </ol>
+     */
     public void cloneRemote() {
-        log.debug("cloning remote from: {}", configuration
-                .getRemoteRepoHtmlUrl());
+        log.debug("clone requested");
 
         try {
-            CloneCommand cloneCommand = Git.cloneRepository()
-                                           .setURI(configuration.getCloneUrl())
-                                           .setDirectory(configuration.getProjectDir());
-            cloneCommand.call();
+            File localDir = configuration.getProjectDir();
+            if (localDir.exists()) {
+                log.debug("local copy (assumed to be clone) already exists");
+                switch (configuration.getCloneExistsResponse()) {
+                    case DELETE:
+                        //this will throw exception if denied
+                        deleteFolderIfApproved(localDir);
+                        doClone(localDir);
+                        break;
+
+                    case PULL:
+                        pull();
+                        break;
+                    case EXCEPTION:
+                    default:
+                        log.debug("Exception thrown as configured");
+                        throw new GitLocalException("Git clone called, when Git local directory already exists");
+
+                }
+            } else {
+                doClone(localDir);
+            }
+
 
         } catch (Exception e) {
             throw new GitLocalException("Unable to clone " + configuration
                     .getRemoteRepoHtmlUrl(), e);
+        }
+    }
+
+    private void doClone(File localDir) throws GitAPIException {
+        log.debug("cloning remote from: {}", configuration
+                .getRemoteRepoHtmlUrl());
+        CloneCommand cloneCommand = Git.cloneRepository()
+                                       .setURI(configuration.getCloneUrl())
+                                       .setDirectory(localDir);
+        cloneCommand.call();
+    }
+
+    private void deleteFolderIfApproved(File localDir) throws IOException {
+        if (configuration.getFileDeleteApprover()
+                         .approve(localDir)) {
+            FileUtils.forceDelete(localDir);
+            log.debug("'{}' deleted", localDir);
+        } else {
+            log.debug("Delete of '{}' not approved", localDir);
+            throw new GitLocalException("Delete of directory not approved: " + localDir.getAbsolutePath());
+        }
+    }
+
+    public void pull() {
+        try {
+            final PullCommand pull = git.pull();
+            pull.call();
+        } catch (Exception e) {
+            throw new GitLocalException("Pull failed", e);
         }
     }
 

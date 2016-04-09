@@ -15,12 +15,15 @@ import java.io.IOException;
 import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static uk.q3c.gitplus.gitplus.GitPlusConfiguration.CloneExistsResponse.DELETE;
+import static uk.q3c.gitplus.gitplus.GitPlusConfiguration.CloneExistsResponse.EXCEPTION;
 
 /**
  * Created by David Sowerby on 14 Mar 2016
  */
 public class GitPlusConfiguration {
 
+    public enum CloneExistsResponse {DELETE, PULL, EXCEPTION}
     public static final Map<String, String> defaultIssueLabels = new ImmutableMap.Builder<String, String>().put("bug", "fc2929")
                                                                                                            .put("duplicate", "cccccc")
                                                                                                            .put("enhancement", "84b6eb")
@@ -33,7 +36,6 @@ public class GitPlusConfiguration {
                                                                                                            .put("performance", "d4c5f9")
                                                                                                            .put("critical", "e11d21")
                                                                                                            .build();
-
     private File projectDir;
     private boolean createLocalRepo;
     private boolean createRemoteRepo;
@@ -59,6 +61,8 @@ public class GitPlusConfiguration {
     private String remoteRepoName;
     private Map<String, String> issueLabels;
     private boolean mergeIssueLabels;
+    private CloneExistsResponse cloneExistsResponse = EXCEPTION;
+    private FileDeleteApprover fileDeleteApprover;
 
     public GitPlusConfiguration() {
         //required
@@ -91,6 +95,8 @@ public class GitPlusConfiguration {
         this.taggerEmail = other.taggerEmail;
         this.issueLabels = other.issueLabels;
         this.mergeIssueLabels = other.mergeIssueLabels;
+        this.cloneExistsResponse = other.cloneExistsResponse;
+        this.fileDeleteApprover = other.fileDeleteApprover;
 
     }
 
@@ -254,16 +260,18 @@ public class GitPlusConfiguration {
         if (createLocalRepo) {
             exceptionIfNull("createLocalRepo", "projectName", getProjectName());
         }
+
+        if (cloneExistsResponse == DELETE) {
+            exceptionIfNull("cloneExistsResponse", "fileDeleteApprover", getFileDeleteApprover());
+        }
     }
 
     private void prepareRemoteConfig() {
         if (createRemoteRepo) {
             exceptionIfNull("createRemoteRepo", "projectDescription", projectDescription);
         }
-        if (cloneRemoteRepo) {
-            if (projectDirParent == null) {
-                projectDirParent = new File(".");
-            }
+        if (cloneRemoteRepo && projectDirParent == null) {
+            projectDirParent = new File(".");
         }
 
         if (createRemoteRepo || cloneRemoteRepo) {
@@ -472,4 +480,25 @@ public class GitPlusConfiguration {
         remoteRepoName = splitRepoName[1];
         return this;
     }
+
+    public CloneExistsResponse getCloneExistsResponse() {
+        return cloneExistsResponse;
+    }
+
+    public GitPlusConfiguration cloneExistsResponse(final CloneExistsResponse cloneExistsResponse) {
+        this.cloneExistsResponse = cloneExistsResponse;
+        return this;
+    }
+
+
+    public FileDeleteApprover getFileDeleteApprover() {
+        return fileDeleteApprover;
+    }
+
+    public GitPlusConfiguration fileDeleteApprover(final FileDeleteApprover fileDeleteApprover) {
+        this.fileDeleteApprover = fileDeleteApprover;
+        return this;
+    }
+
+
 }

@@ -1,7 +1,9 @@
 package uk.q3c.gitplus.local
 
 import com.google.common.collect.ImmutableList
+import org.apache.commons.io.FileUtils
 import org.eclipse.jgit.api.Git
+import org.eclipse.jgit.api.PullCommand
 import org.eclipse.jgit.api.PushCommand
 import org.eclipse.jgit.transport.CredentialsProvider
 import org.eclipse.jgit.transport.PushResult
@@ -9,13 +11,40 @@ import org.eclipse.jgit.transport.RemoteRefUpdate
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
+import uk.q3c.gitplus.gitplus.FileDeleteApprover
 import uk.q3c.gitplus.gitplus.GitPlusConfiguration
 import uk.q3c.gitplus.remote.GitRemote
+
+import static uk.q3c.gitplus.gitplus.GitPlusConfiguration.CloneExistsResponse.DELETE
+import static uk.q3c.gitplus.gitplus.GitPlusConfiguration.CloneExistsResponse.PULL
 
 /**
  * Created by David Sowerby on 17 Mar 2016
  */
 class GitLocalTest extends Specification {
+
+    class TestDirDeleteApprover implements FileDeleteApprover {
+
+        File tempfile
+
+        TestDirDeleteApprover(File tempfile) {
+            this.tempfile = tempfile
+        }
+
+        @Override
+        boolean approve(File file) {
+            return file.getParentFile().equals(tempfile)
+        }
+    }
+
+    class TestDirDeleteDenier implements FileDeleteApprover {
+
+        @Override
+        boolean approve(File file) {
+            return false
+        }
+    }
+
 
     @Rule
     TemporaryFolder temporaryFolder
@@ -389,11 +418,56 @@ class GitLocalTest extends Specification {
         configuration.validate()
         gitLocal = new GitLocal(configuration)
 
+
         when:
         gitLocal.cloneRemote()
 
         then:
         gitLocal.extractMasterCommits().size() > 0
+
+        when:
+        gitLocal.cloneRemote() // second time, so local repo already exists
+
+        then:
+        thrown GitLocalException
+
+        when:
+        gitLocal.getConfiguration().cloneExistsResponse(DELETE) // but has no approver
+        gitLocal.cloneRemote()
+
+        then:
+        thrown GitLocalException
+
+        when:
+        gitLocal.getConfiguration().cloneExistsResponse(DELETE).fileDeleteApprover(new TestDirDeleteDenier())
+        gitLocal.cloneRemote()
+
+        then:
+        thrown GitLocalException // not approved
+
+        when:
+        gitLocal.getConfiguration().cloneExistsResponse(DELETE).fileDeleteApprover(new TestDirDeleteApprover(temp))
+        gitLocal.cloneRemote()
+
+        then:
+        gitLocal.extractMasterCommits().size() > 0
+    }
+
+    def "clone with response set to PULL"() {
+        given:
+        configuration.cloneRemoteRepo(true).remoteRepoFullName('davidsowerby/scratch').projectDirParent(temp).cloneExistsResponse(PULL)
+        configuration.validate()
+        gitLocal = new GitLocal(mockGit, configuration)
+        FileUtils.forceMkdir(configuration.getProjectDir())  // simulate previous clone
+        PullCommand pc = Mock(PullCommand)
+
+        when:
+        gitLocal.cloneRemote()
+
+        then:
+        1 * mockGit.pull() >> pc
+
+
     }
 
     def "getTags() fails"() {
