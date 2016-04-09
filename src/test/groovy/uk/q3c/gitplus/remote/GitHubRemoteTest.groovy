@@ -2,10 +2,7 @@ package uk.q3c.gitplus.remote
 
 import com.google.common.collect.ImmutableList
 import com.google.common.collect.ImmutableSet
-import com.jcabi.github.Coordinates
-import com.jcabi.github.Github
-import com.jcabi.github.Repo
-import com.jcabi.github.Repos
+import com.jcabi.github.*
 import com.jcabi.github.mock.MkGithub
 import org.eclipse.jgit.transport.CredentialItem
 import org.eclipse.jgit.transport.URIish
@@ -276,9 +273,10 @@ class GitHubRemoteTest extends Specification {
     }
 
 
-    def "create repo successful"() {
+    def "create repo successful, no label merge"() {
         given:
         gitHubProvider.get(dummyConfiguration, CREATE_REPO) >> gitHub
+        gitHubProvider.get(dummyConfiguration, RESTRICTED) >> gitHub // for call to getLabelsAsMap()
         remote = new GitHubRemote(dummyConfiguration, gitHubProvider, remoteRequest)
 
         when:
@@ -286,6 +284,22 @@ class GitHubRemoteTest extends Specification {
 
         then:
         gitHub.repos().get(dummyCoordinates) != null
+        remote.getLabelsAsMap().size() == 0
+    }
+
+    def "create repo successful, with label merge"() {
+        given:
+        dummyConfiguration.mergeIssueLabels(true)
+        gitHubProvider.get(dummyConfiguration, CREATE_REPO) >> gitHub
+        gitHubProvider.get(dummyConfiguration, RESTRICTED) >> gitHub // for call to mergeLabels()
+        remote = new GitHubRemote(dummyConfiguration, gitHubProvider, remoteRequest)
+
+        when:
+        remote.createRepo()
+
+        then:
+        gitHub.repos().get(dummyCoordinates) != null
+        remote.getLabelsAsMap().size() == 11
     }
 
 
@@ -314,6 +328,33 @@ class GitHubRemoteTest extends Specification {
         remote.listRepositoryNames().size() == 4
     }
 
+    def "merge labels"() {
+        given:
+        dummyConfiguration.validate()
+        createLabels()
+        gitHubProvider.get(dummyConfiguration, RESTRICTED) >> gitHub
+        remote = new GitHubRemote(dummyConfiguration, gitHubProvider, remoteRequest)
+
+        when:
+        remote.mergeLabels()
+        Labels labels = gitHub.repos().get(dummyCoordinates).labels()
+
+        then:
+        labels.get('bug')
+        labels.get('question')
+
+    }
+
+    private void createLabels() {
+        Repo r = gitHub.repos().get(dummyCoordinates)
+        r.labels().create('bug', 'ee0701')
+        r.labels().create('duplicate', 'cccccc')
+        r.labels().create('enhancement', '84b6eb')
+        r.labels().create('help wanted', '128a0c')
+        r.labels().create('invalid', 'e6e6e6')
+        r.labels().create('question', 'cc317c')
+        r.labels().create('wontfix', 'ffffff')
+    }
 
 
     boolean passwordMatches(UsernamePasswordCredentialsProvider credentialsProvider, String apiToken) {

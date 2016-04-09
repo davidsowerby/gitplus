@@ -11,6 +11,7 @@ import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
 import uk.q3c.gitplus.gitplus.GitPlusConfiguration
 import uk.q3c.gitplus.remote.GitRemote
+
 /**
  * Created by David Sowerby on 17 Mar 2016
  */
@@ -453,6 +454,20 @@ class GitLocalTest extends Specification {
         then:
         gitLocal.getConfiguration().getRemoteRepoHtmlUrl().equals('https://github.com/davidsowerby/scratch/wiki')
         gitLocal.getConfiguration().getProjectDir().equals(new File(temp, 'scratch.wiki'))
+    }
+
+    def "extract commits fails"() {
+        given:
+        configuration.remoteRepoFullName('davidsowerby/scratch').projectDirParent(temp)
+        configuration.validate()
+        mockGit.log() >> { throw new IOException() }
+        gitLocal = new GitLocal(mockGit, configuration)
+
+        when:
+        gitLocal.extractDevelopCommits()
+
+        then:
+        thrown GitLocalException
     }
 
 

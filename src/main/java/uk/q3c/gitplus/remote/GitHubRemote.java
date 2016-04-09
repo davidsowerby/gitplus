@@ -11,8 +11,7 @@ import uk.q3c.gitplus.gitplus.GitPlusConfiguration;
 import javax.annotation.Nonnull;
 import javax.json.JsonReader;
 import java.io.IOException;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -151,6 +150,9 @@ public class GitHubRemote implements GitRemote {
                     .withHomepage(configuration.getProjectHomePage());
             getGitHub(CREATE_REPO).repos()
                                   .create(settings);
+            if (configuration.isMergeIssueLabels()) {
+                mergeLabels();
+            }
         } catch (Exception e) {
             throw new GitRemoteException("Unable to create Repo", e);
         }
@@ -203,5 +205,79 @@ public class GitHubRemote implements GitRemote {
                                                    .repo()));
         return repoNames;
     }
+
+    @Override
+    public void mergeLabels() throws IOException {
+        mergeLabels(configuration.getIssueLabels());
+    }
+
+
+    @Override
+    public Map<String, String> mergeLabels(Map<String, String> labelsToMerge) throws IOException {
+        final Labels labels = getRepo(RESTRICTED).labels();
+        final Iterable<Label> iterate = labels.iterate();
+        final Iterator<Label> iterator = iterate.iterator();
+
+        //copy of map, we need to remove entries to keep track, and we may have been passed an ImmutableMap
+        Map<String, String> lblsToMerge = new TreeMap<>(labelsToMerge);
+
+        //take existing labels first, update any colours which have changed, and remove labels that are not in the 'labelsToMerge'
+        List<Label> existingToRemove = new ArrayList<>();
+        while (iterator.hasNext()) {
+            Label currentLabel = iterator.next();
+            String currentName = currentLabel.name();
+            //if this repo label is in new set as well, update the colour if, but only if not already the same (save unnecessary API calls)
+            if (labelsToMerge.containsKey(currentName)) {
+                String mergeColour = labelsToMerge.get(currentName);
+                Label.Smart smLabel = new Label.Smart(currentLabel);
+                if (!smLabel.color()
+                            .equals(mergeColour)) {
+                    smLabel.color(mergeColour);// this does the update (patch)
+                }
+                //processed, remove from merge set
+                lblsToMerge.remove(currentName);
+            } else {
+                // it is not in the new set, note it for removal
+                existingToRemove.add(currentLabel);
+            }
+        }
+
+        //remove the unwanted
+        for (Label label : existingToRemove) {
+            log.debug("deleting label '{}", label.name());
+            labels.delete(label.name());
+        }
+
+        //existing set is updated except for any new ones that need to be added
+        //lblsToMerge now contains only those which have not been processed
+        for (Map.Entry<String, String> entry : lblsToMerge.entrySet()) {
+            try {
+                labels.create(entry.getKey(), entry.getValue());
+            } catch (IOException ioe) {
+                log.warn("Failed to add new label '{}'", entry.getKey(), ioe);
+            }
+        }
+
+        // do final check to make sure the two sets are the same, if different throw exception
+        Map<String, String> checkMap = getLabelsAsMap();
+
+        if (!checkMap.equals(labelsToMerge)) {
+            throw new GitRemoteException("Labels did not merge correctly");
+        }
+        return checkMap;
+    }
+
+
+    @Override
+    public Map<String, String> getLabelsAsMap() throws IOException {
+        final Labels labels = getRepo(RESTRICTED).labels();
+        Map<String, String> map = new TreeMap<>();
+        for (Label label : labels.iterate()) {
+            Label.Smart smLabel = new Label.Smart(label);
+            map.put(smLabel.name(), smLabel.color());
+        }
+        return map;
+    }
+
 
 }

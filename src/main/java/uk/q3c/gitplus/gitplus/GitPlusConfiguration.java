@@ -1,5 +1,6 @@
 package uk.q3c.gitplus.gitplus;
 
+import com.google.common.collect.ImmutableMap;
 import uk.q3c.gitplus.remote.DefaultGitRemoteFactory;
 import uk.q3c.gitplus.remote.DefaultRemoteRepoDeleteApprover;
 import uk.q3c.gitplus.remote.GitRemote.ServiceProvider;
@@ -11,6 +12,7 @@ import uk.q3c.gitplus.util.FileBuildPropertiesLoader;
 import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.IOException;
+import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -18,6 +20,19 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Created by David Sowerby on 14 Mar 2016
  */
 public class GitPlusConfiguration {
+
+    public static final Map<String, String> defaultIssueLabels = new ImmutableMap.Builder<String, String>().put("bug", "fc2929")
+                                                                                                           .put("duplicate", "cccccc")
+                                                                                                           .put("enhancement", "84b6eb")
+                                                                                                           .put("question", "cc317c")
+                                                                                                           .put("wontfix", "d7e102")
+                                                                                                           .put("task", "0b02e1")
+                                                                                                           .put("quality", "02d7e1")
+                                                                                                           .put("documentation", "eb6420")
+                                                                                                           .put("build", "fbca04")
+                                                                                                           .put("performance", "d4c5f9")
+                                                                                                           .put("critical", "e11d21")
+                                                                                                           .build();
 
     private File projectDir;
     private boolean createLocalRepo;
@@ -42,6 +57,8 @@ public class GitPlusConfiguration {
     private String taggerEmail;
     private String remoteRepoUser;
     private String remoteRepoName;
+    private Map<String, String> issueLabels;
+    private boolean mergeIssueLabels;
 
     public GitPlusConfiguration() {
         //required
@@ -72,7 +89,30 @@ public class GitPlusConfiguration {
         this.cloneUrl = other.cloneUrl;
         this.taggerName = other.taggerName;
         this.taggerEmail = other.taggerEmail;
+        this.issueLabels = other.issueLabels;
+        this.mergeIssueLabels = other.mergeIssueLabels;
 
+    }
+
+    public boolean isMergeIssueLabels() {
+        return mergeIssueLabels;
+    }
+
+    public GitPlusConfiguration mergeIssueLabels(final boolean mergeIssueLabels) {
+        this.mergeIssueLabels = mergeIssueLabels;
+        return this;
+    }
+
+    public GitPlusConfiguration issueLabels(final Map<String, String> issueLabels) {
+        this.issueLabels = issueLabels;
+        return this;
+    }
+
+    public Map<String, String> getIssueLabels() {
+        if (issueLabels == null) {
+            issueLabels = defaultIssueLabels;
+        }
+        return issueLabels;
     }
 
     public GitPlusConfiguration remoteRepoName(final String remoteRepoName) {
@@ -366,106 +406,6 @@ public class GitPlusConfiguration {
         return this;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-
-        GitPlusConfiguration that = (GitPlusConfiguration) o;
-
-        if (createLocalRepo != that.createLocalRepo) {
-            return false;
-        }
-        if (createRemoteRepo != that.createRemoteRepo) {
-            return false;
-        }
-        if (cloneRemoteRepo != that.cloneRemoteRepo) {
-            return false;
-        }
-        if (createProject != that.createProject) {
-            return false;
-        }
-        if (publicProject != that.publicProject) {
-            return false;
-        }
-        if (useWiki != that.useWiki) {
-            return false;
-        }
-        if (projectDir != null ? !projectDir.equals(that.projectDir) : that.projectDir != null) {
-            return false;
-        }
-        if (projectName != null ? !projectName.equals(that.projectName) : that.projectName != null) {
-            return false;
-        }
-
-        if (taggerName != null ? !taggerName.equals(that.taggerName) : that.taggerName != null) {
-            return false;
-        }
-
-        if (taggerEmail != null ? !taggerEmail.equals(that.taggerEmail) : that.taggerEmail != null) {
-            return false;
-        }
-
-        if (remoteRepoName != null ? !remoteRepoName.equals(that.remoteRepoName) : that.remoteRepoName != null) {
-            return false;
-        }
-
-        if (remoteRepoUser != null ? !remoteRepoUser.equals(that.remoteRepoUser) : that.remoteRepoUser != null) {
-            return false;
-        }
-        if (projectDirParent != null ? !projectDirParent.equals(that.projectDirParent) : that.projectDirParent != null) {
-            return false;
-        }
-        if (projectCreator != null ? !projectCreator.equals(that.projectCreator) : that.projectCreator != null) {
-            return false;
-        }
-        if (gitRemoteFactory != null ? !gitRemoteFactory.equals(that.gitRemoteFactory) : that.gitRemoteFactory != null) {
-            return false;
-        }
-        if (projectDescription != null ? !projectDescription.equals(that.projectDescription) : that.projectDescription != null) {
-            return false;
-        }
-        if (projectHomePage != null ? !projectHomePage.equals(that.projectHomePage) : that.projectHomePage != null) {
-            return false;
-        }
-        if (confirmRemoteDelete != null ? !confirmRemoteDelete.equals(that.confirmRemoteDelete) : that.confirmRemoteDelete != null) {
-            return false;
-        }
-        if (remoteRepoHtmlUrl != null ? !remoteRepoHtmlUrl.equals(that.remoteRepoHtmlUrl) : that.remoteRepoHtmlUrl != null) {
-            return false;
-        }
-        return remoteServiceProvider == that.remoteServiceProvider;
-
-    }
-
-    @Override
-    public int hashCode() {
-        int result = projectDir != null ? projectDir.hashCode() : 0;
-        result = 31 * result + (createLocalRepo ? 1 : 0);
-        result = 31 * result + (createRemoteRepo ? 1 : 0);
-        result = 31 * result + (cloneRemoteRepo ? 1 : 0);
-        result = 31 * result + (projectName != null ? projectName.hashCode() : 0);
-        result = 31 * result + (taggerName != null ? taggerName.hashCode() : 0);
-        result = 31 * result + (taggerEmail != null ? taggerEmail.hashCode() : 0);
-        result = 31 * result + (createProject ? 1 : 0);
-        result = 31 * result + (remoteRepoUser != null ? remoteRepoUser.hashCode() : 0);
-        result = 31 * result + (remoteRepoName != null ? remoteRepoName.hashCode() : 0);
-        result = 31 * result + (projectDirParent != null ? projectDirParent.hashCode() : 0);
-        result = 31 * result + (projectCreator != null ? projectCreator.hashCode() : 0);
-        result = 31 * result + (gitRemoteFactory != null ? gitRemoteFactory.hashCode() : 0);
-        result = 31 * result + (projectDescription != null ? projectDescription.hashCode() : 0);
-        result = 31 * result + (projectHomePage != null ? projectHomePage.hashCode() : 0);
-        result = 31 * result + (publicProject ? 1 : 0);
-        result = 31 * result + (confirmRemoteDelete != null ? confirmRemoteDelete.hashCode() : 0);
-        result = 31 * result + (remoteRepoHtmlUrl != null ? remoteRepoHtmlUrl.hashCode() : 0);
-        result = 31 * result + (useWiki ? 1 : 0);
-        result = 31 * result + (remoteServiceProvider != null ? remoteServiceProvider.hashCode() : 0);
-        return result;
-    }
 
     public String getCloneUrl() {
         if (cloneUrl == null) {

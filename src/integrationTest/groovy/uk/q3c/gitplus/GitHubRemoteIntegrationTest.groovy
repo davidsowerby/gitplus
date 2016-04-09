@@ -63,6 +63,7 @@ class GitHubRemoteIntegrationTest extends Specification {
                 .publicProject(true)
                 .projectDirParent(temp)
                 .useWiki(true)
+                .mergeIssueLabels(true)
         gitLocalProvider = new GitLocalProvider()
         gitPlus = new GitPlus(gitPlusConfiguration, gitLocalProvider)
         gitLocal = gitPlus.getGitLocal()
@@ -85,6 +86,7 @@ class GitHubRemoteIntegrationTest extends Specification {
         gitPlus.getWikiLocal().getProjectDir().exists()
         new File(gitPlus.getWikiLocal().getProjectDir(), '.git').exists()
         new File(gitPlus.getWikiLocal().getProjectDir(), 'changelog.md').exists()
+        gitPlus.getGitRemote().getLabelsAsMap().equals(gitPlusConfiguration.getIssueLabels())
 
 
     }

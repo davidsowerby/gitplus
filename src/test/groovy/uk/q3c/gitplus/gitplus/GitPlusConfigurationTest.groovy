@@ -10,6 +10,7 @@ import uk.q3c.gitplus.remote.RemoteRepoDeleteApprover
 import uk.q3c.gitplus.util.BuildPropertiesLoader
 import uk.q3c.gitplus.util.FileBuildPropertiesLoader
 
+import static uk.q3c.gitplus.remote.GitRemote.ServiceProvider.BITBUCKET
 import static uk.q3c.gitplus.remote.GitRemote.ServiceProvider.GITHUB
 
 /**
@@ -43,6 +44,8 @@ class GitPlusConfigurationTest extends Specification {
         config.getRemoteServiceProvider().equals(GITHUB)
         config.getPropertiesLoader() instanceof FileBuildPropertiesLoader
         config.getRepoDeleteApprover() instanceof DefaultRemoteRepoDeleteApprover
+        config.getIssueLabels().equals(GitPlusConfiguration.defaultIssueLabels)
+        !config.isMergeIssueLabels()
 
     }
 
@@ -271,185 +274,21 @@ class GitPlusConfigurationTest extends Specification {
                 .projectCreator(projectCreator)
                 .gitRemoteFactory(remoteFactory)
                 .propertiesLoader(propertiesLoader)
+                .remoteRepoName('dummy')
 
         when:
         GitPlusConfiguration newConfig = new GitPlusConfiguration(config)
 
         then:
-        newConfig.equals(config)
+        newConfig.getProjectDir().equals(config.getProjectDir())
+        newConfig.getProjectName().equals(config.getProjectName())
+        newConfig.getIssueLabels().equals(config.getIssueLabels())
+        newConfig.getApiTokenCreateRepo().equals(config.getApiTokenCreateRepo())
+        newConfig.getApiTokenDeleteRepo().equals(config.getApiTokenDeleteRepo())
+        newConfig.getApiTokenRestricted().equals(config.getApiTokenRestricted())
+        newConfig.getRemoteServiceProvider().equals(config.getRemoteServiceProvider())
     }
 
-    def "equals and hashcode same instance"() {
-        given:
-        GitPlusConfiguration configuration1 = new GitPlusConfiguration()
-        GitPlusConfiguration configuration2 = configuration1
-
-        expect:
-        configuration1.equals(configuration2)
-        configuration1.hashCode() == configuration2.hashCode()
-    }
-
-    def "equals and hashcode not equal null"() {
-        given:
-        GitPlusConfiguration configuration1 = new GitPlusConfiguration()
-        GitPlusConfiguration configuration2 = null
-
-        expect:
-        !configuration1.equals(configuration2)
-    }
-
-    def "equals and hashcode differing elements"() {
-        given:
-        GitPlusConfiguration configuration1 = new GitPlusConfiguration()
-        GitPlusConfiguration configuration2 = new GitPlusConfiguration()
-        GitRemoteFactory remoteFactory1 = Mock(GitRemoteFactory)
-        GitRemoteFactory remoteFactory2 = Mock(GitRemoteFactory)
-        ProjectCreator projectCreator1 = Mock(ProjectCreator)
-        ProjectCreator projectCreator2 = Mock(ProjectCreator)
-        File f1 = Mock(File)
-        File f2 = Mock(File)
-
-        when:
-        configuration1.createRemoteRepo(true)
-        configuration2.createRemoteRepo(false)
-
-        then:
-        !configuration1.equals(configuration2)
-        configuration1.hashCode() != configuration2.hashCode()
-
-        when:
-        configuration1.createRemoteRepo(false).cloneRemoteRepo(true)
-        configuration2.createRemoteRepo(false).cloneRemoteRepo(false)
-
-        then:
-        !configuration1.equals(configuration2)
-        configuration1.hashCode() != configuration2.hashCode()
-
-        when:
-        configuration1.cloneRemoteRepo(true).confirmRemoteDelete('dd')
-        configuration2.cloneRemoteRepo(true).confirmRemoteDelete('da')
-
-        then:
-        !configuration1.equals(configuration2)
-        configuration1.hashCode() != configuration2.hashCode()
-
-        when:
-        configuration1.confirmRemoteDelete('dd').createProject(true)
-        configuration2.confirmRemoteDelete('dd').createProject(false)
-
-        then:
-        !configuration1.equals(configuration2)
-        configuration1.hashCode() != configuration2.hashCode()
-
-
-        when:
-        configuration1.createProject(true).gitRemoteFactory(remoteFactory1)
-        configuration2.createProject(true).gitRemoteFactory(remoteFactory2)
-
-        then:
-        !configuration1.equals(configuration2)
-        configuration1.hashCode() != configuration2.hashCode()
-
-        when:
-        configuration1.gitRemoteFactory(remoteFactory1).projectCreator(projectCreator1)
-        configuration2.gitRemoteFactory(remoteFactory1).projectCreator(projectCreator2)
-
-        then:
-        !configuration1.equals(configuration2)
-        configuration1.hashCode() != configuration2.hashCode()
-
-        when:
-        configuration1.projectCreator(projectCreator1).createLocalRepo(true)
-        configuration2.projectCreator(projectCreator1).createLocalRepo(false)
-
-        then:
-        !configuration1.equals(configuration2)
-        configuration1.hashCode() != configuration2.hashCode()
-
-        when:
-        configuration1.createLocalRepo(true).publicProject(true)
-        configuration2.createLocalRepo(true).publicProject(false)
-
-        then:
-        !configuration1.equals(configuration2)
-        configuration1.hashCode() != configuration2.hashCode()
-
-        when:
-        configuration1.publicProject(true).useWiki(true)
-        configuration2.publicProject(true).useWiki(false)
-        configuration1.isUseWiki()
-        !configuration2.isUseWiki()
-
-        then:
-        !configuration1.equals(configuration2)
-        configuration1.hashCode() != configuration2.hashCode()
-
-        when:
-        configuration1.useWiki(true).remoteRepoHtmlUrl('a')
-        configuration2.useWiki(true).remoteRepoHtmlUrl('b')
-
-        then:
-        !configuration1.equals(configuration2)
-        configuration1.hashCode() != configuration2.hashCode()
-
-        when:
-        configuration1.remoteRepoHtmlUrl('a').projectDescription('a')
-        configuration2.remoteRepoHtmlUrl('a').projectDescription('b')
-
-        then:
-        !configuration1.equals(configuration2)
-        configuration1.hashCode() != configuration2.hashCode()
-
-        when:
-        configuration1.projectDescription('a').projectHomePage('a')
-        configuration2.projectDescription('a').projectHomePage('b')
-
-        then:
-        !configuration1.equals(configuration2)
-        configuration1.hashCode() != configuration2.hashCode()
-
-        when:
-        configuration1.projectHomePage('a').projectDirParent(f1)
-        configuration2.projectHomePage('a').projectDirParent(f2)
-
-        then:
-        !configuration1.equals(configuration2)
-        configuration1.hashCode() != configuration2.hashCode()
-
-        when:
-        configuration1.projectDirParent(f1).remoteRepoFullName('a/b')
-        configuration2.projectDirParent(f1).remoteRepoFullName('b/b')
-
-        then:
-        !configuration1.equals(configuration2)
-        configuration1.hashCode() != configuration2.hashCode()
-        !configuration1.getRemoteRepoFullName().equals(configuration2.getRemoteRepoFullName())
-
-        when:
-        configuration1.remoteRepoFullName('a/b').projectName('a')
-        configuration2.remoteRepoFullName('a/b').projectName('b')
-
-        then:
-        !configuration1.equals(configuration2)
-        configuration1.hashCode() != configuration2.hashCode()
-
-        when:
-        configuration1.projectName('a').projectDir(f1)
-        configuration2.projectName('a').projectDir(f2)
-
-        then:
-        !configuration1.equals(configuration2)
-        configuration1.hashCode() != configuration2.hashCode()
-
-        when:
-        configuration1.projectDir(f1).remoteServiceProvider(GITHUB)
-        configuration2.projectDir(f1).remoteServiceProvider(null)
-
-        then:
-        !configuration1.equals(configuration2)
-        configuration1.hashCode() != configuration2.hashCode()
-
-    }
 
     def "getApiTokenRestricted"() {
         expect:
@@ -464,9 +303,22 @@ class GitPlusConfigurationTest extends Specification {
         String taggerName = 'a'
         String taggerEmail = 'b'
         String cloneUrl = 'url'
+        Map<String, String> labels = Mock(Map)
+        File projectDir = new File('.')
 
         when:
-        config.repoDeleteApprover(approver).taggerName(taggerName).taggerEmail(taggerEmail).cloneUrl(cloneUrl)
+        config.repoDeleteApprover(approver)
+                .taggerName(taggerName)
+                .taggerEmail(taggerEmail)
+                .cloneUrl(cloneUrl)
+                .issueLabels(labels)
+                .mergeIssueLabels(true)
+                .publicProject(true)
+                .confirmRemoteDelete('whatever')
+                .remoteServiceProvider(BITBUCKET)
+                .remoteRepoHtmlUrl('thingy')
+                .projectDir(projectDir)
+                .useWiki(true)
 
 
         then:
@@ -474,6 +326,60 @@ class GitPlusConfigurationTest extends Specification {
         config.getTaggerName().equals(taggerName)
         config.getTaggerEmail().equals(taggerEmail)
         config.getCloneUrl().equals(cloneUrl)
+        config.getIssueLabels() == labels
+        config.isMergeIssueLabels()
+        config.isPublicProject()
+        config.getConfirmRemoteDelete().equals('whatever')
+        config.getRemoteServiceProvider() == BITBUCKET
+        config.getProjectDir().equals(projectDir)
+        config.isUseWiki()
+    }
+
+    def "force load from properties"() {
+        expect:
+        config.getTaggerName().equals('David Sowerby')
+        config.getTaggerEmail().equals('david.sowerby@virgin.net')
+    }
+
+    def "project name not set and remoteRepoName also null"() {
+        when:
+        config.getProjectName()
+
+        then:
+        thrown GitPlusConfigurationException
+    }
+
+    def "set remoteRepoFullname with no '/'"() {
+        when:
+        config.remoteRepoFullName('wiggly')
+
+        then:
+        thrown GitPlusConfigurationException
+    }
+
+    def "confirm delete"() {
+        given:
+        config.remoteRepoFullName('davidsowerby/dummy').
+                confirmRemoteDelete("I really, really want to delete the davidsowerby/dummy repo from GitHub")
+        expect:
+        config.deleteRepoApproved()
+    }
+
+    def "reject delete"() {
+        given:
+        config.remoteRepoFullName('davidsowerby/dummy').
+                confirmRemoteDelete("I really really want to delete the davidsowerby/dummy repo from GitHub")
+        expect:
+        !config.deleteRepoApproved()
+    }
+
+
+    def "cloneUrl is null, get from htmlUrl"() {
+        given:
+        config.remoteRepoHtmlUrl('somewhere')
+
+        expect:
+        config.getCloneUrl().equals('somewhere.git')
     }
 
     def "getRemoteRepoFullName(), return null if either user or repoName null"() {
