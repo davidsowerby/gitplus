@@ -35,7 +35,7 @@ class ChangeLogConfigurationTest extends Specification {
 
     def "defaults"() {
         expect:
-        config.getTemplateName().equals(ChangeLog.DEFAULT_TEMPLATE)
+        config.getTemplateName().equals(ChangeLogConfiguration.DEFAULT_TEMPLATE)
         config.exclusionTagOpen.equals('{{')
         config.exclusionTagClose.equals('}}')
         config.separatePullRequests

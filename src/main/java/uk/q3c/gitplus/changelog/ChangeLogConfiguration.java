@@ -68,7 +68,8 @@ public class ChangeLogConfiguration {
 
     //    @formatter:on
 
-    private String templateName = ChangeLog.DEFAULT_TEMPLATE;
+    public static final String DEFAULT_TEMPLATE = "markdown.vm";
+    private String templateName = DEFAULT_TEMPLATE;
     private Map<String, Set<String>> labelGroups = defaultLabelGroups;
     private String exclusionTagOpen = "{{";
     private String exclusionTagClose = "}}";
