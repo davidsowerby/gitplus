@@ -304,16 +304,6 @@ public class GitLocal implements AutoCloseable {
         }
     }
 
-    public void setOrigin(@Nonnull GitRemote gitRemote) {
-        checkNotNull(gitRemote);
-        try {
-            String originUrl = gitRemote.getCloneUrl();
-            setOrigin(originUrl);
-        } catch (Exception e) {
-            throw new GitLocalException("Unable to set origin", e);
-        }
-    }
-
     public void setOrigin(@Nonnull String origin) {
         checkNotNull(origin);
         try {
@@ -322,6 +312,16 @@ public class GitLocal implements AutoCloseable {
             config.setString("remote", "origin", "url", origin);
             config.save();
 
+        } catch (Exception e) {
+            throw new GitLocalException("Unable to set origin", e);
+        }
+    }
+
+    public void setOrigin(@Nonnull GitRemote gitRemote) {
+        checkNotNull(gitRemote);
+        try {
+            String originUrl = gitRemote.getCloneUrl();
+            setOrigin(originUrl);
         } catch (Exception e) {
             throw new GitLocalException("Unable to set origin", e);
         }
@@ -338,8 +338,8 @@ public class GitLocal implements AutoCloseable {
         checkNotNull(gitRemote);
 
         try {
-            PushCommand pc = git.push()
-                                .setCredentialsProvider(gitRemote.getCredentialsProvider());
+            PushCommand pc = getGit().push()
+                                     .setCredentialsProvider(gitRemote.getCredentialsProvider());
 
             if (tags) {
                 pc.setPushTags();

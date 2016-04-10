@@ -241,6 +241,27 @@ class ChangeLogTest extends Specification {
         changeLog.getOutputFile().equals(new File(currentDir, 'changelog.md'))
     }
 
+    def "create changelog output to wiki is pushed to remote wiki"() {
+        given:
+        createDataWithMostRecentCommitNotTagged()
+        changeLogConfiguration = new ChangeLogConfiguration()
+
+
+        gitPlus()
+        wikiLocal.getProjectDir() >> temp
+        gitPlus.getWikiLocal() >> wikiLocal
+
+        changeLog = new ChangeLog(gitPlus, changeLogConfiguration)
+
+        when:
+        changeLog.createChangeLog()
+
+        then:
+        1 * wikiLocal.add(_)
+        1 * wikiLocal.commit('Auto generated changelog')
+        1 * wikiLocal.push(gitRemote, false)
+    }
+
     private void createDataWithMostRecentCommitNotTagged() {
         createCommits(2, 3, 5, 7, 8)
         issues.get(2).pullRequest(true)

@@ -10,6 +10,7 @@ import org.apache.velocity.tools.generic.DateTool;
 import org.slf4j.Logger;
 import uk.q3c.gitplus.gitplus.GitPlus;
 import uk.q3c.gitplus.local.GitCommit;
+import uk.q3c.gitplus.local.GitLocal;
 import uk.q3c.gitplus.local.Tag;
 import uk.q3c.gitplus.remote.GitRemote;
 
@@ -83,7 +84,15 @@ public class ChangeLog {
 
         StringWriter w = new StringWriter();
         velocityTemplate.merge(velocityContext, w);
-        FileUtils.writeStringToFile(getOutputFile(), w.toString());
+        File outputFile = getOutputFile();
+        FileUtils.writeStringToFile(outputFile, w.toString());
+        if (configuration.getOutputDirectory() == ChangeLogConfiguration.OutputTarget.WIKI_ROOT) {
+            GitLocal wikiLocal = gitPlus.getWikiLocal();
+            wikiLocal.add(outputFile);
+            wikiLocal.commit("Auto generated changelog");
+            wikiLocal
+                    .push(gitPlus.getGitRemote(), false);
+        }
 
     }
 

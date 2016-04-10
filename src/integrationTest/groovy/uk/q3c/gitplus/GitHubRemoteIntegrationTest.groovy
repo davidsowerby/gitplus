@@ -19,6 +19,8 @@ import uk.q3c.util.testutil.FileTestUtil
 
 import java.nio.file.Paths
 
+import static uk.q3c.gitplus.changelog.ChangeLogConfiguration.OutputTarget.USE_FILE_SPEC
+
 /**
  * This test needs to delete the 'dummy' repo in cleanup.  This test is a bit weird because it has to use deleteRepo to clean up, but also tests deleteRepo
  *
@@ -67,7 +69,7 @@ class GitHubRemoteIntegrationTest extends Specification {
         gitLocalProvider = new GitLocalProvider()
         gitPlus = new GitPlus(gitPlusConfiguration, gitLocalProvider)
         gitLocal = gitPlus.getGitLocal()
-        ChangeLogConfiguration changeLogConfiguration = new ChangeLogConfiguration()
+        ChangeLogConfiguration changeLogConfiguration = new ChangeLogConfiguration().outputDirectory(USE_FILE_SPEC).outputFile(new File(temp, 'changelog.md'))
         gitRemote = gitPlus.getGitRemote()
 
         URL url = this.getClass()
@@ -83,26 +85,10 @@ class GitHubRemoteIntegrationTest extends Specification {
 
         then:
         FileTestUtil.compare(changeLog.getOutputFile(), expectedResult1)
-        gitPlus.getWikiLocal().getProjectDir().exists()
-        new File(gitPlus.getWikiLocal().getProjectDir(), '.git').exists()
-        new File(gitPlus.getWikiLocal().getProjectDir(), 'changelog.md').exists()
         gitPlus.getGitRemote().getLabelsAsMap().equals(gitPlusConfiguration.getIssueLabels())
     }
 
-    def "generate own changelog"() {
-        given:
-        File userHome = new File(System.getProperty('user.home'))
-        File gitDir = new File(userHome, 'git')
-        File projectDir = new File(gitDir, 'gitplus')
-        gitPlusConfiguration = new GitPlusConfiguration()
-                .remoteRepoFullName('davidsowerby/gitplus').projectDir(projectDir)
-        gitPlus = new GitPlus(gitPlusConfiguration, new GitLocalProvider())
-        ChangeLogConfiguration changeLogConfiguration = new ChangeLogConfiguration()
-        ChangeLog changeLog = new ChangeLog(gitPlus, changeLogConfiguration)
 
-        expect:
-        changeLog.createChangeLog()
-    }
 
     def ChangeLog generateChangeLog(ChangeLogConfiguration changeLogConfiguration) {
         gitLocalProvider = new GitLocalProvider()
