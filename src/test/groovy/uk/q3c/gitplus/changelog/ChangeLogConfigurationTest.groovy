@@ -112,5 +112,49 @@ class ChangeLogConfigurationTest extends Specification {
         thrown ChangeLogConfigurationException
     }
 
+    def "toVersion is null, returns false"() {
+        expect:
+        !config.isToVersion('1')
+    }
+
+    def "toVersion with null parameter throws NPE"() {
+        given:
+        config.toVersion('1')
+        when:
+        config.isToVersion(null)
+
+        then:
+        thrown NullPointerException
+    }
+
+    def "fromVersion is null, returns false"() {
+        expect:
+        !config.isFromVersion('1')
+    }
+
+    def "fromVersion with null parameter throws NPE"() {
+        given:
+        config.fromVersion('1')
+        when:
+        config.isFromVersion(null)
+
+        then:
+        thrown NullPointerException
+    }
+
+    def "fromLatestVersion"() {
+        expect:
+        !config.fromVersion(ChangeLogConfiguration.LATEST_COMMIT).fromLatestVersion()
+        config.fromVersion(ChangeLogConfiguration.LATEST_VERSION).fromLatestVersion()
+        !config.fromVersion('1').fromLatestVersion()
+    }
+
+    def "fromLatestCommit"() {
+        expect:
+        config.fromVersion(ChangeLogConfiguration.LATEST_COMMIT).fromLatestCommit()
+        !config.fromVersion(ChangeLogConfiguration.LATEST_VERSION).fromLatestCommit()
+        !config.fromVersion('1').fromLatestCommit()
+    }
+
 
 }

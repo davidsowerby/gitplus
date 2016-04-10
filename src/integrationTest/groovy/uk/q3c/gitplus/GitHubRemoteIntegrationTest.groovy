@@ -87,11 +87,25 @@ class GitHubRemoteIntegrationTest extends Specification {
         new File(gitPlus.getWikiLocal().getProjectDir(), '.git').exists()
         new File(gitPlus.getWikiLocal().getProjectDir(), 'changelog.md').exists()
         gitPlus.getGitRemote().getLabelsAsMap().equals(gitPlusConfiguration.getIssueLabels())
+    }
 
+    def "generate own changelog"() {
+        given:
+        File userHome = new File(System.getProperty('user.home'))
+        File gitDir = new File(userHome, 'git')
+        File projectDir = new File(gitDir, 'gitplus')
+        gitPlusConfiguration = new GitPlusConfiguration()
+                .remoteRepoFullName('davidsowerby/gitplus').projectDir(projectDir)
+        gitPlus = new GitPlus(gitPlusConfiguration, new GitLocalProvider())
+        ChangeLogConfiguration changeLogConfiguration = new ChangeLogConfiguration()
+        ChangeLog changeLog = new ChangeLog(gitPlus, changeLogConfiguration)
 
+        expect:
+        changeLog.createChangeLog()
     }
 
     def ChangeLog generateChangeLog(ChangeLogConfiguration changeLogConfiguration) {
+        gitLocalProvider = new GitLocalProvider()
         ChangeLog changeLog = new ChangeLog(gitPlus, changeLogConfiguration)
         changeLog.createChangeLog()
         return changeLog

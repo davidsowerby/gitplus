@@ -3,11 +3,13 @@ package uk.q3c.gitplus.changelog;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
+import javax.annotation.Nonnull;
 import java.io.File;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static uk.q3c.gitplus.changelog.ChangeLogConfiguration.OutputTarget.USE_FILE_SPEC;
 
 /**
@@ -298,11 +300,13 @@ public class ChangeLogConfiguration {
         return fromVersion.equals(LATEST_VERSION);
     }
 
-    public boolean isFromVersion(String version) {
-        return fromVersion.equals(version);
+    public boolean isFromVersion(@Nonnull String version) {
+        checkNotNull(version);
+        return fromVersion != null && fromVersion.equals(version);
     }
 
-    public boolean isToVersion(String version) {
-        return toVersion.equals(version);
+    public boolean isToVersion(@Nonnull String version) {
+        checkNotNull(version);
+        return toVersion != null && toVersion.equals(version);
     }
 }
