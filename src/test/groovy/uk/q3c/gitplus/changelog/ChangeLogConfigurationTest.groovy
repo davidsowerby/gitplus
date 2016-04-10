@@ -39,7 +39,7 @@ class ChangeLogConfigurationTest extends Specification {
         config.exclusionTagOpen.equals('{{')
         config.exclusionTagClose.equals('}}')
         config.separatePullRequests
-        config.useTypoMap
+        config.correctTypos
         config.typoMap.equals(ChangeLogConfiguration.defaultTypoMap)
         config.getLabelGroups().equals(ChangeLogConfiguration.defaultLabelGroups)
         config.getExclusionTags().equals(ImmutableSet.of('javadoc'))
@@ -67,7 +67,7 @@ class ChangeLogConfigurationTest extends Specification {
         config.exclusionTagOpen(messageTagOpen)
         config.exclusionTagClose(messageTagClose)
         config.separatePullRequests(false)
-        config.useTypoMap(false)
+        config.correctTypos(false)
         config.exclusionTags(excludedMessageTags)
         config.pullRequestTitle(pullRequestTitle)
         config.fromVersion('0.1')
@@ -82,7 +82,7 @@ class ChangeLogConfigurationTest extends Specification {
         config.getExclusionTagOpen().equals(messageTagOpen)
         config.getExclusionTagClose().equals(messageTagClose)
         !config.isSeparatePullRequests()
-        !config.isUseTypoMap()
+        !config.isCorrectTypos()
         config.getExclusionTags() == excludedMessageTags
         config.pullRequestTitle.equals(pullRequestTitle)
         config.getOutputFilename().equals(outputFilename)

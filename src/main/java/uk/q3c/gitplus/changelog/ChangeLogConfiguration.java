@@ -77,7 +77,7 @@ public class ChangeLogConfiguration {
     private Set<String> exclusionTags = ImmutableSet.of("javadoc");
 
     private Map<String, String> typoMap = defaultTypoMap;
-    private boolean useTypoMap = true;
+    private boolean correctTypos = true;
     private String outputFilename = "changelog.md";
     private String pullRequestTitle = DEFAULT_PULL_REQUESTS_TITLE;
     private OutputTarget outputDirectory = OutputTarget.WIKI_ROOT;
@@ -150,8 +150,8 @@ public class ChangeLogConfiguration {
         return pullRequestTitle;
     }
 
-    public boolean isUseTypoMap() {
-        return useTypoMap;
+    public boolean isCorrectTypos() {
+        return correctTypos;
     }
 
 
@@ -213,33 +213,65 @@ public class ChangeLogConfiguration {
         return this;
     }
 
+    /**
+     * An exclusionTag stops a commit message from being processed into the Change Log.  This sets the marker which opens the tag (default is '{{')
+     *
+     * @param messageTagOpen the closing marker for an exclusion tag
+     * @return this for fluency
+     */
     public ChangeLogConfiguration exclusionTagOpen(final String messageTagOpen) {
         this.exclusionTagOpen = messageTagOpen;
         return this;
     }
 
+    /**
+     * An exclusionTag stops a commit message from being processed into the Change Log.  This sets the marker which closes the tag (default is '}}')
+     *
+     * @param messageTagClose the closing marker for an exclusion tag
+     * @return this for fluency
+     */
     public ChangeLogConfiguration exclusionTagClose(final String messageTagClose) {
         this.exclusionTagClose = messageTagClose;
         return this;
     }
 
+    /**
+     * If true, pull requests are extracted under their own heading in the change log.  If false, they are merged with other issues according to the labels
+     * attached to them
+     *
+     * @param separatePullRequests true to extract pull requests separately
+     * @return this for fluency
+     */
     public ChangeLogConfiguration separatePullRequests(final boolean separatePullRequests) {
         this.separatePullRequests = separatePullRequests;
         return this;
     }
 
+    /**
+     * An exclusionTag stops a commit message from being processed into the Change Log.  With default settings, therefore, any commit message containing
+     * '{{javadoc}}' is just ignored.  This method defines which tags should be excluded.  See also {@link #exclusionTagOpen} and {@link #exclusionTagClose}
+     *
+     * @param exclusionTags the tags to be ignored
+     * @return this for fluency
+     */
     public ChangeLogConfiguration exclusionTags(final Set<String> exclusionTags) {
         this.exclusionTags = exclusionTags;
         return this;
     }
 
+    /**
+     * A simple 'search and replace' map of typos.  Usually used to find typos which would affect correct identofocation of related issues
+     *
+     * @param typoMap A map of search (the key) and replace (the value)
+     * @return this for fluency
+     */
     public ChangeLogConfiguration typoMap(final Map<String, String> typoMap) {
         this.typoMap = typoMap;
         return this;
     }
 
-    public ChangeLogConfiguration useTypoMap(final boolean useTypoMap) {
-        this.useTypoMap = useTypoMap;
+    public ChangeLogConfiguration correctTypos(final boolean correctTypos) {
+        this.correctTypos = correctTypos;
         return this;
     }
 
