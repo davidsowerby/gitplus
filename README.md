@@ -42,9 +42,13 @@ Using the two components above, ```ChangeLog``` generates a change log from Git 
 The core functionality is working and tested, but not yet exercised in production.
  
 # Limitations
+## GitHub wiki
 When you create a new GitHub repository manually, and select the wiki tab, you may notice that there is no clone url displayed - until your create the first page.  This is also true when you create a repository through the API, but unfortunately there is no way to create that first wiki page via the API.  (This has been confirmed by GitHub Support)
 
 This means that the GitPlus configuration is set to create both local and remote repositories, it will do that, but cannot "activate" the wiki - you will need to do that manually by creating a page online.
+
+## Tags
+It is currently assumed that all Git tags are version tags.  There is an [open issue](https://github.com/davidsowerby/gitplus/issues/18) to address that
 
 # Default Branch
 This project is part of the work to move [Krail](https://github.com/davidsowerby/krail) to a Continuous Delivery build model.  
