@@ -11,7 +11,7 @@ plugins {
 }
 
 sourceCompatibility = '1.8'
-version = '0.9.14'
+version = '0.9.15'
 group = 'uk.q3c.build'
 
 testSets {
@@ -20,7 +20,7 @@ testSets {
 
 ext.assertjVersion = '3.3.0'
 ext.commonsLangVersion = '3.3.2'
-ext.groovyVersion = '2.4.1'
+ext.groovyVersion = '2.4.4'
 ext.guavaVersion = '19.0'
 
 repositories {
