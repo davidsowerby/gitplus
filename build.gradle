@@ -5,10 +5,14 @@ plugins {
     id 'idea'
     id 'eclipse-wtp'
     id 'org.unbroken-dome.test-sets' version '1.2.0'
+    id 'maven'
+    id 'maven-publish'
 
 }
 
 sourceCompatibility = '1.8'
+version = '0.9.14'
+group = 'uk.q3c.build'
 
 testSets {
     integrationTest
@@ -28,20 +32,12 @@ dependencies {
     //git and github
     compile 'org.eclipse.jgit:org.eclipse.jgit:3.6.0.201412230720-r'
     compile 'com.jcabi:jcabi-github:0.27'
-//    compile 'org.kohsuke:github-api:1.73'
 
     //groovy
     compile 'org.codehaus.groovy:groovy-all:' + groovyVersion
 
     //Logging
     compile 'org.slf4j:slf4j-api:1.7.5'
-
-    //REST
-//    compile 'com.jcabi:jcabi-http:1.14.2' //client
-    compile 'org.glassfish:javax.json:1.0.4'
-    compile 'javax.json:javax.json-api:1.0'
-    compile 'javax.ws.rs:javax.ws.rs-api:2.0.1'
-    compile 'org.glassfish.jersey.core:jersey-client:2.22.2'
 
     //templating
     compile 'org.apache.velocity:velocity:1.7'
@@ -68,4 +64,38 @@ dependencies {
 
 task wrapper(type: Wrapper) {
     gradleVersion = '2.10'
+}
+
+publishing {
+    publications {
+        mavenStuff(MavenPublication) {
+            from components.java
+
+            artifact sourcesJar {
+                classifier "sources"
+            }
+
+            artifact javadocJar {
+                classifier "javadoc"
+            }
+        }
+    }
+}
+task sourcesJar(type: Jar, dependsOn: classes) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
+artifacts {
+    archives sourcesJar
+    archives javadocJar
+}
+
+javadoc {
+    failOnError = false
 }
