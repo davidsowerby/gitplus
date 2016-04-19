@@ -76,4 +76,4 @@ Contributions would be extremely welcome, especially additional implementations 
 
 # Configuration
 
-See the [wiki](https://github.com/davidsowerby/gitplus/wiki)
+See the [docs](http://gitplus.readthedocs.org/en/latest/)
