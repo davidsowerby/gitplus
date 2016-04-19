@@ -1,0 +1,16 @@
+  
+new GPLabel("documentation","eb6420"),
+
+
+    new GPLabel("name": "bug","color": "fc2929"),
+    new GPLabel("name": "duplicate","color": "cccccc"),
+  new GPLabel(  "name": "enhancement","color": "84b6eb"),
+  new GPLabel(  "name": "question","color": "cc317c"),
+ new GPLabel(   "name": "wontfix","color": "d7e102"),
+ new GPLabel(   "name": "task","color": "0b02e1"),
+new GPLabel(    "name": "quality","color": "02d7e1"),
+new GPLabel(    "name": "documentation","color": "eb6420"),
+new GPLabel(    "name": "build","color": "fbca04"),
+new GPLabel(    "name": "performance","color": "d4c5f9"),
+new GPLabel(    "name": "critical","color": "e11d21")
+  
