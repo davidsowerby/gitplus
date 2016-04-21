@@ -95,12 +95,12 @@ public class GPIssue implements Comparable<GPIssue> {
             return false;
         }
 
-        GPIssue GPIssue = (GPIssue) o;
+        GPIssue gpIssue = (GPIssue) o;
 
-        if (number != GPIssue.number) {
+        if (number != gpIssue.number) {
             return false;
         }
-        return htmlUrl.equals(GPIssue.htmlUrl);
+        return htmlUrl.equals(gpIssue.htmlUrl);
 
     }
 

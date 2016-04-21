@@ -1,6 +1,7 @@
 package uk.q3c.build.gitplus.gitplus;
 
 import com.google.common.collect.ImmutableMap;
+import uk.q3c.build.gitplus.changelog.ChangeLogConfiguration;
 import uk.q3c.build.gitplus.local.DefaultGitLocalProvider;
 import uk.q3c.build.gitplus.local.GitLocalProvider;
 import uk.q3c.build.gitplus.remote.DefaultGitRemoteFactory;
@@ -66,6 +67,7 @@ public class GitPlusConfiguration {
     private CloneExistsResponse cloneExistsResponse = EXCEPTION;
     private FileDeleteApprover fileDeleteApprover;
     private GitLocalProvider gitLocalProvider;
+    private ChangeLogConfiguration changeLogConfiguration;
 
     public GitPlusConfiguration() {
         //required
@@ -100,7 +102,18 @@ public class GitPlusConfiguration {
         this.mergeIssueLabels = other.mergeIssueLabels;
         this.cloneExistsResponse = other.cloneExistsResponse;
         this.fileDeleteApprover = other.fileDeleteApprover;
+        this.changeLogConfiguration = other.changeLogConfiguration;
+        this.gitLocalProvider = other.gitLocalProvider;
 
+    }
+
+    public GitPlusConfiguration changeLogConfiguration(final ChangeLogConfiguration changeLogConfiguration) {
+        this.changeLogConfiguration = changeLogConfiguration;
+        return this;
+    }
+
+    public ChangeLogConfiguration getChangeLogConfiguration() {
+        return changeLogConfiguration;
     }
 
     public GitPlusConfiguration gitLocalProvider(final GitLocalProvider gitLocalProvider) {

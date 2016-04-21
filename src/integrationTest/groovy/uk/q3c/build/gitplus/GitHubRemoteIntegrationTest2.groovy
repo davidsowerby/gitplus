@@ -39,7 +39,7 @@ class GitHubRemoteIntegrationTest2 extends Specification {
         then:
         repos.contains('krail')
         !repos.contains('perl')
-        repos.size() == 17
+        repos.size() >= 17
 
     }
 

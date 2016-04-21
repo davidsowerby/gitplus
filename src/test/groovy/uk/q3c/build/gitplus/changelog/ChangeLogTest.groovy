@@ -8,6 +8,7 @@ import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
 import spock.lang.Unroll
 import uk.q3c.build.gitplus.gitplus.GitPlus
+import uk.q3c.build.gitplus.gitplus.GitPlusConfiguration
 import uk.q3c.build.gitplus.local.GitCommit
 import uk.q3c.build.gitplus.local.GitLocal
 import uk.q3c.build.gitplus.local.Tag
@@ -47,6 +48,7 @@ class ChangeLogTest extends Specification {
     static File projectFolder
     static File wikiFolder
     PersonIdent personIdent = Mock(PersonIdent)
+    GitPlusConfiguration gitPlusConfiguration = Mock(GitPlusConfiguration)
 
 
     def setup() {
@@ -59,36 +61,44 @@ class ChangeLogTest extends Specification {
         wikiFolder = new File(temp, wikiFolderName)
         gitLocal.getProjectDir() >> projectFolder
         wikiLocal.getProjectDir() >> wikiFolder
-
-
+        gitPlusConfiguration.getChangeLogConfiguration() >> null
+        gitPlus.getConfiguration() >> gitPlusConfiguration
     }
 
 
-    def "constructor validates configuration, verifies repo"() {
-        given:
-        changeLogConfiguration.getOutputFilename() >> temp
+    def "constructor creates configuration if none provided"() {
 
         when:
-        new ChangeLog(gitPlus, changeLogConfiguration)
+        ChangeLog changelog = new ChangeLog(gitPlus)
 
         then:
-        1 * changeLogConfiguration.validate()
-        1 * changeLogConfiguration.getTemplateName() >> ChangeLogConfiguration.DEFAULT_TEMPLATE
-        1 * gitPlus.createOrVerifyRepos()
+        1 * gitPlus.getConfiguration() >> gitPlusConfiguration
+        1 * gitPlusConfiguration.getChangeLogConfiguration() >> null
+        changelog.getConfiguration() != null
+    }
+
+    def "constructor uses provided configuration"() {
+
+        given:
+        GitPlusConfiguration gitPlusConfiguration = Mock(GitPlusConfiguration)
+        changeLogConfiguration = new ChangeLogConfiguration()
+
+        when:
+        ChangeLog changelog = new ChangeLog(gitPlus)
+
+        then:
+        1 * gitPlus.getConfiguration() >> gitPlusConfiguration
+        1 * gitPlusConfiguration.getChangeLogConfiguration() >> changeLogConfiguration
+        changelog.getConfiguration() == changeLogConfiguration
     }
 
     def "NPE from constructor is parameter null"() {
         when:
-        new ChangeLog(null, changeLogConfiguration)
+        new ChangeLog(null)
 
         then:
         thrown NullPointerException
 
-        when:
-        new ChangeLog(gitPlus, null)
-
-        then:
-        thrown NullPointerException
     }
 
     def "not really a test, just checking test setup"() {
@@ -112,7 +122,7 @@ class ChangeLogTest extends Specification {
     def "latest commit is  tagged as version"() {
         given:
         changeLogConfiguration.getPullRequestTitle() >> ChangeLogConfiguration.DEFAULT_PULL_REQUESTS_TITLE
-        changeLogConfiguration.getOutputDirectory() >> USE_FILE_SPEC
+        changeLogConfiguration.getOutputTarget() >> USE_FILE_SPEC
         changeLogConfiguration.getOutputFile() >> new File(temp, 'changelog.md')
         changeLogConfiguration.getFromVersion() >> fromVersion
         changeLogConfiguration.getToVersion() >> toVersion
@@ -123,7 +133,8 @@ class ChangeLogTest extends Specification {
         changeLogConfiguration.getNumberOfVersions() >> wantedVersions
         createDataWithMostRecentCommitTagged()
         gitPlus()
-        changeLog = new ChangeLog(gitPlus, changeLogConfiguration)
+        changeLog = new ChangeLog(gitPlus)
+        changeLog.setConfiguration(changeLogConfiguration)
         File expectedResult = testResource(expected)
 
         when:
@@ -148,7 +159,7 @@ class ChangeLogTest extends Specification {
     def "latest commit is not tagged as version"() {
         given:
         changeLogConfiguration.getPullRequestTitle() >> ChangeLogConfiguration.DEFAULT_PULL_REQUESTS_TITLE
-        changeLogConfiguration.getOutputDirectory() >> USE_FILE_SPEC
+        changeLogConfiguration.getOutputTarget() >> USE_FILE_SPEC
         changeLogConfiguration.getOutputFile() >> new File(temp, 'changelog.md')
         changeLogConfiguration.getFromVersion() >> fromVersion
         changeLogConfiguration.getToVersion() >> toVersion
@@ -159,7 +170,8 @@ class ChangeLogTest extends Specification {
         changeLogConfiguration.getNumberOfVersions() >> wantedVersions
         createDataWithMostRecentCommitNotTagged()
         gitPlus()
-        changeLog = new ChangeLog(gitPlus, changeLogConfiguration)
+        changeLog = new ChangeLog(gitPlus)
+        changeLog.setConfiguration(changeLogConfiguration)
         File expectedResult = testResource(expected)
 
         when:
@@ -181,10 +193,11 @@ class ChangeLogTest extends Specification {
 
     def "getOutputFile using FILE_SPEC"() {
         given:
-        changeLogConfiguration.getOutputDirectory() >> USE_FILE_SPEC
+        changeLogConfiguration.getOutputTarget() >> USE_FILE_SPEC
         changeLogConfiguration.getOutputFile() >> new File(temp, 'changelog.md')
         changeLogConfiguration.getTemplateName() >> 'markdown.vm'
-        changeLog = new ChangeLog(gitPlus, changeLogConfiguration)
+        changeLog = new ChangeLog(gitPlus)
+        changeLog.setConfiguration(changeLogConfiguration)
 
         expect:
         changeLog.getOutputFile().equals(new File(temp, 'changelog.md'))
@@ -192,11 +205,12 @@ class ChangeLogTest extends Specification {
 
     def "getOutputFile using PROJECT_ROOT"() {
         given:
-        changeLogConfiguration.getOutputDirectory() >> PROJECT_ROOT
+        changeLogConfiguration.getOutputTarget() >> PROJECT_ROOT
         changeLogConfiguration.getOutputFile() >> new File(temp, 'changelog.md')
         changeLogConfiguration.getTemplateName() >> 'markdown.vm'
         changeLogConfiguration.getOutputFilename() >> 'changelog.md'
-        changeLog = new ChangeLog(gitPlus, changeLogConfiguration)
+        changeLog = new ChangeLog(gitPlus)
+        changeLog.setConfiguration(changeLogConfiguration)
 
         expect:
         changeLog.getOutputFile().equals(new File(projectFolder, 'changelog.md'))
@@ -204,11 +218,12 @@ class ChangeLogTest extends Specification {
 
     def "getOutputFile using PROJECT_BUILD_ROOT"() {
         given:
-        changeLogConfiguration.getOutputDirectory() >> PROJECT_BUILD_ROOT
+        changeLogConfiguration.getOutputTarget() >> PROJECT_BUILD_ROOT
         changeLogConfiguration.getOutputFile() >> new File(temp, 'changelog.md')
         changeLogConfiguration.getTemplateName() >> 'markdown.vm'
         changeLogConfiguration.getOutputFilename() >> 'changelog.md'
-        changeLog = new ChangeLog(gitPlus, changeLogConfiguration)
+        changeLog = new ChangeLog(gitPlus)
+        changeLog.setConfiguration(changeLogConfiguration)
 
         File buildFolder = new File(projectFolder, 'build')
 
@@ -218,11 +233,12 @@ class ChangeLogTest extends Specification {
 
     def "getOutputFile using WIKI_ROOT"() {
         given:
-        changeLogConfiguration.getOutputDirectory() >> WIKI_ROOT
+        changeLogConfiguration.getOutputTarget() >> WIKI_ROOT
         changeLogConfiguration.getOutputFile() >> new File(temp, 'changelog.md')
         changeLogConfiguration.getTemplateName() >> 'markdown.vm'
         changeLogConfiguration.getOutputFilename() >> 'changelog.md'
-        changeLog = new ChangeLog(gitPlus, changeLogConfiguration)
+        changeLog = new ChangeLog(gitPlus)
+        changeLog.setConfiguration(changeLogConfiguration)
 
         expect:
         changeLog.getOutputFile().equals(new File(wikiFolder, 'changelog.md'))
@@ -230,11 +246,12 @@ class ChangeLogTest extends Specification {
 
     def "getOutputFile using CURRENT_DIR"() {
         given:
-        changeLogConfiguration.getOutputDirectory() >> CURRENT_DIR
+        changeLogConfiguration.getOutputTarget() >> CURRENT_DIR
         changeLogConfiguration.getOutputFile() >> new File(temp, 'changelog.md')
         changeLogConfiguration.getTemplateName() >> 'markdown.vm'
         changeLogConfiguration.getOutputFilename() >> 'changelog.md'
-        changeLog = new ChangeLog(gitPlus, changeLogConfiguration)
+        changeLog = new ChangeLog(gitPlus)
+        changeLog.setConfiguration(changeLogConfiguration)
 
         File currentDir = new File('.')
 
@@ -245,14 +262,11 @@ class ChangeLogTest extends Specification {
     def "create changelog output to wiki is pushed to remote wiki"() {
         given:
         createDataWithMostRecentCommitNotTagged()
-        changeLogConfiguration = new ChangeLogConfiguration()
-
-
         gitPlus()
         wikiLocal.getProjectDir() >> temp
         gitPlus.getWikiLocal() >> wikiLocal
 
-        changeLog = new ChangeLog(gitPlus, changeLogConfiguration)
+        changeLog = new ChangeLog(gitPlus)
 
         when:
         changeLog.createChangeLog()
@@ -337,6 +351,8 @@ class ChangeLogTest extends Specification {
         changeLogConfiguration.getOutputFilename() >> new File(temp, 'changelog.md')
         changeLogConfiguration.getTemplateName() >> ChangeLogConfiguration.DEFAULT_TEMPLATE
         changeLogConfiguration.getLabelGroups() >> ChangeLogConfiguration.defaultLabelGroups
+        gitPlus.getConfiguration() >> gitPlusConfiguration
+        gitPlusConfiguration.getChangeLogConfiguration() >> changeLogConfiguration
     }
 
 

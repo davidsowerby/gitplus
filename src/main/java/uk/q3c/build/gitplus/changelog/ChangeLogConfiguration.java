@@ -82,7 +82,7 @@ public class ChangeLogConfiguration {
     private boolean correctTypos = true;
     private String outputFilename = "changelog.md";
     private String pullRequestTitle = DEFAULT_PULL_REQUESTS_TITLE;
-    private OutputTarget outputDirectory = OutputTarget.WIKI_ROOT;
+    private OutputTarget outputTarget = OutputTarget.WIKI_ROOT;
     private File outputFile;
     private String fromVersion = LATEST_COMMIT;
     private String toVersion = null;
@@ -121,20 +121,32 @@ public class ChangeLogConfiguration {
     }
 
     public File getOutputFile() {
-        return outputFile;
+        if (outputFile == null) {
+            if (outputTarget == USE_FILE_SPEC) {
+                throw new ChangeLogConfigurationException("When output target is " + USE_FILE_SPEC.name() + " outputFile must be specified");
+            }
+            if (outputFilename == null) {
+                throw new ChangeLogConfigurationException("'outputFileName' must be specified (Except when output target is " + USE_FILE_SPEC.name() + ")");
+            }
+            return null;
+        } else {
+            return outputFile;
+        }
     }
+
 
     /**
      * The {@link #outputFilename} is referenced to an OutputTarget directory, unless USE_FILE_SPEC is selected, in which case the {@link #outputFile} must
      * be specified
      */
-    public ChangeLogConfiguration outputDirectory(final OutputTarget outputDirectory) {
-        this.outputDirectory = outputDirectory;
+    public ChangeLogConfiguration outputTarget(@Nonnull final OutputTarget outputTarget) {
+        checkNotNull(outputTarget);
+        this.outputTarget = outputTarget;
         return this;
     }
 
-    public OutputTarget getOutputDirectory() {
-        return outputDirectory;
+    public OutputTarget getOutputTarget() {
+        return outputTarget;
     }
 
     /**
@@ -282,15 +294,6 @@ public class ChangeLogConfiguration {
         return this;
     }
 
-
-    public void validate() {
-        if (outputDirectory != USE_FILE_SPEC && outputFilename == null) {
-            throw new ChangeLogConfigurationException("outputFileName must be specified");
-        }
-        if (outputDirectory == USE_FILE_SPEC && outputFile == null) {
-            throw new ChangeLogConfigurationException("When output target is " + USE_FILE_SPEC.name() + " outputFile must be specified");
-        }
-    }
 
     public boolean fromLatestCommit() {
         return fromVersion.equals(LATEST_COMMIT);

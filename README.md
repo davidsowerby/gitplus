@@ -6,7 +6,7 @@ It treats a local Git clone and its related remote repository as a pair, represe
  
 # Features
 
-This module is highly configurable, but with depening on how it is configured, a single command could invoke:
+This module is highly configurable, but with depending on how it is configured, a single command could invoke:
 
 - Create a local repo
 - Create a project within that local repo
@@ -31,11 +31,13 @@ This is a fairly thin wrapper around [JGit](https://eclipse.org/jgit/), with som
 
 This is a common interface for any hosted Git service, which is expected also to be where project issues are tracked.  At the moment there is only a [GitHub](https://github.com/) implementation for this interface.  This makes extensive use of this [GitHub API project](https://github.com/jcabi/jcabi-github)
 
-It is hoped that there may be further implementations for BitBucket etc.
+It is hoped that there may be further implementations for BitBucket, GitLab etc.
 
 ## ChangeLog
 
 Using the two components above, ```ChangeLog``` generates a change log from Git comments.  Many elements are configurable, and a Velocity template is used to enable the user to change the layout.
+
+You can see an example of the output - the change log for this project is on the [wiki](https://github.com/davidsowerby/gitplus/wiki/changelog)
 
 
 # Status

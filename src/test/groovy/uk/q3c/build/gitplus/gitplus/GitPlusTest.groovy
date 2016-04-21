@@ -7,12 +7,17 @@ import org.eclipse.jgit.lib.Repository
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
+import uk.q3c.build.gitplus.changelog.ChangeLog
+import uk.q3c.build.gitplus.changelog.ChangeLogConfiguration
 import uk.q3c.build.gitplus.local.GitCommit
 import uk.q3c.build.gitplus.local.GitLocal
 import uk.q3c.build.gitplus.local.GitLocalException
 import uk.q3c.build.gitplus.local.GitLocalProvider
 import uk.q3c.build.gitplus.remote.GitRemote
 import uk.q3c.build.gitplus.remote.GitRemoteFactory
+
+import static uk.q3c.build.gitplus.changelog.ChangeLogConfiguration.OutputTarget.PROJECT_BUILD_ROOT
+import static uk.q3c.build.gitplus.changelog.ChangeLogConfiguration.OutputTarget.USE_FILE_SPEC
 
 /**
  * Created by David Sowerby on 13 Mar 2016
@@ -382,6 +387,76 @@ class GitPlusTest extends Specification {
 
         then:
         1 * wikiLocal.push(gitRemote, false)
+    }
+
+    def "get Change Log"() {
+        expect:
+        gitplus.getChangelog() instanceof ChangeLog
+    }
+
+    def "generate change log, config already set"() {
+        given:
+        ChangeLog changeLog = Mock(ChangeLog)
+        gitplus.setChangelog(changeLog)
+        File f = new File('.')
+
+        when:
+        File result = gitplus.generateChangeLog()
+
+        then:
+        1 * changeLog.createChangeLog() >> f
+        result == f
+    }
+
+    def "generate change log, config provided"() {
+        given:
+        ChangeLog changeLog = Mock(ChangeLog)
+        gitplus.setChangelog(changeLog)
+        File f = new File('.')
+        ChangeLogConfiguration changeLogConfiguration = Mock(ChangeLogConfiguration)
+
+        when:
+        File result = gitplus.generateChangeLog(changeLogConfiguration)
+
+        then:
+        1 * changeLog.setConfiguration(changeLogConfiguration)
+        1 * changeLog.createChangeLog() >> f
+        result == f
+    }
+
+    def "generate change log, change output target"() {
+        given:
+        ChangeLog changeLog = Mock(ChangeLog)
+        gitplus.setChangelog(changeLog)
+        File f = new File('.')
+        ChangeLogConfiguration changeLogConfiguration = Mock(ChangeLogConfiguration)
+
+        when:
+        File result = gitplus.generateChangeLog(PROJECT_BUILD_ROOT)
+
+        then:
+        1 * changeLog.getConfiguration() >> changeLogConfiguration
+        1 * changeLogConfiguration.outputTarget(PROJECT_BUILD_ROOT)
+        1 * changeLog.createChangeLog() >> f
+        result == f
+    }
+
+    def "generate change log, change output file"() {
+        given:
+        ChangeLog changeLog = Mock(ChangeLog)
+        gitplus.setChangelog(changeLog)
+        File f = new File('.')
+        ChangeLogConfiguration changeLogConfiguration = Mock(ChangeLogConfiguration)
+
+        when:
+        File result = gitplus.generateChangeLog(f)
+
+        then:
+        1 * changeLog.getConfiguration() >> changeLogConfiguration
+        1 * changeLogConfiguration.outputFile(f) >> changeLogConfiguration
+        1 * changeLogConfiguration.outputTarget(USE_FILE_SPEC) >> changeLogConfiguration
+        1 * changeLog.createChangeLog() >> f
+        result == f
     }
 
 }

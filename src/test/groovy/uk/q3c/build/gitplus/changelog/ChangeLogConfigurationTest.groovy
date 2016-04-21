@@ -7,9 +7,6 @@ import spock.lang.Specification
 import uk.q3c.build.gitplus.gitplus.GitPlus
 import uk.q3c.build.gitplus.local.GitLocal
 import uk.q3c.build.gitplus.local.GitLocalProvider
-
-import static uk.q3c.build.gitplus.changelog.ChangeLogConfiguration.OutputTarget.USE_FILE_SPEC
-
 /**
  * Created by David Sowerby on 13 Mar 2016
  */
@@ -93,22 +90,6 @@ class ChangeLogConfigurationTest extends Specification {
         config.getNumberOfVersions() == 33
     }
 
-    def "validate empty"() {
-        when:
-        config.validate()
-
-        then:
-        noExceptionThrown()
-    }
-
-    def "validate, using file spec but no output file throws exception"() {
-        when:
-        config.outputDirectory(USE_FILE_SPEC)
-        config.validate()
-
-        then:
-        thrown ChangeLogConfigurationException
-    }
 
     def "toVersion is null, returns false"() {
         expect:
@@ -154,5 +135,38 @@ class ChangeLogConfigurationTest extends Specification {
         !config.fromVersion('1').fromLatestCommit()
     }
 
+    def "getOutputFile exception when USE_FILE_SPEC but no output file specified"() {
+        given:
+        config.outputFile(null).outputTarget(ChangeLogConfiguration.OutputTarget.USE_FILE_SPEC)
+
+        when:
+        config.getOutputFile()
+
+        then:
+        thrown ChangeLogConfigurationException
+    }
+
+    def "getOutputFile exception when not USE_FILE_SPEC and no file name specified"() {
+        given:
+        config.outputFileName(null).outputTarget(ChangeLogConfiguration.OutputTarget.CURRENT_DIR)
+
+        when:
+        config.getOutputFile()
+
+        then:
+        thrown ChangeLogConfigurationException
+    }
+
+    def "getOutputFile when not USE_FILE_SPEC, has file name, just returns null"() {
+        given:
+        config.outputFile(null).outputTarget(ChangeLogConfiguration.OutputTarget.PROJECT_BUILD_ROOT).outputFileName('anything')
+
+        when:
+        File result = config.getOutputFile()
+
+        then:
+        result == null
+
+    }
 
 }

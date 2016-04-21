@@ -5,11 +5,9 @@ import org.apache.commons.io.FileUtils
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
-import uk.q3c.build.gitplus.changelog.ChangeLog
 import uk.q3c.build.gitplus.changelog.ChangeLogConfiguration
 import uk.q3c.build.gitplus.gitplus.GitPlus
 import uk.q3c.build.gitplus.gitplus.GitPlusConfiguration
-import uk.q3c.build.gitplus.local.DefaultGitLocalProvider
 import uk.q3c.build.gitplus.local.GitLocal
 import uk.q3c.build.gitplus.local.GitLocalProvider
 import uk.q3c.build.gitplus.remote.GitHubProvider
@@ -21,7 +19,6 @@ import uk.q3c.util.testutil.FileTestUtil
 import java.nio.file.Paths
 
 import static uk.q3c.build.gitplus.changelog.ChangeLogConfiguration.OutputTarget.USE_FILE_SPEC
-
 /**
  * This test needs to delete the 'dummy' repo in cleanup.  This test is a bit weird because it has to use deleteRepo to clean up, but also tests deleteRepo
  *
@@ -71,7 +68,7 @@ class GitHubRemoteIntegrationTest extends Specification {
                 .mergeIssueLabels(true)
         gitLocal = gitPlus.getGitLocal()
         gitRemote = gitPlus.getGitRemote()
-        ChangeLogConfiguration changeLogConfiguration = new ChangeLogConfiguration().outputDirectory(USE_FILE_SPEC).outputFile(new File(temp, 'changelog.md'))
+        ChangeLogConfiguration changeLogConfiguration = new ChangeLogConfiguration().outputTarget(USE_FILE_SPEC).outputFile(new File(temp, 'changelog.md'))
 
 
         URL url = this.getClass()
@@ -83,20 +80,14 @@ class GitHubRemoteIntegrationTest extends Specification {
         gitPlus.createOrVerifyRepos()
         createTestIssues(10)
         createVersion('0.1')
-        ChangeLog changeLog = generateChangeLog(changeLogConfiguration)
+        File changeLogFile = gitPlus.generateChangeLog(changeLogConfiguration)
 
         then:
-        FileTestUtil.compare(changeLog.getOutputFile(), expectedResult1)
+        FileTestUtil.compare(changeLogFile, expectedResult1)
         gitPlus.getGitRemote().getLabelsAsMap().equals(gitPlus.getConfiguration().getIssueLabels())
     }
 
 
-    def ChangeLog generateChangeLog(ChangeLogConfiguration changeLogConfiguration) {
-        gitLocalProvider = new DefaultGitLocalProvider()
-        ChangeLog changeLog = new ChangeLog(gitPlus, changeLogConfiguration)
-        changeLog.createChangeLog()
-        return changeLog
-    }
 
     def createTestIssues(int number) {
         List<String> labels = ImmutableList.of('bug', 'documentation', 'quality', 'bug', 'task', 'bug', 'performance', 'enhancement', 'task', 'bug')
@@ -120,7 +111,7 @@ class GitHubRemoteIntegrationTest extends Specification {
     }
 
     def modifyFile(int index) {
-        File f = new File(gitPlusConfiguration.getProjectDir(), index + '.txt')
+        File f = new File(gitPlus.getConfiguration().getProjectDir(), index + '.txt')
         List<String> lines = FileUtils.readLines(f)
         lines.add('modified')
         FileUtils.writeLines(f, lines)
@@ -128,7 +119,7 @@ class GitHubRemoteIntegrationTest extends Specification {
     }
 
     def createFileAndAddToGit(int index) {
-        File f = new File(gitPlusConfiguration.getProjectDir(), index + '.txt')
+        File f = new File(gitPlus.getConfiguration().getProjectDir(), index + '.txt')
         List<String> lines = new ArrayList<>()
         lines.add('Test file')
         FileUtils.writeLines(f, lines)

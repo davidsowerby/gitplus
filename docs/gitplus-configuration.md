@@ -1,5 +1,6 @@
 | name                  | purpose                                                                              | default                   |
 |-----------------------|--------------------------------------------------------------------------------------|---------------------------|
+| changeLogConfiguration| configures the ChangeLog                                                             | default configuration     |
 | cloneExistsResponse   | provides options when clone() called, and local copy already exists                  | EXCEPTION                 |
 | cloneRemoteRepo       | if true clone remote repo to projectDir                                              | false                     |
 | cloneUrl              | URL to clone from. Set automatically from remoteRepoHtmlUrl                          | null                      |
@@ -8,6 +9,7 @@
 | createProject         | true to generate a project. Requires projectCreator                                  | false                     |
 | createRemoteRepo      | if true create a remote repo                                                         | false                     |
 | fileDeleteApprover    | approves / rejects calls to delete a file. A bit of protection from config errors    | null                      |
+| gitLocalProvider      | provides instances of GitLocal (and is used to provide mocks for testing)            | DefaultGitLocalProvider   |
 | gitRemoteFactory      | creates instances of GitRemote for remoteServiceProvider                             | DefaultGitRemoteFactory   |
 | issueLabels           | labels to merge into new remote repo, used with mergeIssueLabels, createRemoteRepo   | defaultIssueLabels        |
 | mergeIssueLabels      | if true, merge issueLabels into this repo                                            | false                     |
@@ -19,11 +21,11 @@
 | projectName           | name of project if createProject true. Uses remoeRepoName if not defined             | null                      |
 | propertiesLoader      | Loads build properties such as API tokens                                            | FileBuildPropertiesLoader |
 | publicProject         | if true, remote repo is public                                                       | false                     |
-| remoteRepoHtmlUrl     | htttp url for remote repo                                                            | null                      |
+| remoteRepoHtmlUrl     | http url for remote repo                                                             | null                      |
 | remoteRepoName        | repo name for remote repo                                                            | null                      |
 | remoteRepoUser        | user name for remote repo                                                            | null                      |
 | remoteServiceProvider | provider of remote repo (and issues)                                                 | GITHUB                    |
-| repoDeleteApprover    | approves / rejects calls to delete remote repo, used with confirmRemoteDelete        |                           |
+| repoDeleteApprover    | approves / rejects calls to delete remote repo, used with confirmRemoteDelete        | null                      |
 | taggerEmail           | the user email to put on a tag when tag() called                                     | load from properties      |
 | taggerName            | the user name to put on a tag when tag() called                                      | load from properties      |
 | useWiki               | passed as part of creating remote repo. May not be supported by all remote providers | true                      |

@@ -4,17 +4,21 @@ import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Repository;
 import org.slf4j.Logger;
+import uk.q3c.build.gitplus.changelog.ChangeLog;
+import uk.q3c.build.gitplus.changelog.ChangeLogConfiguration;
 import uk.q3c.build.gitplus.local.GitCommit;
 import uk.q3c.build.gitplus.local.GitLocal;
 import uk.q3c.build.gitplus.local.Tag;
 import uk.q3c.build.gitplus.remote.GitRemote;
 import uk.q3c.build.gitplus.remote.GitRemoteFactory;
 
+import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -42,7 +46,7 @@ public class GitPlus implements AutoCloseable {
     private GitRemote gitRemote;
 
     private GitPlusConfiguration configuration;
-
+    private ChangeLog changelog;
 
     /**
      * Closes {@link GitLocal} instances to free up resources
@@ -57,7 +61,6 @@ public class GitPlus implements AutoCloseable {
             wikiLocal.close();
         }
     }
-
 
     /**
      * The main entry point when using GitPlus to create repos.  Creates local and/or remote repos depending on configuration settings, and/or reads existing
@@ -85,7 +88,6 @@ public class GitPlus implements AutoCloseable {
         return this;
     }
 
-
     public GitPlusConfiguration getConfiguration() {
         if (configuration == null) {
             configuration = new GitPlusConfiguration();
@@ -93,8 +95,7 @@ public class GitPlus implements AutoCloseable {
         return configuration;
     }
 
-
-    private void verifyRemoteFromLocal() throws IOException {
+    public void verifyRemoteFromLocal() throws IOException {
         if (getConfiguration().getRemoteRepoFullName() == null) {
             String origin = getGitLocal().getOrigin();
             if (origin != null) {
@@ -135,7 +136,6 @@ public class GitPlus implements AutoCloseable {
         gitLocal.add(f);
     }
 
-
     private void createProject() {
         log.debug("creating project");
         configuration.getProjectCreator()
@@ -161,7 +161,6 @@ public class GitPlus implements AutoCloseable {
             createProject();
         }
     }
-
 
     public GitRemote getGitRemote() throws IOException {
         if (gitRemote == null) {
@@ -191,7 +190,6 @@ public class GitPlus implements AutoCloseable {
     public String getRemoteTagUrl() throws IOException {
         return getGitRemote().getTagUrl();
     }
-
 
     public List<Tag> getTags() {
         return getGitLocal().getTags();
@@ -228,5 +226,68 @@ public class GitPlus implements AutoCloseable {
 
     public void pushWiki() throws IOException {
         getWikiLocal().push(getGitRemote(), false);
+    }
+
+    public ChangeLog getChangelog() {
+        if (changelog == null) {
+            changelog = new ChangeLog(this);
+        }
+        return changelog;
+    }
+
+    public void setChangelog(ChangeLog changelog) {
+        this.changelog = changelog;
+    }
+
+    /**
+     * Generates a changelog using {@link ChangeLogConfiguration} passed in with {@link GitPlusConfiguration}, or with default {@link ChangeLogConfiguration}
+     * if none supplied
+     *
+     * @return a File object referencing the generated output
+     * @throws IOException if failure occurs during generation
+     */
+    public File generateChangeLog() throws IOException {
+        return getChangelog().createChangeLog();
+    }
+
+    /**
+     * Generates a changelog using {@code changeLogConfiguration}
+     *
+     * @return a File object referencing the generated output
+     * @throws IOException if failure occurs during generation
+     */
+    public File generateChangeLog(@Nonnull ChangeLogConfiguration changeLogConfiguration) throws IOException {
+        checkNotNull(changeLogConfiguration);
+        getChangelog().setConfiguration(changeLogConfiguration);
+        return changelog.createChangeLog();
+    }
+
+    /**
+     * Generates a changelog using {@link ChangeLogConfiguration} passed in with {@link GitPlusConfiguration}, or with default {@link ChangeLogConfiguration}
+     * if none supplied, modified by {@code outputTarget}.
+     *
+     * @return a File object referencing the generated output
+     * @throws IOException if failure occurs during generation
+     */
+    public File generateChangeLog(@Nonnull ChangeLogConfiguration.OutputTarget outputTarget) throws IOException {
+        checkNotNull(outputTarget);
+        getChangelog().getConfiguration()
+                      .outputTarget(outputTarget);
+        return changelog.createChangeLog();
+    }
+
+    /**
+     * Generates a changelog using {@link ChangeLogConfiguration} passed in with {@link GitPlusConfiguration}, or with default {@link ChangeLogConfiguration}
+     * if none supplied, modified by {@code outputFile}.  The configuration output target is set to USE_FILE_SPEC
+     *
+     * @return a File object referencing the generated output
+     * @throws IOException if failure occurs during generation
+     */
+    public File generateChangeLog(@Nonnull File outputFile) throws IOException {
+        checkNotNull(outputFile);
+        getChangelog().getConfiguration()
+                      .outputFile(outputFile)
+                      .outputTarget(ChangeLogConfiguration.OutputTarget.USE_FILE_SPEC);
+        return changelog.createChangeLog();
     }
 }

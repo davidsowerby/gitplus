@@ -3,6 +3,7 @@ package uk.q3c.build.gitplus.gitplus
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
+import uk.q3c.build.gitplus.changelog.ChangeLogConfiguration
 import uk.q3c.build.gitplus.local.DefaultGitLocalProvider
 import uk.q3c.build.gitplus.local.GitLocalProvider
 import uk.q3c.build.gitplus.remote.DefaultRemoteRepoDeleteApprover
@@ -52,6 +53,7 @@ class GitPlusConfigurationTest extends Specification {
         config.getCloneExistsResponse() == EXCEPTION
         config.getGitLocalProvider() instanceof DefaultGitLocalProvider
         config.getProjectDirParent().equals(new File('.'))
+        config.getChangeLogConfiguration() == null
 
     }
 
@@ -244,6 +246,7 @@ class GitPlusConfigurationTest extends Specification {
         File projectDir = new File('.')
         FileDeleteApprover deleteApprover = Mock(FileDeleteApprover)
         GitLocalProvider mockGitLocalProvider = Mock(GitLocalProvider)
+        ChangeLogConfiguration changeLogConfiguration = Mock(ChangeLogConfiguration)
 
         when:
         config.repoDeleteApprover(approver)
@@ -261,6 +264,7 @@ class GitPlusConfigurationTest extends Specification {
                 .cloneExistsResponse(PULL)
                 .fileDeleteApprover(deleteApprover)
                 .gitLocalProvider(mockGitLocalProvider)
+                .changeLogConfiguration(changeLogConfiguration)
 
 
         then:
@@ -278,6 +282,7 @@ class GitPlusConfigurationTest extends Specification {
         config.getCloneExistsResponse() == PULL
         config.getFileDeleteApprover() == deleteApprover
         config.getGitLocalProvider() == mockGitLocalProvider
+        config.getChangeLogConfiguration() == changeLogConfiguration
     }
 
     def "force load from properties"() {

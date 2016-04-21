@@ -25,7 +25,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Builds a list of {@link VersionRecord}.  The versions are identified by tags. Each VersionRecord holds a set of GitCommit instances, which make up a
- * version.  GitCommmit parses commit messages fro issue fix references, and the VersionRecord collates those into groups of issues (for example, 'bug',
+ * version.  GitCommit parses commit messages fro issue fix references, and the VersionRecord collates those into groups of issues (for example, 'bug',
  * 'enhancement', 'quality'.  The mapping of issues labels to issue groups is user defined via {@link ChangeLogConfiguration#labelGroups(Map)}.
  * <p>
  * Output format is defined by a Velocity template
@@ -36,35 +36,44 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class ChangeLog {
     private static Logger log = getLogger(ChangeLog.class);
     private final VelocityContext velocityContext;
-    private final ChangeLogConfiguration configuration;
+    private ChangeLogConfiguration configuration;
     private Template velocityTemplate;
     private GitPlus gitPlus;
     private Map<String, Tag> tagMap;
     private ArrayList<VersionRecord> versionRecords;
 
-
-    public ChangeLog(@Nonnull GitPlus gitPlus, @Nonnull ChangeLogConfiguration configuration) {
+    /**
+     * @param gitPlus the gitPlus instance used for access to local and remote Git repositories
+     */
+    public ChangeLog(@Nonnull GitPlus gitPlus) {
         checkNotNull(gitPlus);
-        checkNotNull(configuration);
         this.gitPlus = gitPlus;
-        this.configuration = configuration;
-        configuration.validate();
+        // Use change log configuration if provided, otherwise create a default instance
+        ChangeLogConfiguration changeLogConfig = gitPlus.getConfiguration()
+                                                        .getChangeLogConfiguration();
+        this.configuration = changeLogConfig == null ? new ChangeLogConfiguration() : changeLogConfig;
         VelocityEngine velocityEngine = new VelocityEngine();
         velocityEngine.setProperty(RuntimeConstants.RESOURCE_LOADER, "classpath");
         velocityEngine.setProperty("classpath.resource.loader.class", ClasspathResourceLoader.class.getName());
         velocityEngine.init();
         velocityTemplate = velocityEngine.getTemplate(configuration.getTemplateName());
         velocityContext = new VelocityContext();
-        gitPlus.createOrVerifyRepos();
     }
 
+    public ChangeLogConfiguration getConfiguration() {
+        return configuration;
+    }
+
+    public void setConfiguration(ChangeLogConfiguration configuration) {
+        this.configuration = configuration;
+    }
 
     public String getProjectName() {
         return gitPlus.getProjectName();
     }
 
 
-    public void createChangeLog() throws IOException {
+    public File createChangeLog() throws IOException {
         assembleVersionRecords();
 
 
@@ -86,14 +95,14 @@ public class ChangeLog {
         velocityTemplate.merge(velocityContext, w);
         File outputFile = getOutputFile();
         FileUtils.writeStringToFile(outputFile, w.toString());
-        if (configuration.getOutputDirectory() == ChangeLogConfiguration.OutputTarget.WIKI_ROOT) {
+        if (configuration.getOutputTarget() == ChangeLogConfiguration.OutputTarget.WIKI_ROOT) {
             GitLocal wikiLocal = gitPlus.getWikiLocal();
             wikiLocal.add(outputFile);
             wikiLocal.commit("Auto generated changelog");
             wikiLocal
                     .push(gitPlus.getGitRemote(), false);
         }
-
+        return outputFile;
     }
 
     /**
@@ -103,7 +112,7 @@ public class ChangeLog {
      */
     public File getOutputFile() {
         File outputFile;
-        switch (configuration.getOutputDirectory()) {
+        switch (configuration.getOutputTarget()) {
             case USE_FILE_SPEC:
                 outputFile = configuration.getOutputFile();
                 break;
@@ -125,7 +134,7 @@ public class ChangeLog {
                 outputFile = new File(currentDir, configuration.getOutputFilename());
                 break;
             default:
-                throw new ChangeLogConfigurationException("Unrecognised output directory, " + configuration.getOutputDirectory()
+                throw new ChangeLogConfigurationException("Unrecognised output directory, " + configuration.getOutputTarget()
                                                                                                            .name());
 
         }
