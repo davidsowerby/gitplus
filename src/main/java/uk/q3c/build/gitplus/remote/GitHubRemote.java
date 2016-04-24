@@ -278,5 +278,29 @@ public class GitHubRemote implements GitRemote {
         return map;
     }
 
+    @Override
+    public String latestDevelopCommit() throws IOException {
+        Branch developBranch = getBranch("develop");
+        if (developBranch == null) {
+            throw new IOException("'develop' branch not found");
+        }
+        return developBranch.commit()
+                            .sha();
+    }
+
+    private Branch getBranch(String branchName) throws IOException {
+        Iterator<Branch> branchIterator = getRepo(TokenScope.RESTRICTED).branches()
+                                                                        .iterate()
+                                                                        .iterator();
+        while (branchIterator.hasNext()) {
+            Branch branch = branchIterator.next();
+            if (branch.name()
+                      .equals(branchName)) {
+                return branch;
+            }
+        }
+        return null;
+    }
+
 
 }

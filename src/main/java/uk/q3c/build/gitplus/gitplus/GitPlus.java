@@ -251,6 +251,14 @@ public class GitPlus implements AutoCloseable {
     }
 
     /**
+     * Returns the hash for the latest commit on the develop branch.  Ideally this information would be replaced by the payload from a webhook, as there is
+     * always a risk that the call to this method may be incorrect (that is, the push which made a change, is followed quickly by a second push)
+     */
+    public String latestRemoteDevelopCommit() throws IOException {
+        return getGitRemote().latestDevelopCommit();
+    }
+
+    /**
      * Generates a changelog using {@code changeLogConfiguration}
      *
      * @return a File object referencing the generated output

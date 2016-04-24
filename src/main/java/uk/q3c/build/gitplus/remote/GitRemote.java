@@ -92,8 +92,6 @@ public interface GitRemote {
      * attached to</li>
      * </ol>
      */
-
-
     Map<String, String> mergeLabels(Map<String, String> labelsToMerge) throws IOException;
 
     /**
@@ -103,4 +101,9 @@ public interface GitRemote {
      * @throws IOException
      */
     Map<String, String> getLabelsAsMap() throws IOException;
+
+    /**
+     * Returns the hash for the latest commit on the develop branch.
+     */
+    String latestDevelopCommit() throws IOException;
 }

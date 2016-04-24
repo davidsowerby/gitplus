@@ -18,7 +18,6 @@ import uk.q3c.build.gitplus.remote.GitRemoteFactory
 
 import static uk.q3c.build.gitplus.changelog.ChangeLogConfiguration.OutputTarget.PROJECT_BUILD_ROOT
 import static uk.q3c.build.gitplus.changelog.ChangeLogConfiguration.OutputTarget.USE_FILE_SPEC
-
 /**
  * Created by David Sowerby on 13 Mar 2016
  */
@@ -457,6 +456,18 @@ class GitPlusTest extends Specification {
         1 * changeLogConfiguration.outputTarget(USE_FILE_SPEC) >> changeLogConfiguration
         1 * changeLog.createChangeLog() >> f
         result == f
+    }
+
+    def "latest develop commit"() {
+        given:
+        GitPlus gitPlus = new GitPlus()
+        gitPlus.getConfiguration().remoteRepoUser('davidsowerby').remoteRepoName('krail')
+
+        when:
+        String result = gitPlus.latestRemoteDevelopCommit()
+
+        then:
+        result.equals('ebee0ed82aa55d91ca274270059f79454e17db1a')
     }
 
 }
