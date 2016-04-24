@@ -256,9 +256,8 @@ class GitLocalTest extends Specification {
 
     def "GitLocalException when init call fails"() {
         given:
-        configuration.projectName('dummy')
         gitLocal = new GitLocal(configuration)
-        gitLocal.getConfiguration().projectDir(null) // force failure
+        gitLocal.getConfiguration().projectDir(null).projectName(null) // force failure
 
 
         when:

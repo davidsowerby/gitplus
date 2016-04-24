@@ -62,7 +62,7 @@ class GitPlusTest extends Specification {
         then:
         1 * gitLocal.createLocalRepo()
         0 * gitRemote.createRepo()
-        0 * projectCreator.execute(gitplus.getConfiguration().getProjectDir())
+        0 * projectCreator.execute()
     }
 
     def "create local repo only and create project"() {
@@ -81,7 +81,7 @@ class GitPlusTest extends Specification {
 
         then:
         1 * gitLocal.createLocalRepo()
-        1 * projectCreator.execute(gitplus.getConfiguration().getProjectDir())
+        1 * projectCreator.execute()
         0 * gitRemote.createRepo()
         0 * gitLocal.push(gitRemote, true)
 
@@ -105,7 +105,7 @@ class GitPlusTest extends Specification {
         then:
         1 * gitLocal.cloneRemote()
         1 * wikiLocal.cloneRemote()
-        0 * projectCreator.execute(gitplus.getConfiguration().getProjectDir())
+        0 * projectCreator.execute()
         0 * gitRemote.createRepo()
         0 * gitLocal.push(gitRemote, true)
     }
@@ -131,7 +131,7 @@ class GitPlusTest extends Specification {
 
         then:
         1 * gitLocal.createLocalRepo()
-        1 * projectCreator.execute(new File(temporaryFolder.getRoot(), "scratch"))
+        1 * projectCreator.execute()
         1 * gitRemote.createRepo()
         2 * gitLocal.push(gitRemote, false)
     }
@@ -157,7 +157,7 @@ class GitPlusTest extends Specification {
 
         then:
         1 * gitLocal.createLocalRepo()
-        1 * projectCreator.execute(new File(temporaryFolder.getRoot(), "scratch"))
+        1 * projectCreator.execute()
         1 * gitRemote.createRepo()
         2 * gitLocal.push(gitRemote, false)
         1 * wikiLocal.createLocalRepo()
@@ -181,7 +181,7 @@ class GitPlusTest extends Specification {
 
         then:
         1 * gitLocal.createLocalRepo()
-        0 * projectCreator.execute(gitplus.getConfiguration().getProjectDir())
+        0 * projectCreator.execute()
         1 * gitRemote.createRepo()
         2 * gitLocal.push(gitRemote, false)
     }

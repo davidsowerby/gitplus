@@ -136,10 +136,10 @@ public class GitPlus implements AutoCloseable {
         gitLocal.add(f);
     }
 
-    private void createProject() {
+    private void createProject() throws IOException {
         log.debug("creating project");
         configuration.getProjectCreator()
-                     .execute(configuration.getProjectDir());
+                     .execute();
         gitLocal.add(configuration.getProjectDir());
     }
 

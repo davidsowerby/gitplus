@@ -29,7 +29,7 @@ This is a fairly thin wrapper around [JGit](https://eclipse.org/jgit/), with som
   
 ## GitRemote
 
-This is a common interface for any hosted Git service, which is expected also to be where project issues are tracked.  At the moment there is only a [GitHub](https://github.com/) implementation for this interface.  This makes extensive use of this [GitHub API project](https://github.com/jcabi/jcabi-github)
+This is a common interface for any hosted Git service, which is uk.q3c.build.gitplus.expected also to be where project issues are tracked.  At the moment there is only a [GitHub](https://github.com/) implementation for this interface.  This makes extensive use of this [GitHub API project](https://github.com/jcabi/jcabi-github)
 
 It is hoped that there may be further implementations for BitBucket, GitLab etc.
 

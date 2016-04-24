@@ -70,7 +70,7 @@ public class GitLocal implements AutoCloseable {
             repo = new FileRepository(gitDir);
             repo.create();
         } catch (Exception e) {
-            throw new GitLocalException("Unable to init " + configuration.getProjectDir(), e);
+            throw new GitLocalException("Unable to initialise GitLocal", e);
 
         } finally {
             if (repo != null) {
@@ -303,16 +303,6 @@ public class GitLocal implements AutoCloseable {
         }
     }
 
-    public void setOrigin(@Nonnull GitRemote gitRemote) {
-        checkNotNull(gitRemote);
-        try {
-            String originUrl = gitRemote.getCloneUrl();
-            setOrigin(originUrl);
-        } catch (Exception e) {
-            throw new GitLocalException("Unable to set origin", e);
-        }
-    }
-
     public void setOrigin(@Nonnull String origin) {
         checkNotNull(origin);
         try {
@@ -321,6 +311,16 @@ public class GitLocal implements AutoCloseable {
             config.setString("remote", "origin", "url", origin);
             config.save();
 
+        } catch (Exception e) {
+            throw new GitLocalException("Unable to set origin", e);
+        }
+    }
+
+    public void setOrigin(@Nonnull GitRemote gitRemote) {
+        checkNotNull(gitRemote);
+        try {
+            String originUrl = gitRemote.getCloneUrl();
+            setOrigin(originUrl);
         } catch (Exception e) {
             throw new GitLocalException("Unable to set origin", e);
         }
