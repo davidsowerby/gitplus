@@ -3,7 +3,8 @@ package uk.q3c.build.gitplus.creator
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
-
+import uk.q3c.util.testutil.FileTestUtil
+import uk.q3c.util.testutil.TestResource
 /**
  * Created by David Sowerby on 24 Apr 2016
  */
@@ -20,7 +21,7 @@ class JavaSpockProjectCreatorTest extends Specification {
         creator = new JavaSpockProjectCreator(temp)
     }
 
-    def "create"() {
+    def "create with defaults"() {
         given:
         creator.prepare()
 
@@ -28,13 +29,18 @@ class JavaSpockProjectCreatorTest extends Specification {
         creator.execute()
 
         then:
-        new File(temp, 'src/main/java').exists()
-        new File(temp, 'src/main/resources').exists()
-        new File(temp, 'src/test/groovy').exists()
-        new File(temp, 'src/test/resources').exists()
+        new File(temp, 'src/main/java/DummyJava.java').exists()
+        new File(temp, 'src/main/resources/DummyResource.txt').exists()
+        new File(temp, 'src/test/groovy/DummyTestGroovy.groovy').exists()
+        new File(temp, 'src/test/resources/DummyTestResource.txt').exists()
         new File(temp, '.gitignore').exists()
         new File(temp, 'build.gradle').exists()
         creator.getGradleFile().getFilename().equals('build.gradle')
-        creator.getGitIgnoreFle().getFilename().equals('.gitignore')
+        creator.getGitIgnoreFile().getFilename().equals('.gitignore')
+
+
+        File expected = TestResource.resource(this, 'expected.gradle')
+        File actual = new File(temp, 'build.gradle')
+        !FileTestUtil.compare(actual, expected).isPresent()
     }
 }

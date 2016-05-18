@@ -13,38 +13,38 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class JavaSpockProjectCreator extends ProjectCreatorBase {
 
     private final GradleFile gradleFile;
-    private final GitIgnoreFile gitIgnoreFle;
+    private final GitIgnoreFile gitIgnoreFile;
 
     public JavaSpockProjectCreator(@Nonnull File projectDir) {
         super(projectDir);
         checkNotNull(projectDir);
         gradleFile = new GradleFile(projectDir);
-        gitIgnoreFle = new GitIgnoreFile(projectDir);
+        gitIgnoreFile = new GitIgnoreFile(projectDir);
     }
 
     public GradleFile getGradleFile() {
         return gradleFile;
     }
 
-    public GitIgnoreFile getGitIgnoreFle() {
-        return gitIgnoreFle;
+    public GitIgnoreFile getGitIgnoreFile() {
+        return gitIgnoreFile;
     }
 
     @Override
     public void prepare() {
-        directory("src/main/java");
-        directory("src/main/resources");
-        directory("src/test/groovy");
-        directory("src/test/resources");
+        directory("src/main/java", new DummyFileBuilder("DummyJava.java"));
+        directory("src/main/resources", new DummyFileBuilder("DummyResource.txt"));
+        directory("src/test/groovy", new DummyFileBuilder("DummyTestGroovy.groovy"));
+        directory("src/test/resources", new DummyFileBuilder("DummyTestResource.txt"));
         prepareGradleFile();
         prepareGitIgnoreFile();
     }
 
     protected void prepareGitIgnoreFile() {
-        gitIgnoreFle.java()
-                    .eclipse()
-                    .idea();
-        file(gitIgnoreFle);
+        gitIgnoreFile.java()
+                     .eclipse()
+                     .idea();
+        file(gitIgnoreFile);
     }
 
     protected void prepareGradleFile() {
@@ -57,6 +57,7 @@ public class JavaSpockProjectCreator extends ProjectCreatorBase {
                   .jcenter()
                   .junit()
                   .spock()
+                  .groovy()
                   .publishing(true);
         file(gradleFile);
     }

@@ -5,32 +5,29 @@ plugins {
     id 'groovy'
     id 'idea'
     id 'java'
-    id 'wiggly'
+    id 'maven'
+    id 'maven-publish'
 }
 
 sourceCompatibility = '1.8'
 
 repositories {
     jcenter()
-    mavenCentral()
-    mavenLocal()
-    'http://otherRepo'
 }
 
 dependencies {
     compile 'org.codehaus.groovy:groovy-all:2.4.4'
-    compile 'org.slf4j:slf4j-api:1.7.5'
     testCompile 'junit:junit:4.12'
     testCompile 'org.spockframework:spock-core:1.0-groovy-2.4'
-    testCompile 'cglib:cglib-nodep:3.2.0  // for Spock mocks'
-    testCompile 'org.objenesis:objenesis:2.2 // for Spock mocks'
+    testCompile 'cglib:cglib-nodep:3.2.0'
+    testCompile 'org.objenesis:objenesis:2.2'
 }
 
 publishing {
 
     publications {
 
-        mavenStuff {
+        mavenStuff(MavenPublication) {
             from components.java
 
             artifact sourcesJar {

@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -25,11 +26,11 @@ public abstract class AbstractFileBuilder<FILE_TYPE> implements FileBuilder {
     }
 
     @Override
-    public File write() throws IOException {
+    public Optional<File> write() throws IOException {
         contents = new ArrayList<>();
         File f = new File(projectDir, filename);
         FileUtils.writeLines(f, assemble());
-        return f;
+        return Optional.of(f);
     }
 
     /**

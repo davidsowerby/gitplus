@@ -5,9 +5,12 @@ import org.slf4j.Logger;
 import uk.q3c.build.gitplus.gitplus.ProjectCreator;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -18,7 +21,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  */
 public abstract class ProjectCreatorBase implements ProjectCreator {
     private static Logger log = getLogger(ProjectCreatorBase.class);
-    private Set<String> directories = new HashSet<>();
+    private Map<String, FileBuilder> directories = new HashMap<>();
     private Set<FileBuilder> files = new HashSet<>();
     private File projectDir;
 
@@ -27,9 +30,20 @@ public abstract class ProjectCreatorBase implements ProjectCreator {
         this.projectDir = projectDir;
     }
 
-    public ProjectCreatorBase directory(@Nonnull String path) {
+    /**
+     * Specifies a directory to be created and a file to be placed in it (this may just be a dummy file to stop Git from removing an empty directory)
+     *
+     * @param path        file path to the directory
+     * @param fileBuilder the builder to use for the dummy file.  Can be null, in which case a {@link NoOpFile} is used internally
+     * @return this for fluency
+     */
+    public ProjectCreatorBase directory(@Nonnull String path, @Nullable FileBuilder fileBuilder) {
         checkNotNull(path);
-        directories.add(path);
+        if (fileBuilder == null) {
+            directories.put(path, new NoOpFile());
+        } else {
+            directories.put(path, fileBuilder);
+        }
         return this;
     }
 
@@ -39,21 +53,25 @@ public abstract class ProjectCreatorBase implements ProjectCreator {
         return this;
     }
 
-    protected File createDirectory(File projectDir, String path) throws IOException {
-        File f = new File(projectDir, path);
-        if (f.exists()) {
-            log.warn("Directory {} already exists, call to create it has been ignored", f);
+    protected File createDirectory(File projectDir, String path, FileBuilder fileBuilder) throws IOException {
+        File directory = new File(projectDir, path);
+        if (directory.exists()) {
+            log.warn("Directory {} already exists, call to create it has been ignored", directory);
         } else {
-            FileUtils.forceMkdir(f);
+            FileUtils.forceMkdir(directory);
         }
-        return f;
+        if (fileBuilder instanceof DummyFileBuilder) {
+            ((DummyFileBuilder) fileBuilder).setDirectory(directory);
+        }
+        fileBuilder.write();
+        return directory;
     }
 
     @Override
     public void execute() throws IOException {
         checkNotNull(projectDir);
-        for (String directory : directories) {
-            createDirectory(projectDir, directory);
+        for (Map.Entry<String, FileBuilder> entry : directories.entrySet()) {
+            createDirectory(projectDir, entry.getKey(), entry.getValue());
         }
         for (FileBuilder file : files) {
             file.write();

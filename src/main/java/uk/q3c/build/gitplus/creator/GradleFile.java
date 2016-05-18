@@ -14,7 +14,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public class GradleFile extends AbstractFileBuilder<GradleFile> implements FileBuilder {
 
-    private final int indentSpaces = 3;
+    private final int indentSpaces = 4;
     private List<String> repoNames = new ArrayList<>();
     private Set<String> pluginNames = new TreeSet<>();
     private List<String> testCompileDependencies = new ArrayList<>();
@@ -97,8 +97,8 @@ public class GradleFile extends AbstractFileBuilder<GradleFile> implements FileB
 
     public GradleFile spock() {
         testCompileDependency("org.spockframework:spock-core:1.0-groovy-2.4");
-        testCompileDependency("cglib:cglib-nodep:3.2.0  // for Spock mocks");
-        testCompileDependency("org.objenesis:objenesis:2.2 // for Spock mocks");
+        testCompileDependency("cglib:cglib-nodep:3.2.0");   // for Spock mocks
+        testCompileDependency("org.objenesis:objenesis:2.2");  // for Spock mocks
         return this;
     }
 
@@ -174,7 +174,7 @@ public class GradleFile extends AbstractFileBuilder<GradleFile> implements FileB
         plugin("maven-publishing");
         startBlock("publishing");
         startBlock("publications");
-        startBlock("mavenStuff");
+        startBlock("mavenStuff(MavenPublication)");
         line("from components.java");
 
         startBlock("artifact sourcesJar");
