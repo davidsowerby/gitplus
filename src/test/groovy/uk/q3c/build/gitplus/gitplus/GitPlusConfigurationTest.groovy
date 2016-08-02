@@ -1,5 +1,6 @@
 package uk.q3c.build.gitplus.gitplus
 
+import com.google.common.collect.ImmutableMap
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
@@ -242,7 +243,7 @@ class GitPlusConfigurationTest extends Specification {
         String taggerName = 'a'
         String taggerEmail = 'b'
         String cloneUrl = 'url'
-        Map<String, String> labels = Mock(Map)
+        Map<String, String> labels = ImmutableMap.of('a', 'b')
         File projectDir = new File('.')
         FileDeleteApprover deleteApprover = Mock(FileDeleteApprover)
         GitLocalProvider mockGitLocalProvider = Mock(GitLocalProvider)
@@ -371,7 +372,22 @@ class GitPlusConfigurationTest extends Specification {
         config.getRemoteRepoUser().equals('me')
         config.getRemoteRepoName().equals('repo')
         config.getRemoteRepoFullName().equals('me/repo')
+    }
 
+    def "GitHash incorrect length"() {
 
+        when:
+        config.gitHash('rubbish')
+
+        then:
+        thrown(IllegalArgumentException)
+    }
+
+    def "Git hash null"() {
+        when:
+        config.gitHash(null)
+
+        then:
+        thrown(NullPointerException)
     }
 }

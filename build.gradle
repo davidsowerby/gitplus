@@ -11,7 +11,7 @@ plugins {
 }
 
 sourceCompatibility = '1.8'
-version = '0.12.20'
+version = '0.13.22'
 group = 'uk.q3c.build'
 
 testSets {

@@ -1,44 +1,45 @@
 package uk.q3c.build.gitplus.gitplus;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap.Builder;
 import uk.q3c.build.gitplus.changelog.ChangeLogConfiguration;
 import uk.q3c.build.gitplus.local.DefaultGitLocalProvider;
 import uk.q3c.build.gitplus.local.GitLocalProvider;
-import uk.q3c.build.gitplus.remote.DefaultGitRemoteFactory;
-import uk.q3c.build.gitplus.remote.DefaultRemoteRepoDeleteApprover;
-import uk.q3c.build.gitplus.remote.GitRemote.ServiceProvider;
-import uk.q3c.build.gitplus.remote.GitRemoteFactory;
-import uk.q3c.build.gitplus.remote.RemoteRepoDeleteApprover;
+import uk.q3c.build.gitplus.remote.*;
 import uk.q3c.build.gitplus.util.BuildPropertiesLoader;
 import uk.q3c.build.gitplus.util.FileBuildPropertiesLoader;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static uk.q3c.build.gitplus.gitplus.GitPlusConfiguration.CloneExistsResponse.EXCEPTION;
 
 /**
  * Created by David Sowerby on 14 Mar 2016
  */
+@SuppressWarnings({"PublicMethodWithoutLogging", "ParameterHidesMemberVariable", "MethodReturnOfConcreteClass"})
 public class GitPlusConfiguration {
 
     public enum CloneExistsResponse {DELETE, PULL, EXCEPTION}
 
-    public static final Map<String, String> defaultIssueLabels = new ImmutableMap.Builder<String, String>().put("bug", "fc2929")
-                                                                                                           .put("duplicate", "cccccc")
-                                                                                                           .put("enhancement", "84b6eb")
-                                                                                                           .put("question", "cc317c")
-                                                                                                           .put("wontfix", "d7e102")
-                                                                                                           .put("task", "0b02e1")
-                                                                                                           .put("quality", "02d7e1")
-                                                                                                           .put("documentation", "eb6420")
-                                                                                                           .put("build", "fbca04")
-                                                                                                           .put("performance", "d4c5f9")
-                                                                                                           .put("critical", "e11d21")
-                                                                                                           .build();
+    public static final Map<String, String> defaultIssueLabels = new Builder<String, String>().put("bug", "fc2929")
+                                                                                              .put("duplicate", "cccccc")
+                                                                                              .put("enhancement", "84b6eb")
+                                                                                              .put("question", "cc317c")
+                                                                                              .put("wontfix", "d7e102")
+                                                                                              .put("task", "0b02e1")
+                                                                                              .put("quality", "02d7e1")
+                                                                                              .put("documentation", "eb6420")
+                                                                                              .put("build", "fbca04")
+                                                                                              .put("performance", "d4c5f9")
+                                                                                              .put("critical", "e11d21")
+                                                                                              .build();
+    private static final int GIT_HASH_LENGTH = 40;
     private File projectDir;
     private boolean createLocalRepo;
     private boolean createRemoteRepo;
@@ -54,7 +55,7 @@ public class GitPlusConfiguration {
     private String confirmRemoteDelete;
     private String remoteRepoHtmlUrl;
     private boolean useWiki = true;
-    private ServiceProvider remoteServiceProvider = ServiceProvider.GITHUB;
+    private GitRemote.ServiceProvider remoteServiceProvider = GitRemote.ServiceProvider.GITHUB;
     private String cloneUrl;
     private BuildPropertiesLoader propertiesLoader;
     private RemoteRepoDeleteApprover repoDeleteApprover;
@@ -64,47 +65,61 @@ public class GitPlusConfiguration {
     private String remoteRepoName;
     private Map<String, String> issueLabels;
     private boolean mergeIssueLabels;
-    private CloneExistsResponse cloneExistsResponse = EXCEPTION;
+    private GitPlusConfiguration.CloneExistsResponse cloneExistsResponse = EXCEPTION;
     private FileDeleteApprover fileDeleteApprover;
     private GitLocalProvider gitLocalProvider;
     private ChangeLogConfiguration changeLogConfiguration;
+    private String gitHash;
 
     public GitPlusConfiguration() {
         //required
     }
 
+    @SuppressWarnings("AccessingNonPublicFieldOfAnotherObject")
     public GitPlusConfiguration(@Nonnull GitPlusConfiguration other) {
         checkNotNull(other);
-        this.projectDir = other.projectDir;
-        this.createLocalRepo = other.createLocalRepo;
-        this.createRemoteRepo = other.createRemoteRepo;
-        this.cloneRemoteRepo = other.cloneRemoteRepo;
-        this.projectName = other.projectName;
-        this.createProject = other.createProject;
-        this.remoteRepoName = other.remoteRepoName;
-        this.remoteRepoUser = other.remoteRepoUser;
-        this.projectDirParent = other.projectDirParent;
-        this.projectCreator = other.projectCreator;
-        this.gitRemoteFactory = other.gitRemoteFactory;
-        this.projectDescription = other.projectDescription;
-        this.projectHomePage = other.projectHomePage;
-        this.publicProject = other.publicProject;
-        this.confirmRemoteDelete = other.confirmRemoteDelete;
-        this.remoteServiceProvider = other.remoteServiceProvider;
-        this.remoteRepoHtmlUrl = other.remoteRepoHtmlUrl;
-        this.useWiki = other.useWiki;
-        this.propertiesLoader = other.propertiesLoader;
-        this.repoDeleteApprover = other.repoDeleteApprover;
-        this.cloneUrl = other.cloneUrl;
-        this.taggerName = other.taggerName;
-        this.taggerEmail = other.taggerEmail;
-        this.issueLabels = other.issueLabels;
-        this.mergeIssueLabels = other.mergeIssueLabels;
-        this.cloneExistsResponse = other.cloneExistsResponse;
-        this.fileDeleteApprover = other.fileDeleteApprover;
-        this.changeLogConfiguration = other.changeLogConfiguration;
-        this.gitLocalProvider = other.gitLocalProvider;
+        projectDir = other.projectDir;
+        createLocalRepo = other.createLocalRepo;
+        createRemoteRepo = other.createRemoteRepo;
+        cloneRemoteRepo = other.cloneRemoteRepo;
+        projectName = other.projectName;
+        createProject = other.createProject;
+        remoteRepoName = other.remoteRepoName;
+        remoteRepoUser = other.remoteRepoUser;
+        projectDirParent = other.projectDirParent;
+        projectCreator = other.projectCreator;
+        gitRemoteFactory = other.gitRemoteFactory;
+        projectDescription = other.projectDescription;
+        projectHomePage = other.projectHomePage;
+        publicProject = other.publicProject;
+        confirmRemoteDelete = other.confirmRemoteDelete;
+        remoteServiceProvider = other.remoteServiceProvider;
+        remoteRepoHtmlUrl = other.remoteRepoHtmlUrl;
+        useWiki = other.useWiki;
+        propertiesLoader = other.propertiesLoader;
+        repoDeleteApprover = other.repoDeleteApprover;
+        cloneUrl = other.cloneUrl;
+        taggerName = other.taggerName;
+        taggerEmail = other.taggerEmail;
+        issueLabels = other.issueLabels;
+        mergeIssueLabels = other.mergeIssueLabels;
+        cloneExistsResponse = other.cloneExistsResponse;
+        fileDeleteApprover = other.fileDeleteApprover;
+        changeLogConfiguration = other.changeLogConfiguration;
+        gitLocalProvider = other.gitLocalProvider;
+        gitHash = other.gitHash;
 
+
+    }
+
+    public String getGitHash() {
+        return gitHash;
+    }
+
+    public GitPlusConfiguration gitHash(String hash) {
+        checkArgument(hash.length() == GIT_HASH_LENGTH, "Must be full 40 char Git hash");
+        gitHash = hash;
+        return this;
     }
 
     public GitPlusConfiguration changeLogConfiguration(final ChangeLogConfiguration changeLogConfiguration) {
@@ -137,16 +152,24 @@ public class GitPlusConfiguration {
         return this;
     }
 
-    public GitPlusConfiguration issueLabels(final Map<String, String> issueLabels) {
-        this.issueLabels = issueLabels;
+    /**
+     * The issueLabels field is set to an immutable copy of {@code issueLabels}, or to {@link #defaultIssueLabels} if {@code issueLabels} is null
+     *
+     * @param issueLabels the issues to use
+     * @return this for fluency
+     */
+    public GitPlusConfiguration issueLabels(@Nullable final Map<String, String> issueLabels) {
+        this.issueLabels = (issueLabels == null) ? defaultIssueLabels : ImmutableMap.copyOf(issueLabels);
         return this;
     }
 
+    /**
+     * Returns the issue labels that have been set, or if none have been set, returns the {@link #defaultIssueLabels}
+     *
+     * @return the issue labels that have been set, or if none have been set, returns the {@link #defaultIssueLabels}
+     */
     public Map<String, String> getIssueLabels() {
-        if (issueLabels == null) {
-            issueLabels = defaultIssueLabels;
-        }
-        return issueLabels;
+        return (issueLabels == null) ? defaultIssueLabels : issueLabels;
     }
 
     public GitPlusConfiguration remoteRepoName(final String remoteRepoName) {
@@ -195,7 +218,7 @@ public class GitPlusConfiguration {
         return propertiesLoader;
     }
 
-    public ServiceProvider getRemoteServiceProvider() {
+    public GitRemote.ServiceProvider getRemoteServiceProvider() {
         return remoteServiceProvider;
     }
 
@@ -367,7 +390,7 @@ public class GitPlusConfiguration {
     }
 
 
-    public GitPlusConfiguration remoteServiceProvider(final ServiceProvider remoteServiceProvider) {
+    public GitPlusConfiguration remoteServiceProvider(final GitRemote.ServiceProvider remoteServiceProvider) {
         this.remoteServiceProvider = remoteServiceProvider;
         return this;
     }
@@ -460,11 +483,11 @@ public class GitPlusConfiguration {
         return this;
     }
 
-    public CloneExistsResponse getCloneExistsResponse() {
+    public GitPlusConfiguration.CloneExistsResponse getCloneExistsResponse() {
         return cloneExistsResponse;
     }
 
-    public GitPlusConfiguration cloneExistsResponse(final CloneExistsResponse cloneExistsResponse) {
+    public GitPlusConfiguration cloneExistsResponse(final GitPlusConfiguration.CloneExistsResponse cloneExistsResponse) {
         this.cloneExistsResponse = cloneExistsResponse;
         return this;
     }

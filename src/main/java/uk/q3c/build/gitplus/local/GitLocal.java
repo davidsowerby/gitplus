@@ -18,6 +18,7 @@ import org.eclipse.jgit.transport.PushResult;
 import org.slf4j.Logger;
 import uk.q3c.build.gitplus.gitplus.GitPlus;
 import uk.q3c.build.gitplus.gitplus.GitPlusConfiguration;
+import uk.q3c.build.gitplus.local.Tag.TagType;
 import uk.q3c.build.gitplus.remote.GitRemote;
 import uk.q3c.build.gitplus.remote.GitRemoteFactory;
 
@@ -34,11 +35,12 @@ import static org.slf4j.LoggerFactory.getLogger;
 /**
  * A thin wrapper around Git to make some of the commands either simpler or just more direct and relevant to the task of using within Gradle
  */
+@SuppressWarnings("OverlyBroadCatchBlock")
 public class GitLocal implements AutoCloseable {
-    private static Logger log = getLogger(GitLocal.class);
-
+    private static final int GIT_HASH_LENGTH = 40;
+    private static final Logger log = getLogger(GitLocal.class);
+    private final GitPlusConfiguration configuration;
     private Git git;
-    private GitPlusConfiguration configuration;
 
     public GitLocal(@Nonnull GitPlusConfiguration configuration) {
         checkNotNull(configuration);
@@ -100,14 +102,13 @@ public class GitLocal implements AutoCloseable {
      * <li>DELETE - deletes the local copy and clones from remote</li>
      * <li>PULL - executes a Git 'pull' instead of a clone</li>
      * <li>EXCEPTION - throws a GitLocalException</li>
-     * <p>
      * </ol>
      */
     public void cloneRemote() {
         log.debug("clone requested");
 
         try {
-            File localDir = configuration.getProjectDir();
+            final File localDir = configuration.getProjectDir();
             if (localDir.exists()) {
                 log.debug("local copy (assumed to be clone) already exists");
                 switch (configuration.getCloneExistsResponse()) {
@@ -123,7 +124,7 @@ public class GitLocal implements AutoCloseable {
                     case EXCEPTION:
                     default:
                         log.debug("Exception thrown as configured");
-                        throw new GitLocalException("Git clone called, when Git local directory already exists");
+                        throw new IOException("Git clone called, when Git local directory already exists");
 
                 }
             } else {
@@ -137,13 +138,14 @@ public class GitLocal implements AutoCloseable {
         }
     }
 
+    @SuppressWarnings("OverlyBroadThrowsClause")
     private void doClone(File localDir) throws GitAPIException {
         log.debug("cloning remote from: {}", configuration
                 .getRemoteRepoHtmlUrl());
-        CloneCommand cloneCommand = Git.cloneRepository()
-                                       .setURI(configuration.getCloneUrl())
-                                       .setDirectory(localDir);
-        cloneCommand.call();
+        Git.cloneRepository()
+           .setURI(configuration.getCloneUrl())
+           .setDirectory(localDir)
+           .call();
     }
 
     private void deleteFolderIfApproved(File localDir) throws IOException {
@@ -177,20 +179,92 @@ public class GitLocal implements AutoCloseable {
         }
     }
 
-    public void checkout(@Nonnull String branchName) {
-        checkNotNull(branchName);
+    /**
+     * Returns the Git hash for the currently checkout out revision
+     *
+     * @return the Git hash for the currently checkout out revision
+     */
+    public String currentRevision() {
+        log.debug("Retrieving hash for currently checked out revision");
         try {
-            getGit()
-                    .checkout()
-                    .setName(branchName)
-                    .call();
+            Ref ref = getGit().getRepository()
+                              .getRef("HEAD");
+            return ref.getObjectId()
+                      .getName();
         } catch (Exception e) {
-            throw new GitLocalException("Unable checkout branch " + branchName, e);
+            throw new GitLocalException("Unable to retrieve current revision", e);
         }
     }
 
+    /**
+     * Performs a checkout of {@code commitId}.  Note that if this method is called with a specific commit id (that is, not a branch name), then Git will be
+     * left in a detached HEAD state.  That may not matter, but if it does, you can use {@link #checkout(String, String)} instead
+     *
+     * @param commitId the branch or ref id to check out.  If this ia a branch name, it will be checked out at HEAD
+     * @throws GitLocalException if checkout fails for any reason
+     */
+    public void checkout(@Nonnull String commitId) {
+        checkNotNull(commitId);
+        log.debug("Checking out commit id '{}'", commitId);
+        try {
+            final CheckoutCommand checkout = getGit()
+                    .checkout()
+                    .setName(commitId);
+            checkout.call();
+
+        } catch (Exception e) {
+            throw new GitLocalException("Unable checkout commitId " + commitId, e);
+        }
+    }
+
+    /**
+     * Checks out a specific commit reference, as a new branch.  Similar to {@link #checkout(String)}, except that a new branch is created in order to avoid a
+     * detached HEAD state
+     *
+     * @param newBranchName name of the new branch
+     * @param commitId      the commitId (git hash) to check out
+     */
+    @SuppressWarnings("OverlyBroadCatchBlock")
+    public void checkout(@Nonnull String newBranchName, @Nonnull String commitId) {
+        checkNotNull(newBranchName);
+        checkNotNull(commitId);
+        log.debug("checking out Git hash: '{}' to new branch '{}'", commitId, newBranchName);
+        try {
+            getGit()
+                    .checkout()
+                    .setCreateBranch(true)
+                    .setName(newBranchName)
+                    .setStartPoint(commitId)
+                    .call();
+        } catch (Exception e) {
+            throw new GitLocalException("Unable to checkout commit " + commitId, e);
+        }
+    }
+
+    /**
+     * Expands {@code branchName} to 'refs/head/{branchName}'
+     *
+     * @param branchName the short branch name (for example, 'develop') to expand
+     * @return expanded branch name, for example, 'refs/head/develop'
+     */
+    @SuppressWarnings("HardcodedFileSeparator")
+    public String expandBranchName(@Nonnull String branchName) {
+        checkNotNull(branchName);
+        log.debug("expanding branch name: {}", branchName);
+        return "refs/head/" + branchName;
+    }
+
+
+    /**
+     * Creates a new branch with the name {@code branchName}
+     *
+     * @param branchName name of the new branch
+     * @throws GitLocalException if branch cannot be created for any reason
+     */
+    @SuppressWarnings("OverlyBroadCatchBlock")
     public void createBranch(@Nonnull String branchName) {
         checkNotNull(branchName);
+        log.debug("creating branch '{}'", branchName);
         try {
             getGit().branchCreate()
                     .setName(branchName)
@@ -303,6 +377,16 @@ public class GitLocal implements AutoCloseable {
         }
     }
 
+    public void setOrigin(@Nonnull GitRemote gitRemote) {
+        checkNotNull(gitRemote);
+        try {
+            String originUrl = gitRemote.getCloneUrl();
+            setOrigin(originUrl);
+        } catch (Exception e) {
+            throw new GitLocalException("Unable to set origin", e);
+        }
+    }
+
     public void setOrigin(@Nonnull String origin) {
         checkNotNull(origin);
         try {
@@ -311,16 +395,6 @@ public class GitLocal implements AutoCloseable {
             config.setString("remote", "origin", "url", origin);
             config.save();
 
-        } catch (Exception e) {
-            throw new GitLocalException("Unable to set origin", e);
-        }
-    }
-
-    public void setOrigin(@Nonnull GitRemote gitRemote) {
-        checkNotNull(gitRemote);
-        try {
-            String originUrl = gitRemote.getCloneUrl();
-            setOrigin(originUrl);
         } catch (Exception e) {
             throw new GitLocalException("Unable to set origin", e);
         }
@@ -356,12 +430,12 @@ public class GitLocal implements AutoCloseable {
     }
 
     private void openRepository() throws IOException {
-        File f = new File(configuration.getProjectDir(), ".git");
-        FileRepositoryBuilder builder = new FileRepositoryBuilder();
-        Repository repo = builder.setGitDir(f)
-                                 .readEnvironment() // scan environment GIT_* variables
-                                 .findGitDir() // scan up the file system tree
-                                 .build();
+        final File file = new File(configuration.getProjectDir(), ".git");
+        final FileRepositoryBuilder builder = new FileRepositoryBuilder();
+        final Repository repo = builder.setGitDir(file)
+                                       .readEnvironment() // scan environment GIT_* variables
+                                       .findGitDir() // scan up the file system tree
+                                       .build();
         git = new Git(repo);
 
 
@@ -394,7 +468,7 @@ public class GitLocal implements AutoCloseable {
                     tag.commitDate(extractDateFromIdent(codeCommit.getCommitterIdent()))
                        .taggerIdent(revTag.getTaggerIdent())
                        .fullMessage(revTag.getFullMessage())
-                       .tagType(Tag.TagType.ANNOTATED)
+                       .tagType(TagType.ANNOTATED)
                        .commit(new GitCommit(codeCommit));
 
 
@@ -405,7 +479,7 @@ public class GitLocal implements AutoCloseable {
                        .commitDate(extractDateFromIdent(revCommit.getCommitterIdent()))
                        .noTagMessage()
                        .taggerIdent(revCommit.getCommitterIdent())
-                       .tagType(Tag.TagType.LIGHTWEIGHT)
+                       .tagType(TagType.LIGHTWEIGHT)
                        .commit(new GitCommit(revCommit));
                 }
                 tags.add(tag);
@@ -424,11 +498,9 @@ public class GitLocal implements AutoCloseable {
                                       .toZoneId());
     }
 
-    public ImmutableList<GitCommit> extractDevelopCommits() {
-        return extractCommitsFor("refs/heads/develop");
-    }
 
     private ImmutableList<GitCommit> extractCommitsFor(String ref) {
+        log.debug("Retrieving commits for '{}", ref);
         try {
             Repository repo = getGit().getRepository();
             RevWalk walk = new RevWalk(repo);
@@ -452,9 +524,41 @@ public class GitLocal implements AutoCloseable {
         }
     }
 
-    public ImmutableList<GitCommit> extractMasterCommits() {
-        return extractCommitsFor("refs/heads/master");
+    /**
+     * Extracts commits for the 'develop' branch
+     *
+     * @return commits for the 'develop' branch
+     */
+    public ImmutableList<GitCommit> extractDevelopCommits() {
+        return extractCommitsForBranch("develop");
     }
+
+    /**
+     * Extracts commits for the 'master' branch
+     *
+     * @return commits for the 'master' branch
+     */
+    public ImmutableList<GitCommit> extractMasterCommits() {
+        return extractCommitsForBranch("master");
+    }
+
+    /**
+     * Returns commits for the branch defined by {@code branchName}
+     *
+     * @param branchName the name of the branch the commits are required for.
+     * @return commits for the branch defined by {@code branchName}
+     */
+    @SuppressWarnings("PublicMethodWithoutLogging")
+    public ImmutableList<GitCommit> extractCommitsForBranch(@Nonnull String branchName) {
+        checkNotNull(branchName);
+        return extractCommitsFor("refs/heads/" + branchName);
+    }
+
+    @SuppressWarnings("PublicMethodWithoutLogging")
+    public ImmutableList<GitCommit> extractCommits() {
+        return extractCommitsForBranch(currentBranch());
+    }
+
 
     /**
      * Adds {@code tag} to the most recent commit.  This will add an annotated tag.  See also {@link #tagLightweight}
@@ -463,9 +567,9 @@ public class GitLocal implements AutoCloseable {
      */
     public void tag(String tag) {
         try {
-            TagCommand tagCommand = git.tag();
-            Date tagDate = new Date();
-            PersonIdent personalIdent = new PersonIdent(configuration.getTaggerName(), configuration.getTaggerEmail());
+            final TagCommand tagCommand = git.tag();
+            final Date tagDate = new Date();
+            final PersonIdent personalIdent = new PersonIdent(configuration.getTaggerName(), configuration.getTaggerEmail());
             tagCommand.setMessage("Released at version " + tag)
                       .setAnnotated(true)
                       .setName(tag)

@@ -12,6 +12,7 @@ import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
 import uk.q3c.build.gitplus.gitplus.FileDeleteApprover
+import uk.q3c.build.gitplus.gitplus.GitPlus
 import uk.q3c.build.gitplus.gitplus.GitPlusConfiguration
 import uk.q3c.build.gitplus.remote.GitRemote
 
@@ -252,6 +253,52 @@ class GitLocalTest extends Specification {
 
         then:
         thrown GitLocalException
+    }
+    /**
+     * Uses existing project as older commits will not then be subject to change
+     */
+    def "checkout specific commit"() {
+        given:
+        GitPlus gitPlus = new GitPlus()
+        configuration = gitPlus.getConfiguration()
+        configuration.remoteRepoUser('davidsowerby').remoteRepoName('q3c-testUtil').cloneRemoteRepo(true).projectDirParent(temp)
+        gitLocal = gitPlus.getGitLocal()
+        String commitHash = 'f6d1f2269daefeb4375ef5d2a2c2400101df6aa5'
+
+        when:
+        gitPlus.createOrVerifyRepos()
+
+        then:
+        gitLocal.currentBranch().equals('master')
+
+        when:
+        gitLocal.checkout(commitHash)
+
+        then:
+        gitLocal.currentRevision().equals(commitHash)
+        gitLocal.currentBranch().equals(commitHash)
+
+        when:
+        gitLocal.checkout('wiggly', commitHash)
+
+        then:
+        gitLocal.currentBranch().equals('wiggly')
+        gitLocal.currentRevision().equals(commitHash)
+
+    }
+
+    def "expand ref"() {
+        given:
+        createScratchRepo()
+
+        expect:
+        gitLocal.expandBranchName('master').equals('refs/head/master')
+
+        when:
+        gitLocal.expandBranchName(null)
+
+        then:
+        thrown NullPointerException
     }
 
     def "GitLocalException when init call fails"() {

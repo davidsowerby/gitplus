@@ -1,5 +1,6 @@
 package uk.q3c.build.gitplus
 
+import spock.lang.Ignore
 import spock.lang.Specification
 import uk.q3c.build.gitplus.creator.JavaSpockProjectCreator
 import uk.q3c.build.gitplus.gitplus.GitPlus
@@ -9,6 +10,7 @@ import uk.q3c.build.gitplus.gitplus.GitPlus
  *
  * Created by David Sowerby on 20 Mar 2016
  */
+@Ignore
 class CreateProjectTest extends Specification {
 
     def "create project"() {
