@@ -1,4 +1,14 @@
 //noinspection GrPackage
+buildscript {
+    ext.kotlin_version = '1.0.4'
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
 plugins {
     id 'java'
     id 'groovy'
@@ -10,8 +20,10 @@ plugins {
 
 }
 
+apply plugin: 'kotlin'
+
 sourceCompatibility = '1.8'
-version = '0.13.22'
+version = '0.14.1.42'
 group = 'uk.q3c.build'
 
 testSets {
@@ -20,7 +32,6 @@ testSets {
 
 ext.assertjVersion = '3.3.0'
 ext.commonsLangVersion = '3.3.2'
-ext.groovyVersion = '2.4.4'
 ext.guavaVersion = '19.0'
 
 repositories {
@@ -34,8 +45,14 @@ dependencies {
     compile 'org.eclipse.jgit:org.eclipse.jgit:3.6.0.201412230720-r'
     compile 'com.jcabi:jcabi-github:0.27'
 
-    //groovy
-    compile 'org.codehaus.groovy:groovy-all:' + groovyVersion
+    //integration testing
+    integrationTestCompile 'org.spockframework:spock-core:1.0-groovy-2.4'
+    integrationTestCompile 'junit:junit:4.12'
+
+    // kotlin
+    compile 'com.github.salomonbrys.kodein:kodein:3.0.0'
+    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    compile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
 
     //Logging
     compile 'org.slf4j:slf4j-api:1.7.5'
@@ -57,9 +74,11 @@ dependencies {
     compile 'org.apache.commons:commons-lang3:' + commonsLangVersion
     compile 'com.google.code.findbugs:annotations:3.0.0'
 
-    //integration testing
-    integrationTestCompile 'org.spockframework:spock-core:1.0-groovy-2.4'
-    integrationTestCompile 'junit:junit:4.12'
+
+}
+
+task hello(type: Test, dependsOn: build) {
+
 }
 
 publishing {
@@ -94,4 +113,9 @@ artifacts {
 
 javadoc {
     failOnError = false
+}
+
+
+sourceSets {
+    main.java.srcDirs += 'src/main/kotlin'
 }

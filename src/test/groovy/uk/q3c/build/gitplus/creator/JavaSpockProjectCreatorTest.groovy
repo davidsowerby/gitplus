@@ -3,6 +3,7 @@ package uk.q3c.build.gitplus.creator
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
+import uk.q3c.KotlinObjectFactory
 import uk.q3c.util.testutil.FileTestUtil
 import uk.q3c.util.testutil.TestResource
 /**
@@ -19,6 +20,7 @@ class JavaSpockProjectCreatorTest extends Specification {
     def setup() {
         temp = temporaryFolder.root
         creator = new JavaSpockProjectCreator(temp)
+        KotlinObjectFactory.fileBuffer().reset()
     }
 
     def "create with defaults"() {
@@ -39,7 +41,8 @@ class JavaSpockProjectCreatorTest extends Specification {
         creator.getGitIgnoreFile().getFilename().equals('.gitignore')
 
 
-        File expected = TestResource.resource(this, 'expected.gradle')
+        File expected = TestResource.resource(this, 'gradle/expected2.gradle')
+
         File actual = new File(temp, 'build.gradle')
         !FileTestUtil.compare(actual, expected).isPresent()
     }

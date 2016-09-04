@@ -1,5 +1,11 @@
 package uk.q3c.build.gitplus.creator;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import uk.q3c.build.gitplus.creator.gradle.DefaultScriptBlock;
+import uk.q3c.build.gitplus.creator.gradle.ElementFactory;
+import uk.q3c.build.gitplus.creator.gradle.GradleFile;
+import uk.q3c.build.gitplus.creator.gradle.GradleFileContent;
+
 import javax.annotation.Nonnull;
 import java.io.File;
 
@@ -12,14 +18,20 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public class JavaSpockProjectCreator extends ProjectCreatorBase {
 
+    private final GradleFileContent gradleFileContent;
     private final GradleFile gradleFile;
     private final GitIgnoreFile gitIgnoreFile;
 
     public JavaSpockProjectCreator(@Nonnull File projectDir) {
         super(projectDir);
         checkNotNull(projectDir);
-        gradleFile = new GradleFile(projectDir);
+        gradleFile = ElementFactory.INSTANCE.gradleFile(projectDir);
+        gradleFileContent = gradleFile.getContent();
         gitIgnoreFile = new GitIgnoreFile(projectDir);
+    }
+
+    public GradleFileContent getGradleFileContent() {
+        return gradleFileContent;
     }
 
     public GradleFile getGradleFile() {
@@ -42,23 +54,20 @@ public class JavaSpockProjectCreator extends ProjectCreatorBase {
 
     protected void prepareGitIgnoreFile() {
         gitIgnoreFile.java()
-                     .eclipse()
-                     .idea();
+                .eclipse()
+                .idea();
         file(gitIgnoreFile);
     }
 
+    @SuppressFBWarnings("RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT")
     protected void prepareGradleFile() {
-        gradleFile.plugin("java")
-                  .plugin("idea")
-                  .plugin("eclipse-wtp")
-                  .plugin("maven")
-                  .plugin("maven-publish")
-                  .sourceCompatibility("1.8")
-                  .jcenter()
-                  .junit()
-                  .spock()
-                  .groovy()
-                  .publishing(true);
+        gradleFileContent.plugins().java().idea().eclipse().maven().mavenPublish();
+        gradleFileContent.sourceCompatibility("1.8");
+        gradleFileContent.repositories().jcenter();
+        gradleFileContent.junit(DefaultScriptBlock.Companion.getTestCompile(), "4.12")
+                .spock(DefaultScriptBlock.Companion.getTestCompile(), "1.0-groovy-2.4")
+                .groovy(DefaultScriptBlock.Companion.getTestCompile(), "2.4.7")
+                .publishing(true);
         file(gradleFile);
     }
 

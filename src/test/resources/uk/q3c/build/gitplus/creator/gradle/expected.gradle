@@ -1,0 +1,52 @@
+
+buildscript {
+
+    repositories {
+        mavenLocal()
+        jcenter()
+    }
+
+    dependencies {
+        compile 'bsdep1'
+    }
+}
+
+repositories {
+    mavenLocal()
+}
+
+dependencies {
+    compile 'dep1'
+    compile 'dep2'
+    compile 'dep3'
+    runtime 'dep4'
+    runtime 'dep5'
+    smokeCompile 'blah'
+    compile 'depA'
+    compile 'depB'
+}
+
+plugins {
+    id 'java'
+    id 'groovy'
+    id 'wiggly'
+}
+group 'uk.q3c.simplycd'
+
+testSets {
+    line 1
+    line 2
+}
+
+task(name: wrapper, type: Wrapper) {
+    gradleVersion = '2.10'
+}
+apply plugin: 'wiggly'
+apply from: 'wiggly.gradle'
+
+task(name: hello) {
+}
+
+task(name: hello2, type: Test, dependsOn: otherTask) {
+}
+sourceCompatibility = 1.8
