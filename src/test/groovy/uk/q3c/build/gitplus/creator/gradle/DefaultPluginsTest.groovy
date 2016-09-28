@@ -19,7 +19,7 @@ class DefaultPluginsTest extends BlockReaderSpecification {
     def "output"() {
 
         when:
-        plugins.java().groovy().maven().mavenPublish().plugins('wiggly1', 'wiggly2').writeToBuffer()
+        plugins.java().groovy().maven().mavenPublish().plugins('wiggly1', 'wiggly2').plugin('org.unbroken-dome.test-sets', '1.2.0').writeToBuffer()
 
         then:
         List<String> result = resultLines()
@@ -30,7 +30,10 @@ class DefaultPluginsTest extends BlockReaderSpecification {
         result.get(4) == "    id 'maven-publish'"
         result.get(5) == "    id 'wiggly1'"
         result.get(6) == "    id 'wiggly2'"
-        result.get(7) == '}'
+        result.get(7) == "    id 'org.unbroken-dome.test-sets' version '1.2.0'"
+        result.get(8) == '}'
+        result.get(9) == ''
+        result.size() == 10
 
     }
 

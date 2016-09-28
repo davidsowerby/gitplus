@@ -51,6 +51,11 @@ class DefaultPlugins(block: ScriptBlock<GradleFileContent>) : Plugins, ScriptBlo
         return this
     }
 
+    override fun plugin(pluginId: String, version: String): Plugins {
+        lines("id '$pluginId' version '$version'")
+        return this
+    }
+
     fun createLine(content: String) {
         lines("id", true, content)
     }
