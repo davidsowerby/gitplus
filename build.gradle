@@ -1,8 +1,9 @@
 //noinspection GrPackage
 buildscript {
-    ext.kotlin_version = '1.1-M01'
+    ext.kotlin_version = '1.0.4'
     repositories {
         mavenCentral()
+        jcenter()
     }
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
@@ -23,7 +24,7 @@ plugins {
 apply plugin: 'kotlin'
 
 sourceCompatibility = '1.8'
-version = '0.14.4.45'
+version = '0.14.4.46'
 group = 'uk.q3c.build'
 
 testSets {
@@ -43,7 +44,7 @@ dependencies {
 
     //git and github
     compile 'org.eclipse.jgit:org.eclipse.jgit:3.6.0.201412230720-r'
-    compile 'com.jcabi:jcabi-github:0.27'
+    compile 'com.jcabi:jcabi-github:0.28'
 
     //integration testing
     integrationTestCompile 'org.spockframework:spock-core:1.0-groovy-2.4'
