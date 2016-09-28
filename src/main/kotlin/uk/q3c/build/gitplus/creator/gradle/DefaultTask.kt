@@ -16,7 +16,7 @@ class DefaultTask(block: ScriptBlock<GradleFileContent>, taskName: String) : Tas
 
 
     private fun heading(): String {
-        val buffer: StringBuilder = StringBuilder("task(")
+        val buffer: StringBuilder = StringBuilder("tasks.create(")
         var first = true
         for ((key, value) in attributes) {
             if (first)

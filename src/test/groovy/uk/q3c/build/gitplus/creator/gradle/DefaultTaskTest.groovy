@@ -26,7 +26,7 @@ class DefaultTaskTest extends BlockReaderSpecification {
 
         then:
         List<String> result = resultLines()
-        result.get(0) == "task(name: newTask, wiggly: wobble, dependsOn: otherTask, type: Copy) {"
+        result.get(0) == "tasks.create(name: newTask, wiggly: wobble, dependsOn: otherTask, type: Copy) {"
         result.get(1) == "}"
         result.get(2) == ""
         result.size() == 3
@@ -41,7 +41,7 @@ class DefaultTaskTest extends BlockReaderSpecification {
 
         then:
         List<String> result = resultLines()
-        result.get(0) == "task(name: newTask) {"
+        result.get(0) == "tasks.create(name: newTask) {"
         result.get(1) == "    line 1"
         result.get(2) == "    line 2"
         result.get(3) == "}"

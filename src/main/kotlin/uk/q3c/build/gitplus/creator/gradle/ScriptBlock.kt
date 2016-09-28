@@ -7,7 +7,17 @@ interface ScriptBlock<P> : ScriptElement {
 
     fun <E : ScriptElement> addElement(element: E): E
     fun end(): P
+    /**
+     * Inserts a series of lines ([content]), with each line prepended by [prefix].  Each content entry may also be quoted (with single quotes).  Example:
+     * `lines('id',true,'line1', 'line2') would produce:
+     * id 'line1'
+     * id 'line2'
+     */
     fun lines(prefix: String = "", quoted: Boolean = false, vararg content: String): ScriptElement
+
+    /**
+     * Inserts a series of lines into the body of the block
+     */
     fun lines(vararg content: String): ScriptElement
     fun <E : ScriptElement> contains(element: E): Boolean
     fun setBlockHeading(value: (String) -> String)

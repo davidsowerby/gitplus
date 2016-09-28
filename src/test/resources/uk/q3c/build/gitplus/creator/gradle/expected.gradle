@@ -38,15 +38,15 @@ testSets {
     line 2
 }
 
-task(name: wrapper, type: Wrapper) {
+tasks.create(name: wrapper, type: Wrapper) {
     gradleVersion = '2.10'
 }
 apply plugin: 'wiggly'
 apply from: 'wiggly.gradle'
 
-task(name: hello) {
+tasks.create(name: hello) {
 }
 
-task(name: hello2, type: Test, dependsOn: otherTask) {
+tasks.create(name: hello2, type: Test, dependsOn: otherTask) {
 }
 sourceCompatibility = 1.8
