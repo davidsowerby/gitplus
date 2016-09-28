@@ -77,11 +77,10 @@ class DefaultGradleFileContentTest extends BlockReaderSpecification {
 
         then:
         List<String> result = resultLines()
-        result.get(0) == ""
-        result.get(1) == 'plugins {'
-        result.get(2) == "    id 'plugin1'"
-        result.get(3) == "    id 'plugin2'"
-        result.get(4) == "}"
+        result.get(0) == 'plugins {'
+        result.get(1) == "    id 'plugin1'"
+        result.get(2) == "    id 'plugin2'"
+        result.get(3) == "}"
 
     }
 }

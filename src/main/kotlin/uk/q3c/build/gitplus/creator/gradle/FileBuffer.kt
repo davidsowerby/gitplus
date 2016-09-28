@@ -55,7 +55,8 @@ interface FileBuffer {
     fun append(vararg items: String)
 
     /**
-     * Adds a blank line without any indent (avoids comparison errors when 'blank' lines actually have spaces in them)
+     * Adds a blank line without any indent (avoids comparison errors when 'blank' lines actually have spaces in them).
+     * Also does not add the blank line if the buffer is empty.  Again this is to avoid problems with auto-formatting removing leading blank lines
      */
     fun blankLine()
 }

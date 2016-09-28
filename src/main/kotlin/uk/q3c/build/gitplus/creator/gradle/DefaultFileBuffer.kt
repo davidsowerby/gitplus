@@ -68,7 +68,9 @@ object DefaultFileBuffer : FileBuffer {
     }
 
     override fun blankLine() {
-        buf.append("\n")
+        if (buf.isNotEmpty()) {
+            buf.append("\n")
+        }
     }
 
 
