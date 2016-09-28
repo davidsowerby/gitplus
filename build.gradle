@@ -1,6 +1,6 @@
 //noinspection GrPackage
 buildscript {
-    ext.kotlin_version = '1.0.4'
+    ext.kotlin_version = '1.1-M01'
     repositories {
         mavenCentral()
     }
