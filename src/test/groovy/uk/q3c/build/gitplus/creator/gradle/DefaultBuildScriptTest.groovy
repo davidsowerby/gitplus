@@ -36,4 +36,16 @@ class DefaultBuildScriptTest extends BlockReaderSpecification {
         result.get(11) == ""
         result.size() == 12
     }
+
+    def "second call returns existing element instead of creating new"() {
+        when:
+        def r1 = buildScript.repositories()
+        def r2 = buildScript.repositories()
+        def d1 = buildScript.dependencies()
+        def d2 = buildScript.dependencies()
+
+        then:
+        r1 == r2
+        d1 == d2
+    }
 }

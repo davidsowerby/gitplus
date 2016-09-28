@@ -73,7 +73,7 @@ class DefaultGradleFileContent(block: ScriptBlock<GradleFile>) : GradleFileConte
     override fun buildscript(): BuildScript {
         val buildScript1: BuildScript =
                 if (contains(buildScript)) {
-                    getInstanceOf(plugins) as BuildScript
+                    getInstanceOf(buildScript) as BuildScript
                 } else {
                     addElement(ElementFactory.buildscript(this))
                 }

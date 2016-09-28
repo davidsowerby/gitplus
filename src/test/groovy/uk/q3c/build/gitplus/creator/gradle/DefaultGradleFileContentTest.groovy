@@ -67,7 +67,7 @@ class DefaultGradleFileContentTest extends BlockReaderSpecification {
         !diffs.isPresent()
     }
 
-    def "return existing element"() {
+    def "return existing plugins element"() {
         given:
         gradleFileContent.plugins('plugin1')
 
@@ -81,6 +81,23 @@ class DefaultGradleFileContentTest extends BlockReaderSpecification {
         result.get(1) == "    id 'plugin1'"
         result.get(2) == "    id 'plugin2'"
         result.get(3) == "}"
+    }
 
+    def "second call returns existing element instead of creating new"() {
+        when:
+        def p1 = gradleFileContent.plugins()
+        def p2 = gradleFileContent.plugins()
+        def r1 = gradleFileContent.repositories()
+        def r2 = gradleFileContent.repositories()
+        def b1 = gradleFileContent.buildscript()
+        def b2 = gradleFileContent.buildscript()
+        def d1 = gradleFileContent.dependencies()
+        def d2 = gradleFileContent.dependencies()
+
+        then:
+        p1 == p2
+        r1 == r2
+        b1 == b2
+        d1 == d2
     }
 }
