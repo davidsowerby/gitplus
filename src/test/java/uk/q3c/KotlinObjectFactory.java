@@ -1,8 +1,7 @@
 package uk.q3c;
 
-import uk.q3c.build.gitplus.creator.gradle.DefaultFileBuffer;
-import uk.q3c.build.gitplus.creator.gradle.ElementFactory;
-import uk.q3c.build.gitplus.creator.gradle.FileBuffer;
+import uk.q3c.build.gitplus.creator.gradle.buffer.DefaultFileBuffer;
+import uk.q3c.build.gitplus.creator.gradle.buffer.FileBuffer;
 
 /**
  * A possibly unnecessary kludge to get a DefaultFileBuffer object from Kotlin to Groovy (Spock) using this Java class as an intermediary
@@ -16,8 +15,5 @@ public class KotlinObjectFactory {
         return DefaultFileBuffer.INSTANCE;
     }
 
-    public static ElementFactory elementFactory() {
-        return ElementFactory.INSTANCE;
-    }
 
 }

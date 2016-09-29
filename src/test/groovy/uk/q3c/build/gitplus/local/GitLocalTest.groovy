@@ -269,7 +269,7 @@ class GitLocalTest extends Specification {
         gitPlus.createOrVerifyRepos()
 
         then:
-        gitLocal.currentBranch().equals('master')
+        gitLocal.currentBranch().equals('develop')
 
         when:
         gitLocal.checkout(commitHash)

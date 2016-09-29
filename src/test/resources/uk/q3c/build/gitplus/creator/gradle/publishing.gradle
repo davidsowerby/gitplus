@@ -1,0 +1,22 @@
+plugins {
+    id 'maven'
+    id 'maven-publish'
+}
+
+publishing {
+
+    publications {
+
+        mavenStuff(MavenPublication) {
+            from components.java
+
+            artifact sourcesJar {
+                classifier 'sources'
+            }
+
+            artifact javadocJar {
+                classifier 'javadoc'
+            }
+        }
+    }
+}

@@ -1,0 +1,8 @@
+dependencies {
+    compile('dep1') {
+        exclude group: 'grp1'
+        exclude group: 'grp2'
+        exclude module: 'mod1'
+        exclude group: 'grp3', module: 'mod2'
+    }
+}

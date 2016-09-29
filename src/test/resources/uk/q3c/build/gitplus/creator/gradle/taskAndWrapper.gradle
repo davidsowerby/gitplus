@@ -1,0 +1,6 @@
+task taskWithAllAttributes(type: taskType, dependsOn: dependsOn, plugin: plugin) {
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.10'
+}

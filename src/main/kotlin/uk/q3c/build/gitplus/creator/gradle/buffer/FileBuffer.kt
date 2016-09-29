@@ -1,4 +1,4 @@
-package uk.q3c.build.gitplus.creator.gradle
+package uk.q3c.build.gitplus.creator.gradle.buffer
 
 import java.io.File
 

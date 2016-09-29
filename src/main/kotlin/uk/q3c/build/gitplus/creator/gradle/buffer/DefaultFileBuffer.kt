@@ -1,4 +1,4 @@
-package uk.q3c.build.gitplus.creator.gradle
+package uk.q3c.build.gitplus.creator.gradle.buffer
 
 import org.apache.commons.io.FileUtils
 import org.slf4j.LoggerFactory
@@ -27,7 +27,7 @@ object DefaultFileBuffer : FileBuffer {
 
     override fun writeToFile(file: File) {
         log.debug("write buffer to file: {}", file)
-        FileUtils.write(file, buf.toString())
+        FileUtils.write(file, output())
     }
 
 
@@ -53,9 +53,7 @@ object DefaultFileBuffer : FileBuffer {
     override fun appendLine(vararg items: String) {
         log.debug("appending {} items, plus line terminator", items.size)
         indent()
-        for (item in items) {
-            buf.append(item)
-        }
+        append(*items)
         buf.append(newLine)
     }
 

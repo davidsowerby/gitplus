@@ -1,10 +1,36 @@
 package uk.q3c.build.gitplus.creator.gradle
 
 /**
- * Created by David Sowerby on 12 Sep 2016
+ * Created by David Sowerby on 02 Oct 2016
  */
-interface Task : ScriptBlock<GradleFileContent> {
-    fun dependsOn(dependsOn: String): Task
-    fun type(type: String): Task
-    fun attribute(attributeName: String, attributeValue: String): Task
+class Task(name: String, val type: String = "", val dependsOn: String = "", val plugin: String = "") : VariableNamedBlock(name) {
+
+    init {
+        writeWhenEmpty = true
+    }
+
+    override fun openBlock() {
+        fileBuffer.append("task ", name, "(")
+        var precedingArgument: Boolean = false
+        precedingArgument = addArgument("type", type, precedingArgument)
+        precedingArgument = addArgument("dependsOn", dependsOn, precedingArgument)
+        addArgument("plugin", plugin, precedingArgument)
+        fileBuffer.appendLine(") {")
+        fileBuffer.incrementIndent()
+    }
+
+    private fun addArgument(argumentName: String, argumentValue: String, precedingArgument: Boolean): Boolean {
+        if (argumentValue.isNotEmpty()) {
+            if (precedingArgument) {
+                fileBuffer.append(", ")
+            }
+            fileBuffer.append(argumentName, ": ", argumentValue)
+            return true
+        }
+        return false
+    }
+
+
 }
+
+

@@ -1,0 +1,2 @@
+apply plugin: 'uk.q3c.simplycd'
+apply from: 'gradle/versioning.gradle'

@@ -1,8 +1,9 @@
 package uk.q3c.build.gitplus.creator.gradle
 
-class Repositories : NamedBlock() {
+open class VariableNamedBlock(val name: String) : NamedBlock() {
+
 
     override fun blockName(): String {
-        return "repositories"
+        return name
     }
 }
