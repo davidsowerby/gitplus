@@ -6,7 +6,7 @@ For the detail of each of the two main areas of configuration, please refer to [
 
 # Using GitPlus
 
-A typical usage may look like that below, where GitPlus is constructed and then getConfiguration() called to access the configuration.  See the examples below for ways of configuring `GitPlus`
+A typical usage may look like that below, where GitPlus is constructed and then getConfiguration() called to access the configuration.  See the examples below for ways of configuring `DefaultGitPlus`
 
 ```
 GitPlus gitPlus = new GitPlus()

@@ -6,8 +6,9 @@ import uk.q3c.build.gitplus.remote.UnsupportedServiceProviderException
 
 import java.nio.file.Paths
 
-import static uk.q3c.build.gitplus.remote.GitRemote.ServiceProvider.BITBUCKET
-import static uk.q3c.build.gitplus.remote.GitRemote.ServiceProvider.GITHUB
+import static uk.q3c.build.gitplus.remote.ServiceProvider.BITBUCKET
+import static uk.q3c.build.gitplus.remote.ServiceProvider.GITHUB
+
 
 /**
  * Created by David Sowerby on 22 Mar 2016

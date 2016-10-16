@@ -1,40 +1,37 @@
 package uk.q3c.build.gitplus
 
+import com.google.inject.Inject
+import spock.guice.UseModules
 import spock.lang.Specification
-import uk.q3c.build.gitplus.gitplus.GitPlusConfiguration
-import uk.q3c.build.gitplus.remote.GitHubProvider
-import uk.q3c.build.gitplus.remote.GitHubRemote
-import uk.q3c.build.gitplus.remote.GitRemote
-import uk.q3c.build.gitplus.remote.RemoteRequest
+import uk.q3c.build.gitplus.gitplus.GitPlus
+import uk.q3c.build.gitplus.remote.github.DefaultGitHubRemote
 
 /**
- * This test needs to delete the 'dummy' repo in cleanup.  This test is a bit weird because it has to use deleteRepo to clean up, but also tests deleteRepo
  *
  * Created by David Sowerby on 20 Mar 2016
  */
+@UseModules([GitPlusModule])
 class GitHubRemoteIntegrationTest2 extends Specification {
 
-    GitPlusConfiguration krailConfiguration
+
+    @Inject
+    GitPlus gitPlus
 
     def setup() {
-        krailConfiguration = new GitPlusConfiguration().remoteRepoFullName('davidsowerby/krail')
+        gitPlus.remote.repoUser('davidsowerby').repoName('krail')
     }
 
     def "api status"() {
-        given:
-        GitRemote remote = new GitHubRemote(krailConfiguration, new GitHubProvider(), new RemoteRequest())
 
         expect:
-        remote.apiStatus() == GitHubRemote.Status.GREEN
+        gitPlus.remote.apiStatus() == DefaultGitHubRemote.Status.GREEN
     }
 
     def "list repos for this user"() {
-        given:
-        GitRemote remote = new GitHubRemote(krailConfiguration, new GitHubProvider(), new RemoteRequest())
-
 
         when:
-        Set<String> repos = remote.listRepositoryNames()
+        gitPlus.remote.repoUser = 'davidsowerby'
+        Set<String> repos = gitPlus.remote.listRepositoryNames()
 
         then:
         repos.contains('krail')

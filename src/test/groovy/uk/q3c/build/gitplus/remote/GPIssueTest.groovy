@@ -6,6 +6,7 @@ import spock.lang.Specification
 /**
  * Created by David Sowerby on 25 Mar 2016
  */
+@SuppressWarnings("ChangeToOperator")
 class GPIssueTest extends Specification {
 
     def "compareTo same"() {
@@ -26,6 +27,7 @@ class GPIssueTest extends Specification {
         issue1.compareTo(issue2) == -1
     }
 
+
     def "compareTo different url only"() {
         given:
         GPIssue issue1 = new GPIssue(1).htmlUrl('a')
@@ -33,8 +35,8 @@ class GPIssueTest extends Specification {
 
         expect:
         issue1.compareTo(issue2) == -1
-        issue1.compareTo(null) == -1
     }
+
 
     def "equals and hashcode, url and number the same"() {
         given:
@@ -51,20 +53,27 @@ class GPIssueTest extends Specification {
         !issue1.equals(issue4)
         issue1.hashCode() != issue4.hashCode()
         !issue1.equals(null)
+        issue1.equals(issue1)
     }
 
     def "set and get"() {
         given:
-        GPIssue issue1 = new GPIssue(1).htmlUrl('a').body('b').labels(ImmutableSet.of('a', 'b')).pullRequest(true)
+        GPIssue issue1 = new GPIssue(1)
+                .htmlUrl('a')
+                .body('b')
+                .labels(ImmutableSet.of('a', 'b'))
+                .pullRequest(true)
+                .title('any old title')
 
 
         expect:
         issue1.number == 1
-        issue1.getHtmlUrl().equals('a')
-        issue1.getBody().equals('b')
+        issue1.getHtmlUrl() == 'a'
+        issue1.getBody() == 'b'
         issue1.hasLabel('a')
         !issue1.hasLabel('c')
         issue1.isPullRequest()
+        issue1.title == 'any old title'
 
     }
 }

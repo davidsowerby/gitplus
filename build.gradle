@@ -2,6 +2,9 @@
 buildscript {
     ext.kotlin_version = '1.0.4'
     repositories {
+        maven {
+            url 'https://oss.sonatype.org/content/repositories/snapshots'
+        }
         mavenCentral()
         jcenter()
     }
@@ -24,7 +27,7 @@ apply plugin: 'kotlin'
 apply plugin: "jacoco"
 
 sourceCompatibility = '1.8'
-version = '0.14.5.47'
+version = '0.15.0.48'
 group = 'uk.q3c.build'
 
 testSets {
@@ -45,6 +48,10 @@ dependencies {
     //git and github
     compile 'org.eclipse.jgit:org.eclipse.jgit:3.6.0.201412230720-r'
     compile 'com.jcabi:jcabi-github:0.28'
+
+    //guice
+    compile 'com.google.inject:guice:4.1.0'
+    compile 'com.google.inject.extensions:guice-multibindings:4.1.0'
 
     //integration testing
     integrationTestCompile 'org.spockframework:spock-core:1.0-groovy-2.4'
@@ -67,6 +74,8 @@ dependencies {
     testCompile 'org.spockframework:spock-core:1.0-groovy-2.4'
     testCompile 'cglib:cglib-nodep:3.2.0' // needed for Spock mocking
     testCompile 'org.objenesis:objenesis:2.2' // needed for Spock mocking
+    testCompile 'org.spockframework:spock-guice:1.0-groovy-2.4' // Spock with Guice
+
     testCompile 'uk.q3c:q3c-testUtil:0.9.0.140'
     testCompile 'org.assertj:assertj-core:3.4.0'
 

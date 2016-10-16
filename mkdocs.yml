@@ -1,10 +1,10 @@
-site_name: GitPlus
+site_name: DefaultGitPlus
 
 pages:
 - Home: 'index.md'
 - 'Build Properties': 'build-properties.md'
 - 'Change Log Configuration':'change-log-configuration.md'
-- 'GitPlus Configuration':'gitplus-configuration.md'
+- 'DefaultGitPlus Configuration':'gitplus-configuration.md'
 - 'Change Log': 'changelog.md'
 - Licence: 'license.md'
 
