@@ -40,7 +40,7 @@ open class DefaultGitLocal @Inject constructor(val branchConfigProvider: BranchC
     override fun prepare(remote: GitRemote) {
         log.debug("preparing")
         this.remote = remote
-        localConfiguration.validate()
+        localConfiguration.validate(remote)
         git = gitProvider.openRepository(localConfiguration)
     }
 
@@ -156,7 +156,7 @@ open class DefaultGitLocal @Inject constructor(val branchConfigProvider: BranchC
 
 
     override fun checkoutNewBranch(branch: GitBranch) {
-        log.debug("checking out a new branch '{}'", branch)
+        log.info("checking out a new branch '{}'", branch)
         try {
             val checkout = git.checkout()
             checkout.setCreateBranch(true).setName(branch.name)
@@ -177,7 +177,7 @@ open class DefaultGitLocal @Inject constructor(val branchConfigProvider: BranchC
 
 
     override fun checkoutBranch(branch: GitBranch) {
-        log.debug("checking out existing branch '{}'", branch)
+        log.info("checking out existing branch '{}'", branch)
         try {
             git.checkout().setCreateBranch(false).setName(branch.name).call()
 
@@ -187,7 +187,7 @@ open class DefaultGitLocal @Inject constructor(val branchConfigProvider: BranchC
     }
 
     override fun checkoutCommit(sha: GitSHA) {
-        log.debug("checking out Git hash: '{}' ", sha)
+        log.info("checking out Git hash: '{}' ", sha)
         try {
             val checkout = git.checkout()
             checkout.setCreateBranch(false).setName(sha.sha)
@@ -312,7 +312,7 @@ open class DefaultGitLocal @Inject constructor(val branchConfigProvider: BranchC
 
 
     override fun push(tags: Boolean, force: Boolean): PushResponse {
-        log.debug("pushing to remote, with tags='{}' and force = '{}'", tags, force)
+        log.info("pushing to remote, with tags='{}' and force = '{}'", tags, force)
         try {
             if (currentBranch().name != "") {
                 checkTrackingBranch()
@@ -355,7 +355,7 @@ open class DefaultGitLocal @Inject constructor(val branchConfigProvider: BranchC
             if (trackingBranch == null) {
                 val checkout = git.checkout()
                 val currentBranch = currentBranch()
-                checkout.setName(currentBranch.name).setUpstreamMode(SetupUpstreamMode.SET_UPSTREAM).setStartPoint("origin/${currentBranch.name}").call()
+                checkout.setName(currentBranch.name).setUpstreamMode(SetupUpstreamMode.SET_UPSTREAM).setStartPoint(currentBranch.name).call()
                 return true
             }
         }

@@ -2,6 +2,10 @@ package uk.q3c.build.gitplus.remote
 
 import com.google.common.collect.ImmutableMap
 import spock.lang.Specification
+import uk.q3c.build.gitplus.gitplus.GitPlusConfigurationException
+import uk.q3c.build.gitplus.local.GitLocal
+
+import static uk.q3c.build.gitplus.ConstantsKt.notSpecified
 
 /**
  * Created by David Sowerby on 31 Oct 2016
@@ -211,5 +215,48 @@ class DefaultGitRemoteConfigurationTest extends Specification {
         configuration.confirmDelete == 'a'
         configuration.create
         configuration.repoDeleteApprover == mockApprover
+    }
+
+    def "repoName and repoUser must be specified, GitLocal.projectName not specified"() {
+        given:
+        GitLocal local = Mock(GitLocal)
+        local.projectName >> notSpecified
+
+        configuration.repoName("any")
+        configuration.repoUser("someone")
+
+        when:
+        configuration.validate(local)
+
+        then:
+        noExceptionThrown()
+
+        when:
+        configuration.repoName(notSpecified)
+        configuration.validate(local)
+
+        then:
+        thrown GitPlusConfigurationException
+
+        when:
+        configuration.repoName('any')
+        configuration.repoUser(notSpecified)
+        configuration.validate(local)
+
+        then:
+        thrown GitPlusConfigurationException
+    }
+
+    def "local.projectName used if repoName not specified"() {
+        given:
+        GitLocal local = Mock(GitLocal)
+        local.projectName >> 'wiggly'
+        configuration.repoUser("someone")
+
+        when:
+        configuration.validate(local)
+
+        then:
+        configuration.repoName == 'wiggly'
     }
 }

@@ -2,6 +2,7 @@ package uk.q3c.build.gitplus.local
 
 import spock.lang.Specification
 import uk.q3c.build.gitplus.gitplus.GitPlusConfigurationException
+import uk.q3c.build.gitplus.remote.GitRemote
 
 /**
  * Created by David Sowerby on 24 Oct 2016
@@ -15,6 +16,9 @@ class DefaultGitLocalConfigurationTest extends Specification {
     }
 
     def "create and cloneFromRemote cannot both be true"() {
+
+        given:
+        GitRemote remote = Mock(GitRemote)
 
         when:
         true
@@ -38,7 +42,7 @@ class DefaultGitLocalConfigurationTest extends Specification {
         configuration.cloneFromRemote
 
         when:
-        configuration.validate()
+        configuration.validate(remote)
 
         then: "exception because both are true"
         thrown GitPlusConfigurationException
@@ -58,4 +62,5 @@ class DefaultGitLocalConfigurationTest extends Specification {
         then:
         !configuration.active
     }
+
 }

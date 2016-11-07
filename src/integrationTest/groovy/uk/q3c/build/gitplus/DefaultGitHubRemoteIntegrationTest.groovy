@@ -57,22 +57,18 @@ class DefaultGitHubRemoteIntegrationTest extends Specification {
     def "lifecycle"() {
         given:
 
-        gitPlus.remote.repoUser('davidsowerby').repoName('dummy').create(true).publicProject(true).mergeIssueLabels(true)
         gitPlus.local.create(true).projectDirParent(temp).projectName('dummy')
+        gitPlus.remote.repoUser('davidsowerby').create(true).publicProject(true).mergeIssueLabels(true)
         gitPlus.wikiLocal.active(true)
         gitPlus.wikiLocal.create(true)
-//        URL url = this.getClass()
-//                .getResource('changelog-step1.md');
-//        File expectedResult1 = Paths.get(url.toURI())
-//                .toFile();
 
         when:
         gitPlus.execute()
-//        createTestIssues(10)
+        createTestIssues(10)
         createVersion('0.1')
 
         then:
-//        gitPlus.remote.getIssue(9)  // remote repo there, with issues created
+        gitPlus.remote.getIssue(9)  // remote repo there, with issues created
         File localFile = new File(temp, 'dummy')
         localFile.exists() // local file copy
         File wikiLocalFile = new File(temp, 'dummy.wiki')

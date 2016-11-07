@@ -1,5 +1,7 @@
 package uk.q3c.build.gitplus.remote
 
+import uk.q3c.build.gitplus.local.GitLocal
+
 /**
  *
  * A common interface for configuring a remote repo instance. Note that different [ServiceProvider]s (GitHub, BitBucket etc) may use the configuration differently.
@@ -55,6 +57,13 @@ interface GitRemoteConfiguration {
     fun copy(other: GitRemoteConfiguration)
 
     fun active(value: Boolean): GitRemoteConfiguration
+
+    /**
+     * Validates configuration settings, using local configuration to replace missing values where possible and appropriate
+     *
+     * @throws GitPlusConfigurationException if invalid configuration found
+     */
+    fun validate(local: GitLocal)
 }
 
 enum class ServiceProvider {

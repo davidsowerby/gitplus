@@ -1,6 +1,8 @@
 package uk.q3c.build.gitplus.remote
 
 import com.google.common.collect.ImmutableMap
+import uk.q3c.build.gitplus.gitplus.GitPlusConfigurationException
+import uk.q3c.build.gitplus.local.GitLocal
 import uk.q3c.build.gitplus.notSpecified
 
 /**
@@ -102,6 +104,20 @@ class DefaultGitRemoteConfiguration : GitRemoteConfiguration {
         repoUser = segments[1]
         repoName = segments[2]
     }
+
+    override fun validate(local: GitLocal) {
+        if (repoName == notSpecified) {
+            repoName(local.projectName)
+        }
+
+        if (repoName == notSpecified) {
+            throw GitPlusConfigurationException("'repoName' must be specified, either directly or through local.projectName()")
+        }
+        if (repoUser == notSpecified) {
+            throw GitPlusConfigurationException("'repoUser' must be specified")
+        }
+    }
+
 
     override fun copy(other: GitRemoteConfiguration) {
         this.projectDescription = other.projectDescription

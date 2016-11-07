@@ -10,7 +10,9 @@ import org.eclipse.jgit.transport.URIish
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider
 import spock.lang.Specification
 import uk.q3c.build.gitplus.GitSHA
+import uk.q3c.build.gitplus.gitplus.GitPlusConfigurationException
 import uk.q3c.build.gitplus.local.GitBranch
+import uk.q3c.build.gitplus.local.GitLocal
 import uk.q3c.build.gitplus.remote.*
 import uk.q3c.build.gitplus.util.FileBuildPropertiesLoader
 
@@ -101,6 +103,20 @@ class DefaultGitHubRemoteTest extends Specification {
         hasDevelop
         !hasWiggly
 
+    }
+
+    def "prepare calls validate"() {
+        given:
+        GitRemoteConfiguration configuration = new DefaultGitRemoteConfiguration()
+        remote = new DefaultGitHubRemote(configuration, gitHubProvider, remoteRequest, new GitHubUrlMapper())
+        GitLocal gitLocal = Mock(GitLocal)
+        gitLocal.projectName >> 'wiggly'
+
+        when:
+        remote.prepare(gitLocal)
+
+        then: "validate fails"
+        thrown GitPlusConfigurationException
     }
 
     def "construct with null throws IllegalArgumentException"() {

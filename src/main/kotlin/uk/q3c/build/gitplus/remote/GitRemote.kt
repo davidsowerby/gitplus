@@ -3,6 +3,7 @@ package uk.q3c.build.gitplus.remote
 import org.eclipse.jgit.transport.CredentialsProvider
 import uk.q3c.build.gitplus.GitSHA
 import uk.q3c.build.gitplus.local.GitBranch
+import uk.q3c.build.gitplus.local.GitLocal
 import uk.q3c.build.gitplus.remote.github.DefaultGitHubRemote
 import java.io.IOException
 
@@ -104,5 +105,8 @@ interface GitRemote : GitRemoteConfiguration, GitRemoteUrlMapper {
      * Returns true if the remote contains a branch with name [branch.name]
      */
     fun hasBranch(branch: GitBranch): Boolean
+
+    fun prepare(local: GitLocal)
+
 
 }

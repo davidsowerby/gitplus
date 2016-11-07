@@ -9,6 +9,7 @@ import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider
 import org.slf4j.LoggerFactory
 import uk.q3c.build.gitplus.GitSHA
 import uk.q3c.build.gitplus.local.GitBranch
+import uk.q3c.build.gitplus.local.GitLocal
 import uk.q3c.build.gitplus.remote.*
 import uk.q3c.build.gitplus.remote.GitRemote.TokenScope.*
 import java.io.IOException
@@ -21,6 +22,7 @@ class DefaultGitHubRemote @Inject constructor(override val configuration: GitRem
         GitHubRemote,
         GitRemoteConfiguration by configuration,
         GitRemoteUrlMapper by urlMapper {
+
 
 
     override fun hasBranch(branch: GitBranch): Boolean {
@@ -242,6 +244,10 @@ class DefaultGitHubRemote @Inject constructor(override val configuration: GitRem
 
     override fun latestDevelopCommitSHA(): GitSHA {
         return latestCommitSHA(GitBranch("develop"))
+    }
+
+    override fun prepare(local: GitLocal) {
+        validate(local)
     }
 
 

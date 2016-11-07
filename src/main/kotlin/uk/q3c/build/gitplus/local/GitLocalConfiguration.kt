@@ -1,6 +1,7 @@
 package uk.q3c.build.gitplus.local
 
 import uk.q3c.build.gitplus.gitplus.FileDeleteApprover
+import uk.q3c.build.gitplus.remote.GitRemote
 import java.io.File
 
 /**
@@ -18,6 +19,8 @@ interface GitLocalConfiguration {
      * will become 'user/home/git/myproject'
      */
     var projectDirParent: File
+
+
     var projectName: String
     /**
      * Determines the response to a situation where a clone is requested, but a local copy already exists
@@ -48,11 +51,12 @@ interface GitLocalConfiguration {
 
 
     /**
-     * returns the project directory for the local repo, form from the [projectDirParent] and [projectName]
+     * returns the project directory for the local repo, from from the [projectDirParent] and [projectName]
      */
     fun projectDir(): File
 
-    fun validate()
+
+    fun validate(remote: GitRemote)
 }
 
 enum class CloneExistsResponse {

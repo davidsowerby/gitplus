@@ -4,6 +4,7 @@ import uk.q3c.build.gitplus.gitplus.FileDeleteApprover
 import uk.q3c.build.gitplus.gitplus.GitPlusConfigurationException
 import uk.q3c.build.gitplus.local.CloneExistsResponse.EXCEPTION
 import uk.q3c.build.gitplus.notSpecified
+import uk.q3c.build.gitplus.remote.GitRemote
 import java.io.File
 
 /**
@@ -12,7 +13,7 @@ import java.io.File
 open class DefaultGitLocalConfiguration : GitLocalConfiguration {
     override var active = true
     override var cloneExistsResponse = EXCEPTION
-    override lateinit var projectName: String
+    override var projectName = notSpecified
     override lateinit var fileDeleteApprover: FileDeleteApprover
     override var projectDirParent: File = File(".")
     override var taggerName: String = notSpecified
@@ -70,9 +71,18 @@ open class DefaultGitLocalConfiguration : GitLocalConfiguration {
         return File(projectDirParent, projectName)
     }
 
-    override fun validate() {
+    override fun validate(remote: GitRemote) {
+
         if (create && cloneFromRemote) {
             throw GitPlusConfigurationException("Local repo cannot be both created and cloned")
+        }
+
+        if (projectName == notSpecified) {
+            projectName(remote.repoName)
+        }
+
+        if (projectName == notSpecified) {
+            throw GitPlusConfigurationException("project name must be set using either local.projectName() or remote.repoName()")
         }
     }
 }

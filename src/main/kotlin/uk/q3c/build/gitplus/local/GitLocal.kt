@@ -31,6 +31,12 @@ interface GitLocal : GitLocalConfiguration, AutoCloseable {
     fun cloneRemote()
 
     /**
+     *
+     *     /**
+     * If unspecified, [projectName] is taken from the [remote.repoName] property.  If still unspecified, a validation exception is thrown
+     *
+     * @throws GitPlusConfigurationException
+    */
      * Validates the [localConfiguration], then prepares this instance for the configuration settings
      *
      * @param the [GitRemote] associated with this local instance

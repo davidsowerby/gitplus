@@ -4,6 +4,7 @@ import com.google.inject.Inject
 import org.eclipse.jgit.transport.CredentialsProvider
 import uk.q3c.build.gitplus.GitSHA
 import uk.q3c.build.gitplus.local.GitBranch
+import uk.q3c.build.gitplus.local.GitLocal
 import uk.q3c.build.gitplus.remote.GPIssue
 import uk.q3c.build.gitplus.remote.GitRemoteConfiguration
 import uk.q3c.build.gitplus.remote.GitRemoteUrlMapper
@@ -16,6 +17,12 @@ import uk.q3c.build.gitplus.remote.github.DefaultGitHubRemote
 class DefaultBitBucketRemote @Inject constructor(override val configuration: GitRemoteConfiguration, val bitBucketProvider: BitBucketProvider, val remoteRequest: RemoteRequest, override val urlMapper: BitBucketUrlMapper) :
         BitBucketRemote,
         GitRemoteConfiguration by configuration, GitRemoteUrlMapper by urlMapper {
+
+
+    override fun prepare(local: GitLocal) {
+        TODO()
+//        validate()
+    }
 
     override fun hasBranch(branch: GitBranch): Boolean {
         TODO()

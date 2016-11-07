@@ -34,9 +34,10 @@ class DefaultGitPlus @Inject constructor(override val local: GitLocal,
 
     override fun execute(): GitPlus {
         log.debug("executing GitPlus")
-        remote = activeRemote()
+        remote = selectedRemote()
         local.prepare(remote)
         wikiLocal.prepare(remote, local)
+        remote.prepare(local)
         log.debug("preparation stage complete")
 
         try {
@@ -75,7 +76,7 @@ class DefaultGitPlus @Inject constructor(override val local: GitLocal,
         }
     }
 
-    private fun activeRemote(): GitRemote {
+    private fun selectedRemote(): GitRemote {
         return remoteProvider.get(serviceProvider, remote.configuration)
     }
 

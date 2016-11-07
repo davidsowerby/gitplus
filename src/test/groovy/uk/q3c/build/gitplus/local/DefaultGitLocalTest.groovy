@@ -14,6 +14,7 @@ import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
 import uk.q3c.build.gitplus.GitSHA
 import uk.q3c.build.gitplus.gitplus.FileDeleteApprover
+import uk.q3c.build.gitplus.gitplus.GitPlusConfigurationException
 import uk.q3c.build.gitplus.remote.GitRemote
 
 import static uk.q3c.build.gitplus.local.CloneExistsResponse.DELETE
@@ -24,6 +25,7 @@ import static uk.q3c.build.gitplus.local.CloneExistsResponse.PULL
  */
 class DefaultGitLocalTest extends Specification {
 
+    static String notSpecified = 'not specified'
     class TestDirDeleteApprover implements FileDeleteApprover {
 
         File tempfile
@@ -247,6 +249,7 @@ class DefaultGitLocalTest extends Specification {
 
     def "push with no working tree throws GLE"() {
         given:
+        configuration.projectName = 'wiggly'
         gitLocal = new DefaultGitLocal(branchConfigProvider, mockGitProvider, configuration)
         gitLocal.remote = gitRemote
         gitLocal.prepare(gitRemote)
@@ -262,6 +265,7 @@ class DefaultGitLocalTest extends Specification {
 
     def "push with null branch throws GLE"() {
         given:
+        configuration.projectName = 'wiggly'
         gitLocal = new DefaultGitLocal(branchConfigProvider, mockGitProvider, configuration)
         gitLocal.remote = gitRemote
         gitLocal.prepare(gitRemote)
@@ -278,6 +282,7 @@ class DefaultGitLocalTest extends Specification {
 
     def "push with all valid is successful"() {
         given:
+        configuration.projectName = 'wiggly'
         gitLocal = new DefaultGitLocal(branchConfigProvider, mockGitProvider, configuration)
         gitLocal.remote = gitRemote
         gitLocal.prepare(gitRemote)
@@ -324,6 +329,7 @@ class DefaultGitLocalTest extends Specification {
 
     def "push with result failure throws PushException wrapped in GLE"() {
         given:
+        configuration.projectName = 'wiggly'
         gitLocal = new DefaultGitLocal(branchConfigProvider, mockGitProvider, configuration)
         gitLocal.remote = gitRemote
         CredentialsProvider credentialsProvider = Mock(CredentialsProvider)
@@ -470,7 +476,7 @@ class DefaultGitLocalTest extends Specification {
         1 * checkout.setCreateBranch(true) >> checkout
         checkout.setName('wiggly') >> checkout
         2 * checkout.setUpstreamMode(CreateBranchCommand.SetupUpstreamMode.SET_UPSTREAM) >> checkout
-        2 * checkout.setStartPoint("origin/wiggly") >> checkout
+        2 * checkout.setStartPoint("wiggly") >> checkout
         3 * checkout.call()
         1 * mockGit.push() >> pc
 
@@ -486,6 +492,7 @@ class DefaultGitLocalTest extends Specification {
         mockGit.repository >> repo
         checkout.call() >> { throw new IOException() }
         gitRemote.active >> false
+        configuration.projectName = 'wiggly'
         gitLocal = new DefaultGitLocal(branchConfigProvider, mockGitProvider, configuration)
         gitLocal.prepare(gitRemote)
 
@@ -740,6 +747,7 @@ class DefaultGitLocalTest extends Specification {
     def "pull failure causes GLE"() {
         given:
         PullCommand pull = Mock(PullCommand)
+        configuration.projectName = 'wiggly'
         gitLocal = new DefaultGitLocal(branchConfigProvider, mockGitProvider, configuration)
         gitLocal.remote = gitRemote
         gitLocal.prepare(gitRemote)
@@ -762,6 +770,7 @@ class DefaultGitLocalTest extends Specification {
 
     def "setOrigin failure cause GLE"() {
         given:
+        configuration.projectName = 'wiggly'
         gitLocal = new DefaultGitLocal(branchConfigProvider, mockGitProvider, configuration)
         gitLocal.remote = gitRemote
         gitLocal.prepare(gitRemote)
@@ -880,6 +889,32 @@ class DefaultGitLocalTest extends Specification {
         repo.getRef("HEAD") >> { throw new IOException() }
         thrown GitLocalException
     }
+
+
+    def "prepare takes projectName from remote if not set"() {
+        given:
+        gitLocal = new DefaultGitLocal(branchConfigProvider, mockGitProvider, configuration)
+        GitRemote gitRemote2 = Mock(GitRemote)
+        gitRemote.repoName >> notSpecified
+        gitRemote2.repoName >> 'biscuit'
+
+        when: // no project name and no repoName
+        gitLocal.prepare(gitRemote)
+
+        then:
+        thrown GitPlusConfigurationException
+
+        when:
+        gitRemote.repoName('wiggly')
+        gitLocal.prepare(gitRemote2)
+
+        then:
+
+        noExceptionThrown()
+        gitLocal.projectName == 'biscuit'
+
+    }
+
 /**
  * Tested in DefaultGitHubRemote2 - easier that way
  */
