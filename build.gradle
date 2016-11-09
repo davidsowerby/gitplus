@@ -1,6 +1,6 @@
 //noinspection GrPackage
 buildscript {
-    ext.kotlin_version = '1.0.4'
+    ext.kotlin_version = '1.0.5'
     repositories {
         maven {
             url 'https://oss.sonatype.org/content/repositories/snapshots'
@@ -27,7 +27,7 @@ apply plugin: 'kotlin'
 apply plugin: "jacoco"
 
 sourceCompatibility = '1.8'
-version = '0.15.0.51'
+version = '0.15.1.52'
 group = 'uk.q3c.build'
 
 testSets {
