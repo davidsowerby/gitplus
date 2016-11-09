@@ -2,7 +2,7 @@
 
 ## Preparation
 
-Include the [GitPlus](https://github.com/davidsowerby/gitplus) library in your build: *uk.q3c.gitplus:gitplus:version*  
+Include the [GitPlus](https://github.com/davidsowerby/gitplus) library in your build: *uk.q3c.build:gitplus:version*  
 
 Make sure you have API key(s) for your remote service provider.  See the 'Properties File' section
 
