@@ -27,7 +27,7 @@ apply plugin: 'kotlin'
 apply plugin: "jacoco"
 
 sourceCompatibility = '1.8'
-version = '0.15.1.53'
+version = '0.15.2.54'
 group = 'uk.q3c.build'
 
 testSets {
@@ -46,7 +46,7 @@ repositories {
 dependencies {
 
     //git and github
-    compile 'org.eclipse.jgit:org.eclipse.jgit:3.6.0.201412230720-r'
+    compile 'org.eclipse.jgit:org.eclipse.jgit:4.5.0.201609210915-r'
     compile 'com.jcabi:jcabi-github:0.28'
 
     //guice

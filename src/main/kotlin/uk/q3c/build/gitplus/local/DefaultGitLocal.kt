@@ -146,7 +146,7 @@ open class DefaultGitLocal @Inject constructor(val branchConfigProvider: BranchC
     override fun currentCommitHash(): String {
         log.debug("Retrieving hash for currently checked out revision")
         try {
-            val ref = git.repository.getRef("HEAD")
+            val ref = git.repository.findRef("HEAD")
             return ref.objectId.name
         } catch (e: Exception) {
             throw GitLocalException("Unable to retrieve current revision", e)
@@ -422,7 +422,7 @@ open class DefaultGitLocal @Inject constructor(val branchConfigProvider: BranchC
         try {
             val repo = git.repository
             val walk = RevWalk(repo)
-            val ref1 = repo.getRef(branch.name)
+            val ref1 = repo.findRef(branch.name)
             val headCommit = walk.parseCommit(ref1.objectId)
             val allCommits = git.log().all().call()
             val branchCommits = LinkedHashSet<GitCommit>()
