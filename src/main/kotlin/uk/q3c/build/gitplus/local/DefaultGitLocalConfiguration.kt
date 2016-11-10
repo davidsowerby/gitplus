@@ -1,5 +1,6 @@
 package uk.q3c.build.gitplus.local
 
+import uk.q3c.build.gitplus.gitplus.DefaultFileDeleteApprover
 import uk.q3c.build.gitplus.gitplus.FileDeleteApprover
 import uk.q3c.build.gitplus.gitplus.GitPlusConfigurationException
 import uk.q3c.build.gitplus.local.CloneExistsResponse.EXCEPTION
@@ -13,8 +14,8 @@ import java.io.File
 open class DefaultGitLocalConfiguration : GitLocalConfiguration {
     override var active = true
     override var cloneExistsResponse = EXCEPTION
+    override var fileDeleteApprover: FileDeleteApprover = DefaultFileDeleteApprover()
     override var projectName = notSpecified
-    override lateinit var fileDeleteApprover: FileDeleteApprover
     override var projectDirParent: File = File(".")
     override var taggerName: String = notSpecified
     override var taggerEmail: String = notSpecified

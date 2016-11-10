@@ -14,7 +14,7 @@
 | projectDescription    | a project description, for remote repo                                               | empty string              |
 | projectHomePage       | a project home page, for remote repo                                                 | empty string              |
 | publicProject         | if true, remote repo is public                                                       | false                     |
-| repoDeleteApprover    | approves / rejects calls to delete remote repo, used with confirmRemoteDelete        | null                      |
+| repoDeleteApprover    | approves / rejects calls to delete remote repo, used with confirmRemoteDelete        | DefaultRemoteRepoDeleteApprover |
 | taggerEmail           | the user email to put on a tag when tag() called                                     | load from properties      |
 | taggerName            | the user name to put on a tag when tag() called                                      | load from properties      |
 
@@ -26,7 +26,7 @@
 | cloneExistsResponse   | provides options when clone() called, and local copy already exists                  | EXCEPTION                 |
 | clone                 | if true clone remote repo to projectDir   - mutually exclusive with *create*         | false                     |
 | create                | if true create a local repo in projectDir - mutually exclusive with *clone*          | false                     |
-| fileDeleteApprover    | approves / rejects calls to delete a file. A bit of protection from config errors    | null                      |
+| fileDeleteApprover    | approves / rejects calls to delete a file. A bit of protection from config errors    | delete always rejected    |
 | projectDirParent      | the parent directory for projectDir                                                  | current dir               |
 | projectName           | name of project if createProject true.    **REQUIRED**                               | remote.repoName           |
 | taggerEmail           | the user email to put on a tag when tag() called                                     | load from properties      |
