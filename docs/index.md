@@ -50,6 +50,13 @@ gitPlus.remote.createProject(true).mergeIssueLabels(true).issueLabels(myIssueMap
 
 An issue map is simply a `Map<String,String>` containing a key-value of issue label-issue colour
 
+
+You may also want provide a callback to enable the creation of default project directories and files
+
+```
+gitPlus.local.projectCreator({ProjectCreator instance}) 
+```
+
 Once the configuration is set as required, simply execute it:
 
 ```

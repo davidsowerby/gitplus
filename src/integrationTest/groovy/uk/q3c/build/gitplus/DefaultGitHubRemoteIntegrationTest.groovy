@@ -37,6 +37,10 @@ class DefaultGitHubRemoteIntegrationTest extends Specification {
 
     def setup() {
         println 'cleaning up at start'
+        println 'checking api status'
+        if (gitPlus.remote.apiStatus() == DefaultGitHubRemote.Status.RED) {
+            throw new UnsupportedOperationException("Service Provider API is down")
+        }
         if (remoteRepoExists('dummy')) {
             deleteRepo()
             waitRemoteRepoNotExists('dummy')
@@ -69,11 +73,12 @@ class DefaultGitHubRemoteIntegrationTest extends Specification {
 
         then:
         gitPlus.remote.getIssue(9)  // remote repo there, with issues created
-        File localFile = new File(temp, 'dummy')
-        localFile.exists() // local file copy
-        File wikiLocalFile = new File(temp, 'dummy.wiki')
-        wikiLocalFile.exists() // local file copy
+        File localProjectDir = new File(temp, 'dummy')
+        localProjectDir.exists() // local file copy
+        File wikiLocalProjectectDir = new File(temp, 'dummy.wiki')
+        wikiLocalProjectectDir.exists() // local file copy
         gitPlus.local.latestDevelopCommitSHA() == gitPlus.remote.latestDevelopCommitSHA()
+        new File(gitPlus.local.projectDir(), 'README.md').exists()
     }
 
 

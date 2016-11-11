@@ -38,6 +38,12 @@ interface GitLocalConfiguration {
      */
     var cloneFromRemote: Boolean
 
+    /**
+     * Effectively used as a callback after the local Git repository has been initialised, to enable the creation of project directories
+     * and files.  By default, simply adds a README.md to the [projectDir]
+     */
+    var projectCreator: ProjectCreator
+
     fun cloneExistsResponse(cloneExistsResponse: CloneExistsResponse): GitLocalConfiguration
     fun fileDeleteApprover(fileDeleteApprover: FileDeleteApprover): GitLocalConfiguration
     fun projectName(projectName: String): GitLocalConfiguration
@@ -57,6 +63,7 @@ interface GitLocalConfiguration {
 
 
     fun validate(remote: GitRemote)
+    fun projectCreator(projectCreator: ProjectCreator): GitLocalConfiguration
 }
 
 enum class CloneExistsResponse {

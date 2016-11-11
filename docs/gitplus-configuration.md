@@ -11,6 +11,7 @@
 | providerBaseUrl       | the base url for you remote provider. https:// is assumed                            | "github.com"              |
 | issueLabels           | labels to merge into new remote repo, used with mergeIssueLabels                     | defaultIssueLabels        |
 | mergeIssueLabels      | if true, merge issueLabels into this repo                                            | false                     |
+| projectCreator        | a callback to enable the creation of project directories and files                   | creates a README.md       |
 | projectDescription    | a project description, for remote repo                                               | empty string              |
 | projectHomePage       | a project home page, for remote repo                                                 | empty string              |
 | publicProject         | if true, remote repo is public                                                       | false                     |

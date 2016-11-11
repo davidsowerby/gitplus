@@ -65,7 +65,7 @@ class DefaultGitLocalTest extends Specification {
 
     BranchConfigProvider branchConfigProvider = Mock(BranchConfigProvider)
     BranchConfig branchConfig = Mock(BranchConfig)
-
+    ProjectCreator mockProjectCreator = Mock(ProjectCreator)
 
     def setup() {
         gitProvider = new DefaultGitProvider()
@@ -90,10 +90,11 @@ class DefaultGitLocalTest extends Specification {
         thrown IllegalArgumentException
     }
 
-    def "init prepares directory"() {
+    def "init prepares directory, invokes projectCreator and adds projectDir to Git"() {
         given:
-        configuration.projectDirParent(temp).projectName('dummy')
+        configuration.projectDirParent(temp).projectName('dummy').projectCreator(mockProjectCreator)
         gitLocal = new DefaultGitLocal(branchConfigProvider, gitProvider, configuration)
+        gitLocal.prepare(gitRemote)
 
         when:
         gitLocal.init()
@@ -101,6 +102,8 @@ class DefaultGitLocalTest extends Specification {
         then:
         File projectDir = new File(temp, 'dummy')
         new File(projectDir, ".git").exists()
+        1 * mockProjectCreator.invoke(configuration)
+        gitLocal.status().isClean()
     }
 
 
@@ -108,6 +111,7 @@ class DefaultGitLocalTest extends Specification {
         given:
         configuration.create(true).projectName("scratch").projectDirParent(temp)
         gitLocal = new DefaultGitLocal(branchConfigProvider, gitProvider, configuration)
+        gitLocal.prepare(gitRemote)
 
         when:
         gitLocal.createAndInitialise()

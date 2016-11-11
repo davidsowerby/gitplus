@@ -15,7 +15,3 @@ data class GitBranch(val name: String) {
         return name
     }
 }
-
-fun developBranch(): GitBranch {
-    return GitBranch("develop")
-}

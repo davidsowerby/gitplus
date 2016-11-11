@@ -21,6 +21,7 @@ open class DefaultGitLocalConfiguration : GitLocalConfiguration {
     override var taggerEmail: String = notSpecified
     override var create = false
     override var cloneFromRemote = false
+    override var projectCreator: ProjectCreator = DefaultProjectCreator()
 
     override fun cloneFromRemote(value: Boolean): GitLocalConfiguration {
         this.cloneFromRemote = value
@@ -70,6 +71,11 @@ open class DefaultGitLocalConfiguration : GitLocalConfiguration {
 
     override fun projectDir(): File {
         return File(projectDirParent, projectName)
+    }
+
+    override fun projectCreator(projectCreator: ProjectCreator): GitLocalConfiguration {
+        this.projectCreator = projectCreator
+        return this
     }
 
     override fun validate(remote: GitRemote) {

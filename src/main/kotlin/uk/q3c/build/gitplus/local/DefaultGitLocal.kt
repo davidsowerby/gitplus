@@ -6,6 +6,7 @@ import org.apache.commons.io.FileUtils
 import org.eclipse.jgit.api.CreateBranchCommand.SetupUpstreamMode
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.Status
+import org.eclipse.jgit.dircache.DirCache
 import org.eclipse.jgit.internal.storage.file.FileRepository
 import org.eclipse.jgit.lib.Constants
 import org.eclipse.jgit.lib.PersonIdent
@@ -51,6 +52,8 @@ open class DefaultGitLocal @Inject constructor(val branchConfigProvider: BranchC
             val gitDir = File(localConfiguration.projectDir(), ".git")
             repo = FileRepository(gitDir)
             repo.create()
+            projectCreator.invoke(localConfiguration)
+            add(projectDir())
         } catch (e: Exception) {
             throw GitLocalException("Unable to initialise DefaultGitLocal", e)
         } finally {
@@ -210,12 +213,12 @@ open class DefaultGitLocal @Inject constructor(val branchConfigProvider: BranchC
     }
 
 
-    override fun add(file: File) {
+    override fun add(file: File): DirCache {
         try {
             if (!file.exists()) {
                 throw FileNotFoundException(file.absolutePath)
             }
-            git.add().addFilepattern(file.name).call()
+            return git.add().addFilepattern(file.name).call()
         } catch (e: Exception) {
             throw GitLocalException("Unable to add file to git: " + file, e)
         }

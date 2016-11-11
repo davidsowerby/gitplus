@@ -3,6 +3,7 @@ package uk.q3c.build.gitplus.local
 import com.google.common.collect.ImmutableList
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.Status
+import org.eclipse.jgit.dircache.DirCache
 import uk.q3c.build.gitplus.GitSHA
 import uk.q3c.build.gitplus.remote.GitRemote
 import java.io.File
@@ -16,7 +17,8 @@ interface GitLocal : GitLocalConfiguration, AutoCloseable {
     var git: Git
 
     /**
-     * Equivalent to 'git init' from the command line.  Initialises `projectDir` for Git
+     * Equivalent to 'git init' from the command line.  Initialises `projectDir` for Git.  The [projectCreator] is then invoked
+     * and the [projectDir] added to Git
      */
     fun init()
 
@@ -100,10 +102,12 @@ interface GitLocal : GitLocalConfiguration, AutoCloseable {
      * already.
 
      * @param file the file to add
-     * *
+     *
+     * @return directory cache (index) after add
+     *
      * @throws GitLocalException if the action fails
      */
-    fun add(file: File)
+    fun add(file: File): DirCache
 
     fun commit(message: String)
 

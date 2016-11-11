@@ -11,6 +11,8 @@ class DefaultGitLocalConfigurationTest extends Specification {
 
     DefaultGitLocalConfiguration configuration
 
+    ProjectCreator mockProjectCreator = Mock(ProjectCreator)
+
     void setup() {
         configuration = new DefaultGitLocalConfiguration()
     }
@@ -55,12 +57,15 @@ class DefaultGitLocalConfigurationTest extends Specification {
 
         then:
         configuration.active
+        configuration.projectCreator instanceof DefaultProjectCreator
 
         when:
         configuration.active(false)
+        configuration.projectCreator(mockProjectCreator)
 
         then:
         !configuration.active
+        configuration.projectCreator == mockProjectCreator
     }
 
 }
