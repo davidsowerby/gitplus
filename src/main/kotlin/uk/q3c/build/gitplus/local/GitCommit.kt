@@ -3,40 +3,41 @@ package uk.q3c.build.gitplus.local
 import org.eclipse.jgit.lib.PersonIdent
 import org.eclipse.jgit.revwalk.RevCommit
 import org.slf4j.LoggerFactory
-import uk.q3c.build.gitplus.remote.GPIssue
 import java.time.ZonedDateTime
 
 /**
- * Captures commit information.  Fixes are extracted from commit comments and stored as instances of [GPIssue] if other providers (BitBucket etc) are
- * implemented, their issues would need to be mapped to [GPIssue]
- *
- * Make sure you have called RevWalk.parseBody on [revCommit] before passing to this constructor
+ * Captures commit information.  Primary constructor is mainly for testing.  General use is to pass a [RevCommit] instance - note that
+ * [RevWalk.parseBody] must be called on [revCommit] before passing to the constructor
  *
  * Created by David Sowerby on 08 Mar 2016
  */
-class GitCommit(revCommit: RevCommit) {
-    private val log = LoggerFactory.getLogger(this.javaClass.name)
+class GitCommit(val fullMessage: String,
+                val hash: String,
+                val author: PersonIdent,
+                val committer: PersonIdent) {
 
 
-    val fullMessage: String
-    val shortMessage: String
-    val hash: String
-    val author: PersonIdent
-    val committer: PersonIdent
     val commitDate: ZonedDateTime
     val authorDate: ZonedDateTime
+    val shortMessage: String
+
+    /**
+     * [RevWalk.parseBody] must be called on [revCommit] before passing to this constructor
+     */
+    constructor(revCommit: RevCommit) : this(
+            revCommit.fullMessage,
+            revCommit.id.name,
+            revCommit.authorIdent,
+            revCommit.committerIdent)
+
+
+    private val log = LoggerFactory.getLogger(this.javaClass.name)
 
     init {
-
-        hash = revCommit.id.name
-        committer = revCommit.committerIdent
-        author = revCommit.authorIdent
         authorDate = identToDate(author)
         commitDate = identToDate(committer)
-        fullMessage = revCommit.fullMessage
         shortMessage = extractShortMessage()
     }
-
 
     private fun extractShortMessage(): String {
         return fullMessage.split("\n".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()[0]

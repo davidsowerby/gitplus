@@ -2,7 +2,7 @@ package uk.q3c.build.gitplus.local
 
 import com.google.common.collect.ImmutableList
 import com.google.inject.Inject
-import org.eclipse.jgit.revwalk.RevCommit
+import org.eclipse.jgit.lib.PersonIdent
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.guice.UseModules
@@ -11,7 +11,6 @@ import uk.q3c.build.gitplus.GitPlusModule
 import uk.q3c.build.gitplus.gitplus.GitPlus
 
 import java.time.ZonedDateTime
-
 /**
  * It is impossible to mock a RevCommit (it is a class with embedded static calls, so this unit test is actually more like an integration test
  *
@@ -20,7 +19,6 @@ import java.time.ZonedDateTime
 @UseModules([GitPlusModule])
 class GitCommitTest extends Specification {
 
-    RevCommit revCommit = Mock(RevCommit)
 
     @Rule
     TemporaryFolder temporaryFolder
@@ -62,9 +60,14 @@ class GitCommitTest extends Specification {
         commit1.equals(commit3)
         !commit1.equals(commit2)
         !commit1.equals(null)
-
-
     }
 
+    def "short message"() {
+        given:
+        PersonIdent personIdent = new PersonIdent("me", "me@there", new Date().toInstant().toEpochMilli(), 0)
+        GitCommit commit1 = new GitCommit("line1\nline2", "hash", personIdent, personIdent)
 
+        expect:
+        commit1.shortMessage == "line1"
+    }
 }
