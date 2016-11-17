@@ -53,7 +53,7 @@ class DefaultGitPlusTest extends Specification {
         serviceProviders.put(BITBUCKET, bitBucketProvider)
         temp = temporaryFolder.getRoot()
         gitRemoteProvider = new DefaultGitRemoteProvider(serviceProviders)
-        gitplus = new DefaultGitPlus(local, wikiLocal, gitRemoteProvider, gitHubRemote)
+        gitplus = new DefaultGitPlus(local, wikiLocal, gitRemoteProvider)
         projDirParent = temp
     }
 

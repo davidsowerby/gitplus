@@ -13,4 +13,14 @@ interface GitRemoteProvider {
      * provided here
      */
     fun get(serviceProvider: ServiceProvider, configuration: GitRemoteConfiguration): GitRemote
+
+    /**
+     * Returns a [GitRemote] instance for the [defaultProvider]
+     */
+    fun getDefault(): GitRemote
+
+    /**
+     * Declares the default [ServiceProvider] to use
+     */
+    fun defaultProvider(): ServiceProvider
 }

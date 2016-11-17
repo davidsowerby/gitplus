@@ -8,12 +8,20 @@ import com.google.inject.Provider
  */
 class DefaultGitRemoteProvider @Inject constructor(override val remotes: MutableMap<ServiceProvider, Provider<GitRemote>>) : GitRemoteProvider {
 
+    override fun defaultProvider(): ServiceProvider {
+        return ServiceProvider.GITHUB
+    }
+
     override fun get(serviceProvider: ServiceProvider, configuration: GitRemoteConfiguration): GitRemote {
         // this should never actually return null provided all ServiceProviders have an entry in the map
         // map defined in GitPlusModule
         val remote = remotes.get(serviceProvider)!!.get()
-        // this is a reference not a copy, because we want any further changes to be available to the remote instance as well
+        // copy any changes which have been made to the configuration
         remote.configuration.copy(configuration)
         return remote
+    }
+
+    override fun getDefault(): GitRemote {
+        return remotes.get(ServiceProvider.GITHUB)!!.get()
     }
 }

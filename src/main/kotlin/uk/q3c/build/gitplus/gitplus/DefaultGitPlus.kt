@@ -9,19 +9,22 @@ import uk.q3c.build.gitplus.local.WikiLocal
 import uk.q3c.build.gitplus.remote.GitRemote
 import uk.q3c.build.gitplus.remote.GitRemoteProvider
 import uk.q3c.build.gitplus.remote.ServiceProvider
-import uk.q3c.build.gitplus.remote.github.GitHubRemote
 import java.io.File
 import java.util.*
 
 
 class DefaultGitPlus @Inject constructor(override val local: GitLocal,
                                          override val wikiLocal: WikiLocal,
-                                         val remoteProvider: GitRemoteProvider,
-                                         defaultRemote: GitHubRemote) : GitPlus {
+                                         val remoteProvider: GitRemoteProvider) : GitPlus {
 
     private val log = LoggerFactory.getLogger(this.javaClass.name)
-    override var serviceProvider = ServiceProvider.GITHUB
-    override var remote: GitRemote = defaultRemote
+    override lateinit var serviceProvider: ServiceProvider
+    override lateinit var remote: GitRemote
+
+    init {
+        remote = remoteProvider.getDefault()
+        serviceProvider = remoteProvider.defaultProvider()
+    }
 
     /**
      * Closes [GitLocal] instances to free up resources
