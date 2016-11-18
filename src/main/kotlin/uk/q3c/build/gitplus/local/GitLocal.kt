@@ -156,14 +156,14 @@ interface GitLocal : GitLocalConfiguration, AutoCloseable {
     fun tags(): List<Tag>
 
     /**
-     * Extracts commits for the 'develop' branch. Equivalent to calling [extractCommitsForBranch] with branchName='develop'
+     * Extracts commits for the 'develop' branch. Equivalent to calling [extractCommitsFor] with branchName='develop'
 
      * @return commits for the 'develop' branch
      */
     fun extractDevelopCommits(): ImmutableList<GitCommit>
 
     /**
-     * Extracts commits for the 'master' branch Equivalent to calling [extractCommitsForBranch] with branchName='master'
+     * Extracts commits for the 'master' branch Equivalent to calling [extractCommitsFor] with branchName='master'
 
      * @return commits for the 'master' branch
      */
@@ -176,7 +176,9 @@ interface GitLocal : GitLocalConfiguration, AutoCloseable {
      * *
      * @return commits for the branch defined by [branchName]
      */
-    fun extractCommitsForBranch(branchName: String): ImmutableList<GitCommit>
+    fun extractCommitsFor(branchName: String): ImmutableList<GitCommit>
+
+    fun extractCommitsFor(branch: GitBranch): ImmutableList<GitCommit>
 
     /**
      * Adds `tag` to the most recent commit.  This will add an annotated tag, with attributes taken from [localConfiguration].  See also [tagLightweight]
@@ -218,4 +220,5 @@ interface GitLocal : GitLocalConfiguration, AutoCloseable {
     fun developBranch(): GitBranch
 
     fun masterBranch(): GitBranch
+
 }

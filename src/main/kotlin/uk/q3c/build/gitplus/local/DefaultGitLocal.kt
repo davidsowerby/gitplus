@@ -420,7 +420,7 @@ open class DefaultGitLocal @Inject constructor(val branchConfigProvider: BranchC
     }
 
 
-    private fun extractCommitsFor(branch: GitBranch): ImmutableList<GitCommit> {
+    override fun extractCommitsFor(branch: GitBranch): ImmutableList<GitCommit> {
         log.debug("Retrieving commits for '{}' branch", branch.name)
         try {
             val repo = git.repository
@@ -454,16 +454,16 @@ open class DefaultGitLocal @Inject constructor(val branchConfigProvider: BranchC
 
 
     override fun extractDevelopCommits(): ImmutableList<GitCommit> {
-        return extractCommitsForBranch(DefaultGitPlus.DEVELOP_BRANCH)
+        return extractCommitsFor(DefaultGitPlus.DEVELOP_BRANCH)
     }
 
 
     override fun extractMasterCommits(): ImmutableList<GitCommit> {
-        return extractCommitsForBranch(DefaultGitPlus.MASTER_BRANCH)
+        return extractCommitsFor(DefaultGitPlus.MASTER_BRANCH)
     }
 
 
-    override fun extractCommitsForBranch(branchName: String): ImmutableList<GitCommit> {
+    override fun extractCommitsFor(branchName: String): ImmutableList<GitCommit> {
         return extractCommitsFor(GitBranch(branchName))
     }
 
