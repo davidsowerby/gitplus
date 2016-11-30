@@ -2,6 +2,7 @@ site_name: GitPlus
 
 pages:
 - Home: 'index.md'
+- Detailed Configuration: 'gitplus-configuration.md'
 - Licence: 'license.md'
 
 theme: readthedocs
