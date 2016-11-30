@@ -156,21 +156,21 @@ interface GitLocal : GitLocalConfiguration, AutoCloseable {
     fun tags(): List<Tag>
 
     /**
-     * Extracts commits for the 'develop' branch. Equivalent to calling [extractCommitsFor] with branchName='develop'
+     * Extracts commits for the 'develop' branch. Equivalent to calling [extractCommitsFor] with branchName='develop'. The returned list is ordered with the most recent commit at index 0
 
      * @return commits for the 'develop' branch
      */
     fun extractDevelopCommits(): ImmutableList<GitCommit>
 
     /**
-     * Extracts commits for the 'master' branch Equivalent to calling [extractCommitsFor] with branchName='master'
+     * Extracts commits for the 'master' branch Equivalent to calling [extractCommitsFor] with branchName='master'. The returned list is ordered with the most recent commit at index 0
 
      * @return commits for the 'master' branch
      */
     fun extractMasterCommits(): ImmutableList<GitCommit>
 
     /**
-     * Returns commits for the branch defined by [branchName]
+     * Returns commits for the branch defined by [branchName].  The returned list is ordered with the most recent commit at index 0
 
      * @param branchName the name of the branch the commits are required for.
      * *
@@ -178,6 +178,13 @@ interface GitLocal : GitLocalConfiguration, AutoCloseable {
      */
     fun extractCommitsFor(branchName: String): ImmutableList<GitCommit>
 
+    /**
+     * Returns commits for the branch defined by [branch].  The returned list is ordered with the most recent commit at index 0
+
+     * @param branch the branch the commits are required for.
+     * *
+     * @return commits for the branch defined by [branchName]
+     */
     fun extractCommitsFor(branch: GitBranch): ImmutableList<GitCommit>
 
     /**
