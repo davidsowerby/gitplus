@@ -3,6 +3,7 @@ site_name: GitPlus
 pages:
 - Home: 'index.md'
 - Detailed Configuration: 'gitplus-configuration.md'
+- Build Properties: 'build-properties.md'
 - Licence: 'license.md'
 
 theme: readthedocs
