@@ -7,7 +7,7 @@ import uk.q3c.build.gitplus.local.GitBranch
 import uk.q3c.build.gitplus.local.GitLocal
 import uk.q3c.build.gitplus.local.WikiLocal
 import uk.q3c.build.gitplus.remote.GitRemote
-import uk.q3c.build.gitplus.remote.GitRemoteProvider
+import uk.q3c.build.gitplus.remote.GitRemoteResolver
 import uk.q3c.build.gitplus.remote.ServiceProvider
 import java.io.File
 import java.util.*
@@ -15,15 +15,15 @@ import java.util.*
 
 class DefaultGitPlus @Inject constructor(override val local: GitLocal,
                                          override val wikiLocal: WikiLocal,
-                                         val remoteProvider: GitRemoteProvider) : GitPlus {
+                                         val remoteResolver: GitRemoteResolver) : GitPlus {
 
     private val log = LoggerFactory.getLogger(this.javaClass.name)
     override lateinit var serviceProvider: ServiceProvider
     override lateinit var remote: GitRemote
 
     init {
-        remote = remoteProvider.getDefault()
-        serviceProvider = remoteProvider.defaultProvider()
+        remote = remoteResolver.getDefault()
+        serviceProvider = remoteResolver.defaultProvider()
     }
 
     /**
@@ -80,7 +80,7 @@ class DefaultGitPlus @Inject constructor(override val local: GitLocal,
     }
 
     private fun selectedRemote(): GitRemote {
-        return remoteProvider.get(serviceProvider, remote.configuration)
+        return remoteResolver.get(serviceProvider, remote.configuration)
     }
 
     /**

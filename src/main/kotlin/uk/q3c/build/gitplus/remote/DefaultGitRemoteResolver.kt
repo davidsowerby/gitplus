@@ -6,7 +6,7 @@ import com.google.inject.Provider
 /**
  * Created by David Sowerby on 25 Oct 2016
  */
-class DefaultGitRemoteProvider @Inject constructor(override val remotes: MutableMap<ServiceProvider, Provider<GitRemote>>) : GitRemoteProvider {
+class DefaultGitRemoteResolver @Inject constructor(override val remotes: MutableMap<ServiceProvider, Provider<GitRemote>>) : GitRemoteResolver {
 
     override fun defaultProvider(): ServiceProvider {
         return ServiceProvider.GITHUB

@@ -14,9 +14,11 @@ Add `GitPlusModule` to your injector, and inject `GitPlus` where needed
 
 ### Other
 
-A factory is not yet available, see this [open issue](https://github.com/davidsowerby/gitplus/issues/83).  
+A factory available:
 
-You would need to construct an instance of `DefaultGitPlus` directly. `GitPlusModule` gives you all the mappings of interface to implementation that you need. 
+```
+GitPlusFactory.getInstance()
+```
 
 ## Configuration
 

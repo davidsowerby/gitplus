@@ -35,7 +35,7 @@ class DefaultGitPlusTest extends Specification {
     GitRemoteConfiguration gitRemoteConfiguration
 
     Map<ServiceProvider, Provider<GitRemote>> serviceProviders
-    GitRemoteProvider gitRemoteProvider
+    GitRemoteResolver gitRemoteProvider
     GitLocal local = Mock(GitLocal)
     WikiLocal wikiLocal = Mock(WikiLocal)
     final String projectName = "scratch"
@@ -52,7 +52,7 @@ class DefaultGitPlusTest extends Specification {
         serviceProviders.put(GITHUB, gitHubProvider)
         serviceProviders.put(BITBUCKET, bitBucketProvider)
         temp = temporaryFolder.getRoot()
-        gitRemoteProvider = new DefaultGitRemoteProvider(serviceProviders)
+        gitRemoteProvider = new DefaultGitRemoteResolver(serviceProviders)
         gitplus = new DefaultGitPlus(local, wikiLocal, gitRemoteProvider)
         projDirParent = temp
     }
@@ -199,7 +199,7 @@ class DefaultGitPlusTest extends Specification {
     def "getters"() {
 
         expect:
-        gitplus.getRemoteProvider() == gitRemoteProvider
+        gitplus.getRemoteResolver() == gitRemoteProvider
     }
 //
 //

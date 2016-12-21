@@ -36,7 +36,7 @@ public class GitPlusModule extends AbstractModule {
         bind(GitLocalConfiguration.class).to(DefaultGitLocalConfiguration.class);
         bind(WikiLocal.class).to(DefaultWikiLocal.class);
         bind(GitRemoteConfiguration.class).to(DefaultGitRemoteConfiguration.class);
-        bind(GitRemoteProvider.class).to(DefaultGitRemoteProvider.class);
+        bind(GitRemoteResolver.class).to(DefaultGitRemoteResolver.class);
         bind(BitBucketRemote.class).to(DefaultBitBucketRemote.class);
         bind(BuildPropertiesLoader.class).to(FileBuildPropertiesLoader.class);
         bind(BitBucketProvider.class).to(DefaultBitBucketProvider.class);

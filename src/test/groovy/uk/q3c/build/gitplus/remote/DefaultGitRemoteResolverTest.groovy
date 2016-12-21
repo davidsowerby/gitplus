@@ -18,7 +18,7 @@ import static uk.q3c.build.gitplus.remote.ServiceProvider.GITHUB
 /**
  * Created by David Sowerby on 26 Oct 2016
  */
-class DefaultGitRemoteProviderTest extends Specification {
+class DefaultGitRemoteResolverTest extends Specification {
 
 
     static GitRemoteConfiguration gitRemoteConfiguration1 = new DefaultGitRemoteConfiguration()
@@ -48,7 +48,7 @@ class DefaultGitRemoteProviderTest extends Specification {
         gitRemoteConfiguration1.repoUser('d').repoName('x')
 
         when: "default"
-        GitRemoteProvider provider = new DefaultGitRemoteProvider(serviceProviders)
+        GitRemoteResolver provider = new DefaultGitRemoteResolver(serviceProviders)
 
 
         then:
