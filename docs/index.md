@@ -14,10 +14,19 @@ Add `GitPlusModule` to your injector, and inject `GitPlus` where needed
 
 ### Other
 
-A factory available:
+A factory available.  Use a try-resources block:
 
 ```
-GitPlusFactory.getInstance()
+try (GitPlus gitPlus = GitPlusFactory.getInstance()) {
+    final GitLocal gitLocal = gitPlus.getLocal();
+    final GitLocalConfiguration localConfig = gitLocal.getLocalConfiguration();
+    // do stuff
+}
+catch (Exception e){
+
+...
+
+}
 ```
 
 ## Configuration
@@ -30,7 +39,11 @@ The rest configuration structure matches the structure of [GitPlus](https://gith
 - remote
 - wikiLocal
 
-Note that local and remote are *active* by default, and wikiLocal is *not active* by default
+Note that local and remote are *active* by default, and wikiLocal is *not active* by default.  These can be changed, for example:
+
+```
+gitPlus.remote.active(false)
+```
 
 A typical scenario is given below. The [detailed configuration](gitplus-configuration.md) lists each of the options.
 
@@ -59,7 +72,7 @@ You may also want provide a callback to enable the creation of default project d
 gitPlus.local.projectCreator({ProjectCreator instance}) 
 ```
 
-Once the configuration is set as required, simply execute it:
+Once the configuration is set as required, simply execute it (**Note::** execute() should always be called even if `GitPlus` is only being used to read information fro local or remote Git repositories.
 
 ```
 gitPlus.execute()

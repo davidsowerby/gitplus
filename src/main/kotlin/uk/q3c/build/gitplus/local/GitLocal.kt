@@ -33,13 +33,12 @@ interface GitLocal : GitLocalConfiguration, AutoCloseable {
     fun cloneRemote()
 
     /**
+     * This method should not generally be called directly .. it is invoked by [GitPlus.execute]
      *
-     *     /**
+     * Validates the [localConfiguration], then prepares this instance for the configuration settings
      * If unspecified, [projectName] is taken from the [remote.repoName] property.  If still unspecified, a validation exception is thrown
      *
      * @throws GitPlusConfigurationException
-    */
-     * Validates the [localConfiguration], then prepares this instance for the configuration settings
      *
      * @param the [GitRemote] associated with this local instance
      */
@@ -202,13 +201,6 @@ interface GitLocal : GitLocalConfiguration, AutoCloseable {
     fun tagLightweight(tagMsg: String)
 
     /**
-     * Adjusts the [localConfiguration] for use with a wiki repo - these adjustments depend on the remote provider, and are therefore
-     * specific to different [GitRemote] implementations
-     */
-    //    fun configureForWiki()
-
-
-    /**
      * Reads the Git local information (by using the equivalent of 'git remote show origin') to get remote information.
      * Can be used with existing project instead of explicitly setting the remote url
      */
@@ -224,8 +216,14 @@ interface GitLocal : GitLocalConfiguration, AutoCloseable {
      */
     fun latestDevelopCommitSHA(): GitSHA
 
+    /**
+     * Returns the 'develop' branch
+     */
     fun developBranch(): GitBranch
 
+    /**
+     * Returns the 'master' branch
+     */
     fun masterBranch(): GitBranch
 
 }
