@@ -24,7 +24,6 @@ class DefaultGitHubRemote @Inject constructor(override val configuration: GitRem
         GitRemoteUrlMapper by urlMapper {
 
 
-
     override fun hasBranch(branch: GitBranch): Boolean {
         try {
             getBranch(branch)
@@ -247,7 +246,9 @@ class DefaultGitHubRemote @Inject constructor(override val configuration: GitRem
     }
 
     override fun prepare(local: GitLocal) {
-        validate(local)
+        if (active) {
+            validate(local)
+        }
     }
 
 

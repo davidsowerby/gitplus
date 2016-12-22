@@ -35,12 +35,14 @@ class DefaultWikiLocal @Inject constructor(branchConfigProvider: BranchConfigPro
     }
 
     override fun prepare(remote: GitRemote, local: GitLocal) {
-        log.debug("preparing")
-        projectName("${local.projectName}.wiki")
-        projectDirParent(local.projectDirParent)
-        taggerEmail(local.taggerEmail)
-        taggerName(local.taggerName)
-        super.prepare(remote)
+        if (active) {
+            log.debug("preparing")
+            projectName("${local.projectName}.wiki")
+            projectDirParent(local.projectDirParent)
+            taggerEmail(local.taggerEmail)
+            taggerName(local.taggerName)
+            super.prepare(remote)
+        }
     }
 
     /**

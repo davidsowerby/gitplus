@@ -39,10 +39,12 @@ open class DefaultGitLocal @Inject constructor(val branchConfigProvider: BranchC
     private val log = LoggerFactory.getLogger(this.javaClass.name)
 
     override fun prepare(remote: GitRemote) {
-        log.debug("preparing")
-        this.remote = remote
-        localConfiguration.validate(remote)
-        git = gitProvider.openRepository(localConfiguration)
+        if (active) {
+            log.debug("preparing")
+            this.remote = remote
+            localConfiguration.validate(remote)
+            git = gitProvider.openRepository(localConfiguration)
+        }
     }
 
     override fun init() {
