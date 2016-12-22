@@ -131,6 +131,7 @@ class DefaultGitRemoteConfiguration : GitRemoteConfiguration {
         this.create = other.create
         this.repoDeleteApprover = other.repoDeleteApprover
         this.providerBaseUrl = other.providerBaseUrl
+        this.active = other.active
     }
 
 

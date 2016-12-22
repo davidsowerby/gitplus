@@ -199,6 +199,7 @@ class DefaultGitRemoteConfigurationTest extends Specification {
         other.confirmDelete = 'a'
         other.create = true
         other.repoDeleteApprover = mockApprover
+        other.active(false)
 
         when:
         configuration.copy(other)
@@ -215,6 +216,7 @@ class DefaultGitRemoteConfigurationTest extends Specification {
         configuration.confirmDelete == 'a'
         configuration.create
         configuration.repoDeleteApprover == mockApprover
+        !configuration.active
     }
 
     def "repoName and repoUser must be specified, GitLocal.projectName not specified"() {

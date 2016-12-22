@@ -38,6 +38,7 @@ class DefaultWikiLocalTest extends Specification {
         branchConfigProvider.get(_, _) >> branchConfig
         mockGitProvider.openRepository(_) >> mockGit
         wikiLocal = new DefaultWikiLocal(branchConfigProvider, mockGitProvider, new DefaultGitLocalConfiguration())
+        wikiLocal.active = true
     }
 
     def "prepare modifies copies relevant config"() {
