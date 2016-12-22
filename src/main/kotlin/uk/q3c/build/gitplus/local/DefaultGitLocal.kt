@@ -71,7 +71,11 @@ open class DefaultGitLocal @Inject constructor(val branchConfigProvider: BranchC
      * Closes Git instance to free up resources
      */
     override fun close() {
-        git.close()
+        try {
+            git.close()
+        } catch (uip: UninitializedPropertyAccessException) {
+            // do nothing, if git was not initialised we do not need to close it
+        }
     }
 
 

@@ -38,4 +38,13 @@ class DefaultGitLocalTest2 extends Specification {
         1 * localConfiguration.getActive() >> false
         0 * localConfiguration.validate(remote)
     }
+
+    def "close() before git property initialised does not error"() {
+
+        when:
+        gitLocal.close()
+
+        then:
+        noExceptionThrown()
+    }
 }
