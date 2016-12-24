@@ -27,7 +27,7 @@ apply plugin: 'kotlin'
 apply plugin: "jacoco"
 
 sourceCompatibility = '1.8'
-version = '0.18.3.66'
+version = '0.18.4.67'
 group = 'uk.q3c.build'
 
 testSets {

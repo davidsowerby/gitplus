@@ -45,6 +45,10 @@ class DefaultWikiLocal @Inject constructor(branchConfigProvider: BranchConfigPro
         }
     }
 
+    override fun verifyRemoteFromLocal() {
+        // deliberately does nothing - we do not want to set the remote to the wiki url
+    }
+
     /**
      * A GitHub wiki has to be manually enabled on the GitHub site, before anything can be pushed to it.  This method will
      * swallow the exception thrown by a push if that has not happened, and logs as a warning.  At some point this really ought
