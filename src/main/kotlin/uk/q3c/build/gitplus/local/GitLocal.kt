@@ -187,11 +187,12 @@ interface GitLocal : GitLocalConfiguration, AutoCloseable {
     fun extractCommitsFor(branch: GitBranch): ImmutableList<GitCommit>
 
     /**
-     * Adds `tag` to the most recent commit.  This will add an annotated tag, with attributes taken from [localConfiguration].  See also [tagLightweight]
-
-     * @param tagMsg the tag to apply
+     * Adds `tag` to the most recent commit, with [tagName] and [tagBody].  This will add an annotated tag, with
+     * other attributes (such as personIdent and tagger email) taken from [localConfiguration]
+     *
+     * @param tagName the tag to apply
      */
-    fun tag(tagMsg: String)
+    fun tag(tagName: String, tagBody: String)
 
     /**
      * Adds `tag` to the most recent commit.  This will add a lightweight tag.  See also [tag]

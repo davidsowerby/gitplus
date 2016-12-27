@@ -99,7 +99,7 @@ class DefaultGitHubRemoteIntegrationTest extends Specification {
         gitPlus.local.commit('{{javadoc}}')
         createFileAndAddToGit(2)
         gitPlus.local.commit('Fix #2 commit 2')
-        gitPlus.local.tag(version)
+        gitPlus.local.tag(version, 'version ' + version)
         gitPlus.local.push(true, false)
     }
 

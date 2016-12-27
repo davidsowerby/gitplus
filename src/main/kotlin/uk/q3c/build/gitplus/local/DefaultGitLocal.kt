@@ -473,12 +473,12 @@ open class DefaultGitLocal @Inject constructor(val branchConfigProvider: BranchC
         return extractCommitsFor(GitBranch(branchName))
     }
 
-    override fun tag(tagMsg: String) {
+    override fun tag(tagName: String, tagBody: String) {
         try {
             val tagCommand = git.tag()
             val tagDate = Date()
             val personalIdent = PersonIdent(localConfiguration.taggerName, localConfiguration.taggerEmail)
-            tagCommand.setMessage("Released at version " + tagMsg).setAnnotated(true).setName(tagMsg).tagger = PersonIdent(personalIdent, tagDate)
+            tagCommand.setMessage(tagBody).setAnnotated(true).setName(tagName).tagger = PersonIdent(personalIdent, tagDate)
             tagCommand.call()
 
         } catch (e: Exception) {

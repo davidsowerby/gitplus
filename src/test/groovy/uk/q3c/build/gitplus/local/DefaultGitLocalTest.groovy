@@ -610,11 +610,11 @@ class DefaultGitLocalTest extends Specification {
         File f1 = createAFile()
         gitLocal.add(f1)
         gitLocal.commit('commit 1')
-        gitLocal.tag("0.1")
+        gitLocal.tag("0.1", 'body')
         File f2 = createAFile()
         gitLocal.add(f2)
         gitLocal.commit('commit 2')
-        gitLocal.tag("0.2")
+        gitLocal.tag("0.2", "body")
 
         when:
         List<Tag> tags = gitLocal.tags()
@@ -623,9 +623,9 @@ class DefaultGitLocalTest extends Specification {
 
         then:
         tag1.getTagName() == ("0.1")
-        tag1.getFullMessage() == ("Released at version 0.1")
+        tag1.getFullMessage() == ("body")
         tag2.getTagName() == ("0.2")
-        tag2.getFullMessage() == ("Released at version 0.2")
+        tag2.getFullMessage() == ("body")
 
     }
 
@@ -638,7 +638,7 @@ class DefaultGitLocalTest extends Specification {
         gitLocal = new DefaultGitLocal(branchConfigProvider, mockGitProvider, configuration)
 
         when:
-        gitLocal.tag('x')
+        gitLocal.tag('x', 'body')
 
         then:
         thrown GitLocalException
@@ -811,7 +811,7 @@ class DefaultGitLocalTest extends Specification {
         gitLocal.commit('commit 1')
 
         when:
-        gitLocal.tag('fat')
+        gitLocal.tag('fat', 'body')
         gitLocal.tagLightweight('thin')
         List<Tag> tags = gitLocal.tags()
 
@@ -819,7 +819,7 @@ class DefaultGitLocalTest extends Specification {
         tags.size() == 2
         tags.get(0).getTagType() == Tag.TagType.ANNOTATED
         tags.get(1).getTagType() == Tag.TagType.LIGHTWEIGHT
-        tags.get(0).getFullMessage() == 'Released at version fat'
+        tags.get(0).getFullMessage() == 'body'
         tags.get(1).getFullMessage() == ""
         tags.get(0).getReleaseDate() != null
         tags.get(1).getReleaseDate() != null
