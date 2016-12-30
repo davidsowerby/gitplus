@@ -31,7 +31,7 @@ import java.util.*
  * [branchConfigProvider] is necessary only to enable unit testing.  JGit uses a number of concrete classes directly, which
  * prevents mocking
  */
-open class DefaultGitLocal @Inject constructor(val branchConfigProvider: BranchConfigProvider, val gitProvider: GitProvider, override val localConfiguration: GitLocalConfiguration) : GitLocal, GitLocalConfiguration by localConfiguration {
+open class DefaultGitLocal @Inject constructor(val branchConfigProvider: BranchConfigProvider, val gitProvider: GitProvider, override val localConfiguration: GitLocalConfiguration, val gitInitChecker: GitInitChecker) : GitLocal, GitLocalConfiguration by localConfiguration {
 
 
     override lateinit var git: Git
@@ -44,6 +44,8 @@ open class DefaultGitLocal @Inject constructor(val branchConfigProvider: BranchC
             this.remote = remote
             localConfiguration.validate(remote)
             git = gitProvider.openRepository(localConfiguration)
+            gitInitChecker.setGit(git)
+
         }
     }
 
@@ -54,6 +56,7 @@ open class DefaultGitLocal @Inject constructor(val branchConfigProvider: BranchC
             val gitDir = File(localConfiguration.projectDir(), ".git")
             repo = FileRepository(gitDir)
             repo.create()
+            gitInitChecker.initDone()
             projectCreator.invoke(localConfiguration)
             add(projectDir())
         } catch (e: Exception) {
@@ -115,6 +118,7 @@ open class DefaultGitLocal @Inject constructor(val branchConfigProvider: BranchC
     private fun doClone(localDir: File) {
         log.debug("cloning remote from: {}", remote.repoBaselUrl())
         Git.cloneRepository().setURI(remote.cloneUrl()).setDirectory(localDir).call()
+        gitInitChecker.initDone()
     }
 
     private fun deleteFolderIfApproved(localDir: File) {
@@ -134,7 +138,10 @@ open class DefaultGitLocal @Inject constructor(val branchConfigProvider: BranchC
         } catch (e: Exception) {
             throw GitLocalException("Pull failed", e)
         }
+    }
 
+    override fun isInitDone(): Boolean {
+        return gitInitChecker.isInitDone()
     }
 
     override fun createAndInitialise() {
@@ -187,6 +194,7 @@ open class DefaultGitLocal @Inject constructor(val branchConfigProvider: BranchC
 
     override fun checkoutBranch(branch: GitBranch) {
         log.info("checking out existing branch '{}'", branch)
+        checkInitDone()
         try {
             git.checkout().setCreateBranch(false).setName(branch.name).call()
 
@@ -210,6 +218,7 @@ open class DefaultGitLocal @Inject constructor(val branchConfigProvider: BranchC
 
     override fun createBranch(branchName: String) {
         log.debug("creating branch '{}'", branchName)
+        checkInitDone()
         try {
             git.branchCreate().setName(branchName).call()
         } catch (e: Exception) {
@@ -221,6 +230,7 @@ open class DefaultGitLocal @Inject constructor(val branchConfigProvider: BranchC
 
     override fun add(file: File): DirCache {
         try {
+            checkInitDone()
             if (!file.exists()) {
                 throw FileNotFoundException(file.absolutePath)
             }
@@ -231,7 +241,13 @@ open class DefaultGitLocal @Inject constructor(val branchConfigProvider: BranchC
 
     }
 
+    private fun checkInitDone() {
+        gitInitChecker.checkInitDone()
+    }
+
+
     override fun commit(message: String) {
+        checkInitDone()
         try {
             git.commit().setMessage(message).call()
         } catch (e: Exception) {
@@ -242,10 +258,8 @@ open class DefaultGitLocal @Inject constructor(val branchConfigProvider: BranchC
 
 
     override fun branches(): List<String> {
+        checkInitDone()
         try {
-            if (git.repository.isBare) {
-                throw GitLocalException("Repo has no working tree")
-            }
             val refs = git.branchList().call()
             val branchNames = ArrayList<String>()
             refs.forEach { r -> branchNames.add(r.name.replace(Constants.R_HEADS, "")) }
@@ -257,10 +271,8 @@ open class DefaultGitLocal @Inject constructor(val branchConfigProvider: BranchC
     }
 
     override fun currentBranch(): GitBranch {
+        checkInitDone()
         try {
-            if (git.repository.isBare) {
-                throw GitLocalException("Repo has no working tree")
-            }
             val branch: String? = git.repository.branch
             if (branch == null) {
                 throw GitLocalException("There is no current branch")
@@ -285,6 +297,7 @@ open class DefaultGitLocal @Inject constructor(val branchConfigProvider: BranchC
 
 
     override fun getOrigin(): String {
+        checkInitDone()
         try {
             val config = git.repository.config
             val remotes = config.getSubsections(DefaultGitPlus.REMOTE)
@@ -314,7 +327,7 @@ open class DefaultGitLocal @Inject constructor(val branchConfigProvider: BranchC
             config.save()
 
         } catch (e: Exception) {
-            throw GitLocalException("Unable to set origin", e)
+            throw GitLocalException("Unable to set origin to " + origin, e)
         }
 
     }
@@ -322,6 +335,7 @@ open class DefaultGitLocal @Inject constructor(val branchConfigProvider: BranchC
 
     override fun push(tags: Boolean, force: Boolean): PushResponse {
         log.info("pushing to remote, with tags='{}' and force = '{}'", tags, force)
+        checkInitDone()
         try {
             if (currentBranch().name != "") {
                 checkTrackingBranch()
@@ -373,6 +387,7 @@ open class DefaultGitLocal @Inject constructor(val branchConfigProvider: BranchC
 
 
     override fun tags(): List<Tag> {
+        checkInitDone()
         val tags = ArrayList<Tag>()
         try {
             val refs = git.tagList().call()

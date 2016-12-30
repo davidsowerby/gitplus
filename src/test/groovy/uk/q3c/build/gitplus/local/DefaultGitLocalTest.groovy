@@ -62,6 +62,9 @@ class DefaultGitLocalTest extends Specification {
     GitProvider gitProvider
     GitProvider mockGitProvider = Mock(GitProvider)
     Repository repo = Mock(Repository)
+    GitInitChecker initChecker = new DefaultGitInitChecker()
+    GitInitChecker mockInitChecker = Mock(GitInitChecker)
+
 
     BranchConfigProvider branchConfigProvider = Mock(BranchConfigProvider)
     BranchConfig branchConfig = Mock(BranchConfig)
@@ -76,7 +79,7 @@ class DefaultGitLocalTest extends Specification {
 
     def "construct with null configuration throws IllegalArgumentException"() {
         when:
-        gitLocal = new DefaultGitLocal(branchConfigProvider, gitProvider, null)
+        gitLocal = new DefaultGitLocal(branchConfigProvider, gitProvider, null, mockInitChecker)
 
         then:
         thrown(IllegalArgumentException)
@@ -84,7 +87,7 @@ class DefaultGitLocalTest extends Specification {
 
     def "null gitProvider causes IllegalArgumentException in constructor"() {
         when:
-        new DefaultGitLocal(branchConfigProvider, null, configuration)
+        new DefaultGitLocal(branchConfigProvider, null, configuration, mockInitChecker)
 
         then:
         thrown IllegalArgumentException
@@ -93,7 +96,7 @@ class DefaultGitLocalTest extends Specification {
     def "init prepares directory, invokes projectCreator and adds projectDir to Git"() {
         given:
         configuration.projectDirParent(temp).projectName('dummy').projectCreator(mockProjectCreator)
-        gitLocal = new DefaultGitLocal(branchConfigProvider, gitProvider, configuration)
+        gitLocal = createGitLocal(false, false, false)
         gitLocal.prepare(gitRemote)
 
         when:
@@ -104,13 +107,14 @@ class DefaultGitLocalTest extends Specification {
         new File(projectDir, ".git").exists()
         1 * mockProjectCreator.invoke(configuration)
         gitLocal.status().isClean()
+        gitLocal.initDone
     }
 
 
     def "create local repo"() {
         given:
         configuration.create(true).projectName("scratch").projectDirParent(temp)
-        gitLocal = new DefaultGitLocal(branchConfigProvider, gitProvider, configuration)
+        gitLocal = createGitLocal(false, false, false)
         gitLocal.prepare(gitRemote)
 
         when:
@@ -118,6 +122,7 @@ class DefaultGitLocalTest extends Specification {
 
         then:
         new File(temp, "scratch/.git").exists()
+        gitLocal.initDone
     }
 
     def "set and get origin, sets to remote"() {
@@ -127,7 +132,7 @@ class DefaultGitLocalTest extends Specification {
         remote.repoUser >> 'davidsowerby'
         remote.repoName >> 'scratch'
         remote.cloneUrl() >> remoteCloneUrl
-        gitLocal = new DefaultGitLocal(branchConfigProvider, gitProvider, configuration)
+        gitLocal = createGitLocal(false, false, false)
         configuration.create(true).projectDirParent(temp).projectName('dummy')
         gitLocal.remote = remote
 
@@ -145,7 +150,7 @@ class DefaultGitLocalTest extends Specification {
         given:
         gitRemote.cloneUrl() >> { throw new NullPointerException() }
         mockGit.getRepository() >> { throw new IOException() }
-        gitLocal = new DefaultGitLocal(branchConfigProvider, gitProvider, configuration)
+        gitLocal = createGitLocal(false, false, false)
         configuration.create(true).projectDirParent(temp).projectName('dummy')
         gitLocal.prepare(gitRemote)
 
@@ -154,13 +159,9 @@ class DefaultGitLocalTest extends Specification {
         gitLocal.setOrigin()
 
         then:
-        thrown GitLocalException
+        GitLocalException gle = thrown()
+        gle.message.contains("Unable to set origin")
 
-        when:
-        gitLocal.setOrigin()
-
-        then:
-        thrown GitLocalException
     }
 
 
@@ -170,7 +171,7 @@ class DefaultGitLocalTest extends Specification {
         gitRemote.repoName >> 'scratch'
         final String remoteUrl = 'https://github.com/davidsowerby/scratch.git'
         gitRemote.cloneUrl() >> remoteUrl
-        gitLocal = new DefaultGitLocal(branchConfigProvider, gitProvider, configuration)
+        gitLocal = createGitLocal(false, false, false)
         configuration.create(true).projectDirParent(temp).projectName('dummy')
         gitLocal.remote = gitRemote
         gitLocal.prepare(gitRemote)
@@ -185,23 +186,24 @@ class DefaultGitLocalTest extends Specification {
 
     def "create local repo failure throws GitLocalException"() {
         given:
-        GitLocalConfiguration mockConfiguration = Mock(GitLocalConfiguration)
-        mockConfiguration.create >> true
-        gitLocal = new DefaultGitLocal(branchConfigProvider, gitProvider, mockConfiguration)
-
+        configuration.create = true
+        configuration.projectDirParent = temp
+        configuration.projectName = 'wiggly'
+        gitLocal = createGitLocal(true, false, false)
+        initChecker.initDone >> { throw new NullPointerException() }
 
         when:
         gitLocal.createAndInitialise()
 
         then:
-        thrown GitLocalException
+        GitLocalException gle = thrown()
+        gle.message.contains("Unable to create local repo")
     }
 
     def "create called but not set in config, call is ignored"() {
         given:
-        GitLocalConfiguration mockConfiguration = Mock(GitLocalConfiguration)
-        mockConfiguration.create >> false
-        gitLocal = new DefaultGitLocal(branchConfigProvider, gitProvider, mockConfiguration)
+        configuration.create = false
+        gitLocal = createGitLocal(false, false, false)
 
         when:
         gitLocal.createAndInitialise()
@@ -212,9 +214,8 @@ class DefaultGitLocalTest extends Specification {
 
     def "clone called but not set in config, call is ignored"() {
         given:
-        GitLocalConfiguration mockConfiguration = Mock(GitLocalConfiguration)
-        mockConfiguration.cloneFromRemote >> false
-        gitLocal = new DefaultGitLocal(branchConfigProvider, gitProvider, mockConfiguration)
+        configuration.cloneFromRemote = false
+        gitLocal = createGitLocal(false, false, false)
 
         when:
         gitLocal.cloneRemote()
@@ -239,7 +240,7 @@ class DefaultGitLocalTest extends Specification {
     def "call close()twice does not cause NPE"() {
         given:
         createScratchRepo()
-        Git firstRef = gitLocal.getGit()
+        gitLocal.getGit()
 
         when:
         gitLocal.close()
@@ -251,10 +252,10 @@ class DefaultGitLocalTest extends Specification {
     }
 
 
-    def "push with no working tree throws GLE"() {
+    def "push with null branch throws GLE"() {
         given:
         configuration.projectName = 'wiggly'
-        gitLocal = new DefaultGitLocal(branchConfigProvider, mockGitProvider, configuration)
+        gitLocal = createGitLocal(true, true, true)
         gitLocal.remote = gitRemote
         gitLocal.prepare(gitRemote)
 
@@ -263,31 +264,17 @@ class DefaultGitLocalTest extends Specification {
 
         then:
         1 * mockGit.getRepository() >> repo
-        1 * repo.isBare() >> true
-        thrown GitLocalException
-    }
-
-    def "push with null branch throws GLE"() {
-        given:
-        configuration.projectName = 'wiggly'
-        gitLocal = new DefaultGitLocal(branchConfigProvider, mockGitProvider, configuration)
-        gitLocal.remote = gitRemote
-        gitLocal.prepare(gitRemote)
-
-        when:
-        gitLocal.push(false, false)
-
-        then:
-        2 * mockGit.getRepository() >> repo
-        1 * repo.isBare() >> false
         1 * repo.getBranch() >> null
-        thrown GitLocalException
+        GitLocalException gle = thrown()
+        gle.message.contains("Unable to push")
+        gle.cause instanceof GitLocalException
+        gle.cause.message.contains("Unable to get current branch")
     }
 
     def "push with all valid is successful"() {
         given:
         configuration.projectName = 'wiggly'
-        gitLocal = new DefaultGitLocal(branchConfigProvider, mockGitProvider, configuration)
+        gitLocal = createGitLocal(true, true, true)
         gitLocal.remote = gitRemote
         gitLocal.prepare(gitRemote)
         CredentialsProvider credentialsProvider = Mock(CredentialsProvider)
@@ -334,7 +321,7 @@ class DefaultGitLocalTest extends Specification {
     def "push with result failure throws PushException wrapped in GLE"() {
         given:
         configuration.projectName = 'wiggly'
-        gitLocal = new DefaultGitLocal(branchConfigProvider, mockGitProvider, configuration)
+        gitLocal = createGitLocal(true, true, true)
         gitLocal.remote = gitRemote
         CredentialsProvider credentialsProvider = Mock(CredentialsProvider)
         gitRemote.getCredentialsProvider() >> credentialsProvider
@@ -372,7 +359,9 @@ class DefaultGitLocalTest extends Specification {
         1 * pc.call() >> results
         update1.status >> RemoteRefUpdate.Status.REJECTED_NODELETE
 
-        thrown GitLocalException
+        GitLocalException gle = thrown()
+        gle.message.contains("Unable to push")
+        gle.cause instanceof PushException
 
     }
 
@@ -411,7 +400,8 @@ class DefaultGitLocalTest extends Specification {
         gitLocal.checkoutBranch(new GitBranch("branch"))
 
         then:
-        thrown GitLocalException
+        GitLocalException gle = thrown()
+        gle.message.contains("Unable to checkout branch branch")
     }
     /**
      * Uses existing project as older commits will not then be subject to change
@@ -424,7 +414,7 @@ class DefaultGitLocalTest extends Specification {
         gitRemote.repoName >> testProject
         gitRemote.repoBaselUrl() >> 'https://github.com/davidsowerby/' + testProject
         gitRemote.cloneUrl() >> 'https://github.com/davidsowerby/' + testProject + ".git"
-        gitLocal = new DefaultGitLocal(branchConfigProvider, gitProvider, configuration)
+        gitLocal = createGitLocal(false, false, false)
         gitLocal.remote = gitRemote
         configuration.projectName(testProject).projectDirParent(temp).cloneFromRemote(true)
         String commitHash = 'f6d1f2269daefeb4375ef5d2a2c2400101df6aa5'
@@ -460,7 +450,7 @@ class DefaultGitLocalTest extends Specification {
         gitRemote.repoUser >> 'davidsowerby'
         gitRemote.repoName >> 'scratch'
         configuration.projectName('scratch')
-        gitLocal = new DefaultGitLocal(branchConfigProvider, mockGitProvider, configuration)
+        gitLocal = createGitLocal(true, true, true)
         gitLocal.prepare(gitRemote)
         StoredConfig storedConfig = Mock(StoredConfig)
         PushCommand pc = Mock(PushCommand)
@@ -497,7 +487,7 @@ class DefaultGitLocalTest extends Specification {
         checkout.call() >> { throw new IOException() }
         gitRemote.active >> false
         configuration.projectName = 'wiggly'
-        gitLocal = new DefaultGitLocal(branchConfigProvider, mockGitProvider, configuration)
+        gitLocal = createGitLocal(true, true, true)
         gitLocal.prepare(gitRemote)
 
 
@@ -505,19 +495,22 @@ class DefaultGitLocalTest extends Specification {
         gitLocal.checkoutNewBranch(new GitBranch('wiggly'))
 
         then:
-        thrown GitLocalException
+        GitLocalException gle = thrown()
+        gle.message.contains("Unable to checkout branch wiggly")
 
         when:
         gitLocal.checkoutCommit(new GitSHA('0123456701234567012345670123456701234567'))
 
         then:
-        thrown GitLocalException
+        gle = thrown()
+        gle.message.contains("Unable to checkout commit 0123456701234567012345670123456701234567")
+
 
     }
 
     def "GitLocalException when init call fails"() {
         given:
-        gitLocal = new DefaultGitLocal(branchConfigProvider, gitProvider, configuration)
+        gitLocal = createGitLocal(false, false, false)
         gitLocal.projectName('scratch').projectDirParent(temp)
         temp.writable = false  // to force error
 
@@ -525,82 +518,97 @@ class DefaultGitLocalTest extends Specification {
         gitLocal.init()
 
         then:
-        thrown GitLocalException
+        GitLocalException gle = thrown()
+        gle.message.contains("Unable to initialise DefaultGitLocal")
 
     }
 
     def "GitLocalException when adding a non-existent file"() {
         given:
         configuration.create(true).projectName("scratch").projectDirParent(temp)
-        gitLocal = new DefaultGitLocal(branchConfigProvider, gitProvider, configuration)
+        gitLocal = createGitLocal(false, true, true)
 
         when:
 
         gitLocal.add(new File(temp, "test.md"))
 
         then:
-        thrown GitLocalException
+        GitLocalException gle = thrown()
+        gle.message.contains("Unable to add file to git")
+        gle.cause instanceof FileNotFoundException
     }
 
     def "GitLocalException when calls made, repo not init()'d"() {
         given:
+        String exceptionMessage = "Git repository has not been initialized"
         configuration.create(true).projectName("scratch").projectDirParent(temp)
-        gitLocal = new DefaultGitLocal(branchConfigProvider, gitProvider, configuration)
+        gitLocal = createGitLocal(false, false, false)
+        gitLocal.prepare(gitRemote)
 
         when:
         gitLocal.checkoutBranch(new GitBranch("branch"))
 
         then:
-        thrown GitLocalException
+        GitLocalException gle = thrown()
+        gle.message.contains(exceptionMessage)
 
         when:
         gitLocal.commit("dsfd")
 
         then:
-        thrown GitLocalException
+        gle = thrown()
+        gle.message.contains(exceptionMessage)
 
         when:
         gitLocal.createBranch("any")
 
         then:
-        thrown GitLocalException
+        gle = thrown()
+        gle.message.contains(exceptionMessage)
 
         when:
         gitLocal.getOrigin()
 
         then:
-        thrown GitLocalException
+        gle = thrown()
+        gle.message.contains(exceptionMessage)
 
         when:
         gitLocal.push(true, false)
 
         then:
-        thrown GitLocalException
+        gle = thrown()
+        gle.message.contains(exceptionMessage)
 
     }
 
     def "GitLocalException when calls made, repo does not exist"() {
         given:
+        String exceptionMessage = "Git repository has not been initialized"
         configuration.create(true).projectName("scratch").projectDirParent(temp)
-        gitLocal = new DefaultGitLocal(branchConfigProvider, gitProvider, configuration)
+        gitLocal = createGitLocal(false, false, false)
+        gitLocal.prepare(gitRemote)
 
         when:
-        gitLocal.status()
+        def status = gitLocal.status()
 
         then:
-        thrown GitLocalException
+        status != null
+        status.clean
 
         when:
         gitLocal.branches()
 
         then:
-        thrown GitLocalException
+        GitLocalException gle = thrown()
+        gle.message.contains(exceptionMessage)
 
         when:
         gitLocal.currentBranch()
 
         then:
-        thrown GitLocalException
+        gle = thrown()
+        gle.message.contains(exceptionMessage)
     }
 
 
@@ -635,19 +643,22 @@ class DefaultGitLocalTest extends Specification {
         mockGit.tag() >> tc
         tc.call() >> { throw new NullPointerException() }
         configuration.create(true).projectName("scratch").projectDirParent(temp)
-        gitLocal = new DefaultGitLocal(branchConfigProvider, mockGitProvider, configuration)
+        gitLocal = createGitLocal(true, true, true)
+        gitLocal.prepare(gitRemote)
 
         when:
         gitLocal.tag('x', 'body')
 
         then:
-        thrown GitLocalException
+        GitLocalException gle = thrown()
+        gle.message.contains("Unable to tag")
 
         when:
         gitLocal.tagLightweight('x')
 
         then:
-        thrown GitLocalException
+        gle = thrown()
+        gle.message.contains("Unable to tag")
     }
 
     def "commits"() {
@@ -689,7 +700,7 @@ class DefaultGitLocalTest extends Specification {
         gitRemote.repoName >> 'scratch'
         gitRemote.cloneUrl() >> 'https://github.com/davidsowerby/scratch.git'
         configuration.cloneFromRemote(true).projectDirParent(temp).projectName('scratch')
-        gitLocal = new DefaultGitLocal(branchConfigProvider, gitProvider, configuration)
+        gitLocal = createGitLocal(false, false, false)
         gitLocal.remote = gitRemote
         gitLocal.prepare(gitRemote)
 
@@ -704,21 +715,24 @@ class DefaultGitLocalTest extends Specification {
         gitLocal.cloneRemote() // second time, so local repo already exists
 
         then:
-        thrown GitLocalException
+        GitLocalException gle = thrown()
+        gle.cause.message == "Git clone called, when Git local directory already exists"
 
         when:
         gitLocal.cloneExistsResponse(DELETE) // but has no approver
         gitLocal.cloneRemote()
 
         then:
-        thrown GitLocalException
+        gle = thrown()
+        gle.cause.message.contains("Delete of directory not approved")
 
-        when:
+        when: "actively denied"
         gitLocal.cloneExistsResponse(DELETE).fileDeleteApprover(new TestDirDeleteDenier())
         gitLocal.cloneRemote()
 
         then:
-        thrown GitLocalException // not approved
+        gle = thrown()
+        gle.cause.message.contains("Delete of directory not approved")
 
         when:
         gitLocal.cloneExistsResponse(DELETE).fileDeleteApprover(new TestDirDeleteApprover(temp))
@@ -734,7 +748,7 @@ class DefaultGitLocalTest extends Specification {
         gitRemote.repoName >> 'scratch'
         gitRemote.cloneUrl() >> 'https://github.com/davidsowerby/scratch.git'
         configuration.cloneFromRemote(true).projectDirParent(temp).projectName('scratch').cloneExistsResponse(PULL)
-        gitLocal = new DefaultGitLocal(branchConfigProvider, mockGitProvider, configuration)
+        gitLocal = createGitLocal(true, true, true)
         gitLocal.remote = gitRemote
         gitLocal.prepare(gitRemote)
 //        gitLocal.prepare() // don't do this, it replaces mockGit with a real one
@@ -752,7 +766,7 @@ class DefaultGitLocalTest extends Specification {
         given:
         PullCommand pull = Mock(PullCommand)
         configuration.projectName = 'wiggly'
-        gitLocal = new DefaultGitLocal(branchConfigProvider, mockGitProvider, configuration)
+        gitLocal = createGitLocal(true, true, true)
         gitLocal.remote = gitRemote
         gitLocal.prepare(gitRemote)
         pull.call() >> { throw new IOException() }
@@ -761,12 +775,13 @@ class DefaultGitLocalTest extends Specification {
         gitLocal.pull()
 
         then:
-        thrown GitLocalException
+        GitLocalException gle = thrown()
+        gle.message.contains("Pull failed")
     }
 
     def "masterBranch"() {
         given:
-        gitLocal = new DefaultGitLocal(branchConfigProvider, mockGitProvider, configuration)
+        gitLocal = createGitLocal(true, true, true)
 
         expect:
         gitLocal.masterBranch() == new GitBranch("master")
@@ -775,7 +790,7 @@ class DefaultGitLocalTest extends Specification {
     def "setOrigin failure cause GLE"() {
         given:
         configuration.projectName = 'wiggly'
-        gitLocal = new DefaultGitLocal(branchConfigProvider, mockGitProvider, configuration)
+        gitLocal = createGitLocal(true, true, true)
         gitLocal.remote = gitRemote
         gitLocal.prepare(gitRemote)
         mockGit.repository >> repo
@@ -785,7 +800,8 @@ class DefaultGitLocalTest extends Specification {
         gitLocal.setOrigin('scratch')
 
         then:
-        thrown GitLocalException
+        GitLocalException gle = thrown()
+        gle.message.contains("Unable to set origin to scratch")
 
     }
 
@@ -794,14 +810,15 @@ class DefaultGitLocalTest extends Specification {
         gitRemote.repoUser >> 'davidsowerby'
         gitRemote.repoName >> 'scratch'
         configuration.cloneFromRemote(true).projectDirParent(temp).projectName('scratch')
-        gitLocal = new DefaultGitLocal(branchConfigProvider, gitProvider, configuration)
+        gitLocal = createGitLocal(true, true, true)
 
         when:
         gitLocal.tags()
 
         then:
         mockGit.tagList() >> { throw new IOException() }
-        thrown GitLocalException
+        GitLocalException gle = thrown()
+        gle.message.contains("Unable to read Git status")
     }
 
     def "tags, lightweight and annotated"() {
@@ -833,13 +850,14 @@ class DefaultGitLocalTest extends Specification {
         gitRemote.repoName >> 'scratch'
         configuration.projectDirParent(temp)
         mockGit.log() >> { throw new IOException() }
-        gitLocal = new DefaultGitLocal(branchConfigProvider, gitProvider, configuration)
+        gitLocal = createGitLocal(false, false, false)
 
         when:
         gitLocal.extractDevelopCommits()
 
         then:
-        thrown GitLocalException
+        GitLocalException gle = thrown()
+        gle.message == "Reading commits for branch 'develop' failed"
     }
 
     def "setOrigin fails, throws GitLocalException"() {
@@ -847,14 +865,15 @@ class DefaultGitLocalTest extends Specification {
         given:
         StoredConfig config = Mock(StoredConfig)
         config.save() >> { throw new NullPointerException() }
-        gitLocal = new DefaultGitLocal(branchConfigProvider, gitProvider, configuration)
+        gitLocal = createGitLocal(false, false, false)
         gitLocal.remote = gitRemote
 
         when:
         gitLocal.setOrigin()
 
         then:
-        thrown GitLocalException
+        GitLocalException gle = thrown()
+        gle.message == "Unable to set origin"
     }
 
 
@@ -881,7 +900,7 @@ class DefaultGitLocalTest extends Specification {
     def "currentCommitHash gets exception, throw GLE"() {
 
         given:
-        gitLocal = new DefaultGitLocal(branchConfigProvider, mockGitProvider, configuration)
+        gitLocal = createGitLocal(true, true, true)
         gitLocal.remote = gitRemote
         Repository repo = Mock(Repository)
         mockGit.getRepository() >> repo
@@ -891,13 +910,14 @@ class DefaultGitLocalTest extends Specification {
 
         then:
         repo.getRef("HEAD") >> { throw new IOException() }
-        thrown GitLocalException
+        GitLocalException gle = thrown()
+        gle.message == "Unable to retrieve current revision"
     }
 
 
     def "prepare takes projectName from remote if not set"() {
         given:
-        gitLocal = new DefaultGitLocal(branchConfigProvider, mockGitProvider, configuration)
+        gitLocal = createGitLocal(true, true, true)
         GitRemote gitRemote2 = Mock(GitRemote)
         gitRemote.repoName >> notSpecified
         gitRemote2.repoName >> 'biscuit'
@@ -928,10 +948,20 @@ class DefaultGitLocalTest extends Specification {
 
     private void createScratchRepo() {
         configuration.create(true).projectName("scratch").projectDirParent(temp)
-        gitLocal = new DefaultGitLocal(branchConfigProvider, gitProvider, configuration)
+        gitLocal = createGitLocal(false, false, false)
         gitLocal.prepare(gitRemote)
         gitLocal.createAndInitialise()
     }
+
+    private GitLocal createGitLocal(boolean usingMockGit, boolean usingMockInitChecker, boolean initDone) {
+        GitInitChecker initCheckerUsed = (usingMockInitChecker) ? mockInitChecker : initChecker
+        GitProvider gitProvider1 = usingMockGit ? mockGitProvider : gitProvider
+        if (usingMockInitChecker) {
+            mockInitChecker.isInitDone() >> initDone
+        }
+        new DefaultGitLocal(branchConfigProvider, gitProvider1, configuration, initCheckerUsed)
+    }
+
 
     private File createAFile() {
         File f = new File(configuration.projectDir(), "test.md")

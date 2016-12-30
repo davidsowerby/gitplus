@@ -15,9 +15,10 @@ class DefaultGitLocalTest2 extends Specification {
     GitProvider gitProvider = Mock(GitProvider)
     GitRemote remote = Mock(GitRemote)
     Git git = Mock(Git)
+    GitInitChecker mockInitChecker = Mock(GitInitChecker)
 
     def setup() {
-        gitLocal = new DefaultGitLocal(branchConfigProvider, gitProvider, localConfiguration)
+        gitLocal = new DefaultGitLocal(branchConfigProvider, gitProvider, localConfiguration, mockInitChecker)
     }
 
     def "prepare does not validate if not active"() {

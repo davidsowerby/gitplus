@@ -34,6 +34,7 @@ class DefaultWikiLocalTest extends Specification {
     Repository repository = Mock(Repository)
     StoredConfig repoConfig = Mock(StoredConfig)
     Set<String> remotes = Mock(Set)
+    GitInitChecker mockInitChecker = Mock(GitInitChecker)
 
     def setup() {
         temp = temporaryFolder.getRoot()
@@ -41,7 +42,7 @@ class DefaultWikiLocalTest extends Specification {
         gitLocal.getLocalConfiguration() >> localConfiguration
         branchConfigProvider.get(_, _) >> branchConfig
         mockGitProvider.openRepository(_) >> mockGit
-        wikiLocal = new DefaultWikiLocal(branchConfigProvider, mockGitProvider, new DefaultGitLocalConfiguration())
+        wikiLocal = new DefaultWikiLocal(branchConfigProvider, mockGitProvider, new DefaultGitLocalConfiguration(), mockInitChecker)
         wikiLocal.active = true
     }
 

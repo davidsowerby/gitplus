@@ -17,8 +17,8 @@ interface GitLocal : GitLocalConfiguration, AutoCloseable {
     var git: Git
 
     /**
-     * Equivalent to 'git init' from the command line.  Initialises `projectDir` for Git.  The [projectCreator] is then invoked
-     * and the [projectDir] added to Git
+     * Equivalent to 'git init' from the command line.  Initialises `projectDir` for Git.  If a [projectCreator] has
+     * been provided, it is invoked and the [projectDir] added to Git
      */
     fun init()
 
@@ -227,4 +227,9 @@ interface GitLocal : GitLocalConfiguration, AutoCloseable {
      */
     fun masterBranch(): GitBranch
 
+    /**
+     * When [prepare] is called, a check is made whether the Git repository has been init'd.  This method returns the
+     * result of that check (or true if [init] has been called
+     */
+    fun isInitDone(): Boolean
 }
