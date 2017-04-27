@@ -1,6 +1,6 @@
 //noinspection GrPackage
 buildscript {
-    ext.kotlin_version = '1.0.6'
+    ext.kotlin_version = '1.1.1'
     repositories {
         mavenLocal()
         maven {
@@ -23,7 +23,7 @@ task wrapper(type: Wrapper) {
     gradleVersion = '3.2.1'
 }
 
-version = '0.22.0.73'
+version = '0.23.0.74'
 group = 'uk.q3c.build'
 
 simplycd {
