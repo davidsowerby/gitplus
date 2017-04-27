@@ -46,6 +46,19 @@ class GitSHATest extends Specification {
 
     }
 
+    def "short"() {
+        given:
+        String block = '01234567aB'
+        String sha = block + block + block + block
+
+        when:
+        GitSHA result = new GitSHA(sha)
+
+        then:
+        result.short().length() == 7
+        result.short() == '0123456'
+    }
+
     def "invalid hex"() {
         given:
 
