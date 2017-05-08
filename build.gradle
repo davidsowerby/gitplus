@@ -23,7 +23,7 @@ task wrapper(type: Wrapper) {
     gradleVersion = '3.2.1'
 }
 
-version = '0.23.0.74'
+version = '0.24.0.75'
 group = 'uk.q3c.build'
 
 simplycd {

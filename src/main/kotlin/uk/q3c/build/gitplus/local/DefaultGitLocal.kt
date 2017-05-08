@@ -5,6 +5,7 @@ import com.google.inject.Inject
 import org.apache.commons.io.FileUtils
 import org.eclipse.jgit.api.CreateBranchCommand.SetupUpstreamMode
 import org.eclipse.jgit.api.Git
+import org.eclipse.jgit.api.PushCommand
 import org.eclipse.jgit.api.Status
 import org.eclipse.jgit.dircache.DirCache
 import org.eclipse.jgit.internal.storage.file.FileRepository
@@ -215,6 +216,18 @@ open class DefaultGitLocal @Inject constructor(val branchConfigProvider: BranchC
         }
     }
 
+    override fun checkoutCommit(sha: GitSHA, toBranch: String) {
+        log.info("checking out Git hash: '{}' to branch '{}'", sha, toBranch)
+        try {
+            val checkout = git.checkout()
+            checkout.setCreateBranch(true).setName(toBranch).setStartPoint(sha.sha)
+            checkout.call()
+
+        } catch (e: Exception) {
+            throw GitLocalException("Unable to checkout commit " + sha, e)
+        }
+    }
+
 
     override fun createBranch(branchName: String) {
         log.debug("creating branch '{}'", branchName)
@@ -246,10 +259,11 @@ open class DefaultGitLocal @Inject constructor(val branchConfigProvider: BranchC
     }
 
 
-    override fun commit(message: String) {
+    override fun commit(message: String): GitSHA {
         checkInitDone()
         try {
-            git.commit().setMessage(message).call()
+            val commit = git.commit().setMessage(message).call()
+            return GitSHA(commit.name)
         } catch (e: Exception) {
             throw GitLocalException("Unable to process Git request to commit", e)
         }
@@ -341,27 +355,45 @@ open class DefaultGitLocal @Inject constructor(val branchConfigProvider: BranchC
                 checkTrackingBranch()
             }
 
-            val pc = git.push().add(currentBranch().name).setCredentialsProvider(remote.credentialsProvider)
+            val pc = git.push().add(currentBranch().name)
 
             if (tags) {
                 pc.setPushTags()
             }
             pc.isForce = force
-            val results = pc.call()
-            val response = PushResponse()
-            for (pushResult in results) {
-                response.add(pushResult)
-            }
-            if (response.isSuccessful) {
-                return response
-            }
-
-            throw PushException(response)
-
+            return doPush(pc)
         } catch (e: Exception) {
             throw GitLocalException("Unable to push", e)
         }
+    }
 
+    fun doPush(pc: PushCommand): PushResponse {
+        pc.setCredentialsProvider(remote.credentialsProvider)
+        val results = pc.call()
+        val response = PushResponse()
+        for (pushResult in results) {
+            response.add(pushResult)
+        }
+        if (response.isSuccessful) {
+            return response
+        }
+        throw PushException(response)
+    }
+
+    override fun pushTag(name: String): PushResponse {
+        log.info("pushing tag {}", name)
+        checkInitDone()
+        val refSpec = "refs/tags/$name:refs/tags/$name"
+        val pc = git.push().add(refSpec)
+        return doPush(pc)
+    }
+
+    override fun pushAllTags(): PushResponse {
+        log.info("pushing all tags {}")
+        checkInitDone()
+        val refSpec = "refs/tags/*:refs/tags/*"
+        val pc = git.push().add(refSpec)
+        return doPush(pc)
     }
 
     /**
@@ -447,7 +479,7 @@ open class DefaultGitLocal @Inject constructor(val branchConfigProvider: BranchC
             val repo = git.repository
             val walk = RevWalk(repo)
             val ref1 = repo.findRef(branch.name)
-            val headCommit = walk.parseCommit(ref1.objectId)
+            val headCommit = walk.parseCommit(ref1.objectId) // TODO This throws NPE if HEAD detached - needs a better error message
             val allCommits = git.log().all().call()
             val branchCommits = LinkedHashSet<GitCommit>()
             for (commit in allCommits) {

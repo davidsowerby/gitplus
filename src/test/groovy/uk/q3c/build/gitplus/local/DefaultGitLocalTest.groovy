@@ -441,6 +441,37 @@ class DefaultGitLocalTest extends Specification {
         gitLocal.currentCommitHash().equals(commitHash)
     }
 
+    /**
+     * Uses existing project as older commits will not then be subject to change
+     */
+    def "checkout specific commit using new branch"() {
+
+        given:
+        final String testProject = 'q3c-testUtil'
+        gitRemote.repoUser >> 'davidsowerby'
+        gitRemote.repoName >> testProject
+        gitRemote.repoBaselUrl() >> 'https://github.com/davidsowerby/' + testProject
+        gitRemote.cloneUrl() >> 'https://github.com/davidsowerby/' + testProject + ".git"
+        gitLocal = createGitLocal(false, false, false)
+        gitLocal.remote = gitRemote
+        configuration.projectName(testProject).projectDirParent(temp).cloneFromRemote(true)
+        String commitHash = 'f6d1f2269daefeb4375ef5d2a2c2400101df6aa5'
+        gitLocal.prepare(gitRemote)
+
+        when:
+        gitLocal.cloneRemote()
+
+        then:
+        gitLocal.currentBranch().equals(gitLocal.developBranch())
+
+        when:
+        gitLocal.checkoutCommit(new GitSHA(commitHash), "temptest")
+
+        then:
+        gitLocal.currentCommitHash().equals(commitHash)
+        gitLocal.currentBranch().name == "temptest"
+    }
+
 
     def "checkoutNewBranch with remote set and active, sets up tracking branch"() {
         given:
@@ -661,6 +692,19 @@ class DefaultGitLocalTest extends Specification {
         gle.message.contains("Unable to tag")
     }
 
+    def "commit returns id"() {
+        given:
+        createScratchRepo()
+        createFileAndAddToGit()
+
+        when:
+        GitSHA sha = gitLocal.commit('commit 1')
+
+        then: "invalid SHA would throw exception"
+        noExceptionThrown()
+        sha != null
+    }
+
     def "commits"() {
         given:
         createScratchRepo()
@@ -823,8 +867,8 @@ class DefaultGitLocalTest extends Specification {
 
     def "tags, lightweight and annotated"() {
         given:
-        createScratchRepo();
-        createFileAndAddToGit();
+        createScratchRepo()
+        createFileAndAddToGit()
         gitLocal.commit('commit 1')
 
         when:
@@ -840,7 +884,6 @@ class DefaultGitLocalTest extends Specification {
         tags.get(1).getFullMessage() == ""
         tags.get(0).getReleaseDate() != null
         tags.get(1).getReleaseDate() != null
-
     }
 
 
@@ -966,11 +1009,11 @@ class DefaultGitLocalTest extends Specification {
     private File createAFile() {
         File f = new File(configuration.projectDir(), "test.md")
         f.createNewFile()
-        return f;
+        return f
     }
 
     private void createFileAndAddToGit() {
-        File f = createAFile();
+        File f = createAFile()
         gitLocal.add(f)
     }
 

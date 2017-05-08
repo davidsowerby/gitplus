@@ -10,6 +10,7 @@ import spock.lang.Specification
 import uk.q3c.build.gitplus.gitplus.DefaultGitPlus
 import uk.q3c.build.gitplus.gitplus.GitPlus
 import uk.q3c.build.gitplus.local.GitBranch
+import uk.q3c.build.gitplus.local.PushResponse
 import uk.q3c.build.gitplus.remote.DefaultGitRemoteConfiguration
 import uk.q3c.build.gitplus.remote.DefaultRemoteRequest
 import uk.q3c.build.gitplus.remote.GitRemote
@@ -17,7 +18,6 @@ import uk.q3c.build.gitplus.remote.github.DefaultGitHubProvider
 import uk.q3c.build.gitplus.remote.github.DefaultGitHubRemote
 import uk.q3c.build.gitplus.remote.github.GitHubUrlMapper
 import uk.q3c.build.gitplus.util.FileBuildPropertiesLoader
-
 /**
  * This test needs to delete the 'dummy' repo in cleanup.  This test is a bit weird because it has to use deleteRepo to clean up, but also tests deleteRepo
  *
@@ -75,10 +75,25 @@ class DefaultGitHubRemoteIntegrationTest extends Specification {
         gitPlus.remote.getIssue(9)  // remote repo there, with issues created
         File localProjectDir = new File(temp, 'dummy')
         localProjectDir.exists() // local file copy
-        File wikiLocalProjectectDir = new File(temp, 'dummy.wiki')
-        wikiLocalProjectectDir.exists() // local file copy
+        File wikiLocalProjectDir = new File(temp, 'dummy.wiki')
+        wikiLocalProjectDir.exists() // local file copy
         gitPlus.local.latestDevelopCommitSHA() == gitPlus.remote.latestDevelopCommitSHA()
         new File(gitPlus.local.projectDir(), 'README.md').exists()
+
+        when:
+        gitPlus.local.tag("forPush", "tag to be pushed")
+        PushResponse r1 = gitPlus.local.pushTag("forPush")
+
+        then: "gitHub implementation does not return anything useful for 'tags', so rely on no failure here"
+        noExceptionThrown()
+        r1.successful
+
+        when:
+        r1 = gitPlus.local.pushAllTags()
+
+        then:
+        r1.successful
+
     }
 
 

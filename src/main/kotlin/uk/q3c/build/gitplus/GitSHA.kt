@@ -24,10 +24,11 @@ data class GitSHA(val sha: String) {
     }
 
     /**
-     * Returns the short version of the hash, namely the first 7 digits of the hash
+     * Returns the short version of the hash, by default, the first 7 digits of the hash
      */
-    fun short(): String {
-        return sha.substring(0, 7)
+    @JvmOverloads
+    fun short(length: Int = 7): String {
+        return sha.substring(0, length)
     }
 }
 

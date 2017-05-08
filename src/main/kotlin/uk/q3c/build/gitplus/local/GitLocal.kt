@@ -80,11 +80,14 @@ interface GitLocal : GitLocalConfiguration, AutoCloseable {
     fun checkoutBranch(branch: GitBranch)
 
     /**
-     * Checks out a specific commit for [branch].  This may leave Git in a detached HEAD state
+     * Checks out a specific commit for [branch].  This may leave Git in a detached HEAD state - to avoid that, use the other
+     * version of this method
      *
      * @throws GitLocalException if the checkout fails
      */
     fun checkoutCommit(sha: GitSHA)
+
+    fun checkoutCommit(sha: GitSHA, toBranch: String)
 
     /**
      * Creates a new branch with the name `branchName`, but does nothing with it
@@ -108,7 +111,12 @@ interface GitLocal : GitLocalConfiguration, AutoCloseable {
      */
     fun add(file: File): DirCache
 
-    fun commit(message: String)
+    /**
+     * Executes a commit, applying [message]
+     *
+     * @return the commit id (SHA)
+     */
+    fun commit(message: String): GitSHA
 
     /**
      * Returns a list of branches in the repo, or an empty list if there are no branches
@@ -232,4 +240,14 @@ interface GitLocal : GitLocalConfiguration, AutoCloseable {
      * result of that check (or true if [init] has been called
      */
     fun isInitDone(): Boolean
+
+    /**
+     * Pushes a specific tag
+     */
+    fun pushTag(name: String): PushResponse
+
+    /**
+     * Pushes all tags
+     */
+    fun pushAllTags(): PushResponse
 }
