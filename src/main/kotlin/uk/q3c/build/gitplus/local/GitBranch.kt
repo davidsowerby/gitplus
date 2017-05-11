@@ -5,7 +5,7 @@ package uk.q3c.build.gitplus.local
  *
  * Created by David Sowerby on 31 Oct 2016
  */
-data class GitBranch(val name: String) {
+data class GitBranch(val name: String = "develop") {
 
     fun ref(): String {
         return "refs/heads/$name"
