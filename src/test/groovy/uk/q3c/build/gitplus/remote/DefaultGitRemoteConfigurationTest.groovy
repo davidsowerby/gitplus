@@ -1,12 +1,12 @@
 package uk.q3c.build.gitplus.remote
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.google.common.collect.ImmutableMap
 import spock.lang.Specification
 import uk.q3c.build.gitplus.gitplus.GitPlusConfigurationException
 import uk.q3c.build.gitplus.local.GitLocal
 
 import static uk.q3c.build.gitplus.ConstantsKt.notSpecified
-
 /**
  * Created by David Sowerby on 31 Oct 2016
  */
@@ -35,6 +35,20 @@ class DefaultGitRemoteConfigurationTest extends Specification {
         true     | true
         false    | false
 
+    }
+
+    def "JSON export import"() {
+        given: "change to a couple of non-default values"
+        ObjectMapper objectMapper = new ObjectMapper()
+        StringWriter sw = new StringWriter()
+        configuration.repoName('wiggly').projectHomePage('funky.pigeon')
+
+        when:
+        objectMapper.writeValue(sw, configuration)
+        DefaultGitRemoteConfiguration configuration2 = objectMapper.readValue(sw.toString(), DefaultGitRemoteConfiguration.class)
+
+        then:
+        configuration.equals(configuration2)
     }
 
     def "IssueLabels"() {

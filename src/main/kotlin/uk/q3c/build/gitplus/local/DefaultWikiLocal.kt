@@ -7,7 +7,12 @@ import uk.q3c.build.gitplus.remote.GitRemote
 /**
  * Created by David Sowerby on 21 Oct 2016
  */
-class DefaultWikiLocal @Inject constructor(branchConfigProvider: BranchConfigProvider, gitProvider: GitProvider, localConfiguration: GitLocalConfiguration, gitInitChecker: GitInitChecker) :
+class DefaultWikiLocal @Inject constructor(
+        branchConfigProvider: BranchConfigProvider,
+        gitProvider: GitProvider,
+        localConfiguration: GitLocalConfiguration,
+        gitInitChecker: GitInitChecker) :
+
         DefaultGitLocal(branchConfigProvider, gitProvider, localConfiguration, gitInitChecker),
         WikiLocal,
         GitLocalConfiguration by localConfiguration {
@@ -65,6 +70,10 @@ class DefaultWikiLocal @Inject constructor(branchConfigProvider: BranchConfigPro
             )
             return PushResponse().localFailure()
         }
+    }
+
+    override fun active(value: Boolean): GitLocalConfiguration {
+        return localConfiguration.active(value)
     }
 
 }

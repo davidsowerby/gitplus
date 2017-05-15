@@ -1,5 +1,6 @@
 package uk.q3c.build.gitplus.local
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import uk.q3c.build.gitplus.gitplus.DefaultFileDeleteApprover
 import uk.q3c.build.gitplus.gitplus.FileDeleteApprover
 import uk.q3c.build.gitplus.gitplus.GitPlusConfigurationException
@@ -11,16 +12,18 @@ import java.io.File
 /**
  * Created by David Sowerby on 17 Oct 2016
  */
-open class DefaultGitLocalConfiguration : GitLocalConfiguration {
+data class DefaultGitLocalConfiguration(override var projectName: String = notSpecified) : GitLocalConfiguration {
     override var active = true
     override var cloneExistsResponse = EXCEPTION
+    @JsonIgnore
     override var fileDeleteApprover: FileDeleteApprover = DefaultFileDeleteApprover()
-    override var projectName = notSpecified
+
     override var projectDirParent: File = File(".")
     override var taggerName: String = notSpecified
     override var taggerEmail: String = notSpecified
     override var create = false
     override var cloneFromRemote = false
+    @JsonIgnore
     override var projectCreator: ProjectCreator = DefaultProjectCreator()
 
     override fun cloneFromRemote(value: Boolean): GitLocalConfiguration {

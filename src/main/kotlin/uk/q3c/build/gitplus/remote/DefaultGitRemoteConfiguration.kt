@@ -1,5 +1,6 @@
 package uk.q3c.build.gitplus.remote
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.google.common.collect.ImmutableMap
 import uk.q3c.build.gitplus.gitplus.GitPlusConfigurationException
 import uk.q3c.build.gitplus.local.GitLocal
@@ -8,17 +9,21 @@ import uk.q3c.build.gitplus.notSpecified
 /**
  * Created by David Sowerby on 16 Oct 2016
  */
-class DefaultGitRemoteConfiguration : GitRemoteConfiguration {
+data class DefaultGitRemoteConfiguration(
+        override var repoUser: String = notSpecified,
+        override var repoName: String = notSpecified)
+
+    : GitRemoteConfiguration {
 
     override var active = true
     override var confirmDelete: String = ""
+    @JsonIgnore
     override var repoDeleteApprover: RemoteRepoDeleteApprover = DefaultRemoteRepoDeleteApprover()
 
     override var projectDescription = ""
     override var projectHomePage = ""
     override var publicProject: Boolean = false
-    override var repoUser: String = notSpecified
-    override var repoName: String = notSpecified
+
     override var create: Boolean = false
     override var issueLabels: Map<String, String> = defaultIssueLabels
     override var mergeIssueLabels = false

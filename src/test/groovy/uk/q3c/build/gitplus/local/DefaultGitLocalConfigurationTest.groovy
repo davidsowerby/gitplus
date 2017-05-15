@@ -1,5 +1,6 @@
 package uk.q3c.build.gitplus.local
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import spock.lang.Specification
 import uk.q3c.build.gitplus.gitplus.GitPlusConfigurationException
 import uk.q3c.build.gitplus.remote.GitRemote
@@ -49,6 +50,20 @@ class DefaultGitLocalConfigurationTest extends Specification {
         then: "exception because both are true"
         thrown GitPlusConfigurationException
 
+    }
+
+    def "JSON export import"() {
+        given: "change to a couple of non-default values"
+        ObjectMapper objectMapper = new ObjectMapper()
+        StringWriter sw = new StringWriter()
+        configuration.projectName('wiggly').taggerEmail('funky@pigeon')
+
+        when:
+        objectMapper.writeValue(sw, configuration)
+        DefaultGitLocalConfiguration configuration2 = objectMapper.readValue(sw.toString(), DefaultGitLocalConfiguration.class)
+
+        then:
+        configuration.equals(configuration2)
     }
 
     def "setters"() {
