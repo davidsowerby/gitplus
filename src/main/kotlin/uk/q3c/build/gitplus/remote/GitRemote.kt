@@ -12,7 +12,7 @@ import java.io.IOException
  */
 interface GitRemote : GitRemoteConfiguration, GitRemoteUrlMapper {
 
-    val configuration: GitRemoteConfiguration
+    var configuration: GitRemoteConfiguration
     val urlMapper: GitRemoteUrlMapper
 
     enum class TokenScope {

@@ -18,7 +18,7 @@ import java.util.*
 /**
  * Created by David Sowerby on 12 Feb 2016
  */
-class DefaultGitHubRemote @Inject constructor(override val configuration: GitRemoteConfiguration, val gitHubProvider: GitHubProvider, val remoteRequest: RemoteRequest, override val urlMapper: GitHubUrlMapper) :
+class DefaultGitHubRemote @Inject constructor(override var configuration: GitRemoteConfiguration, val gitHubProvider: GitHubProvider, val remoteRequest: RemoteRequest, override val urlMapper: GitHubUrlMapper) :
         GitHubRemote,
         GitRemoteConfiguration by configuration,
         GitRemoteUrlMapper by urlMapper {

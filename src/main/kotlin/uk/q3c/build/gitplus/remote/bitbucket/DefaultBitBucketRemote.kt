@@ -14,7 +14,7 @@ import uk.q3c.build.gitplus.remote.github.DefaultGitHubRemote
 /**
  * Created by David Sowerby on 25 Oct 2016
  */
-class DefaultBitBucketRemote @Inject constructor(override val configuration: GitRemoteConfiguration, val bitBucketProvider: BitBucketProvider, val remoteRequest: RemoteRequest, override val urlMapper: BitBucketUrlMapper) :
+class DefaultBitBucketRemote @Inject constructor(override var configuration: GitRemoteConfiguration, val bitBucketProvider: BitBucketProvider, val remoteRequest: RemoteRequest, override val urlMapper: BitBucketUrlMapper) :
         BitBucketRemote,
         GitRemoteConfiguration by configuration, GitRemoteUrlMapper by urlMapper {
 

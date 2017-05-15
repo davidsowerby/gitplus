@@ -12,7 +12,7 @@ import java.io.File
  * Created by David Sowerby on 17 Oct 2016
  */
 interface GitLocal : GitLocalConfiguration, AutoCloseable {
-    val localConfiguration: GitLocalConfiguration
+    var localConfiguration: GitLocalConfiguration
     var remote: GitRemote
     var git: Git
 
