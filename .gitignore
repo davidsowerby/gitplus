@@ -5,3 +5,4 @@ gitplus.ipr
 
 build/*
 .gradle
+classes

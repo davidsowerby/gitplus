@@ -48,7 +48,7 @@ class DefaultGitRemoteConfigurationTest extends Specification {
         DefaultGitRemoteConfiguration configuration2 = objectMapper.readValue(sw.toString(), DefaultGitRemoteConfiguration.class)
 
         then:
-        configuration.equals(configuration2)
+        configuration == configuration2
     }
 
     def "IssueLabels"() {
@@ -198,7 +198,7 @@ class DefaultGitRemoteConfigurationTest extends Specification {
         !configuration.active
     }
 
-    def "Copy"() {
+    def "Copy from"() {
         given:
         RemoteRepoDeleteApprover mockApprover = Mock(RemoteRepoDeleteApprover)
         GitRemoteConfiguration other = new DefaultGitRemoteConfiguration()
@@ -216,7 +216,7 @@ class DefaultGitRemoteConfigurationTest extends Specification {
         other.active(false)
 
         when:
-        configuration.copy(other)
+        configuration.copyFrom(other)
 
         then:
         configuration.repoUser == 'davidsowerby'

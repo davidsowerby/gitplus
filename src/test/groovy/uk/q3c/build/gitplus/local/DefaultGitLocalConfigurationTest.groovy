@@ -63,7 +63,30 @@ class DefaultGitLocalConfigurationTest extends Specification {
         DefaultGitLocalConfiguration configuration2 = objectMapper.readValue(sw.toString(), DefaultGitLocalConfiguration.class)
 
         then:
-        configuration.equals(configuration2)
+        configuration == configuration2
+    }
+
+    def "copyFrom"() {
+        given:
+        DefaultGitLocalConfiguration configuration2 = new DefaultGitLocalConfiguration()
+
+        when: "defaults compared"
+        configuration2.copyFrom(configuration2)
+
+        then:
+        configuration == configuration2
+
+        when:
+        configuration.projectName = "wiggly"
+
+        then:
+        configuration != configuration2
+
+        when:
+        configuration2.copyFrom(configuration)
+
+        then:
+        configuration == configuration2
     }
 
     def "setters"() {

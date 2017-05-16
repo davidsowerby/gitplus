@@ -13,6 +13,8 @@ import java.io.File
  * Created by David Sowerby on 17 Oct 2016
  */
 data class DefaultGitLocalConfiguration(override var projectName: String = notSpecified) : GitLocalConfiguration {
+
+
     override var active = true
     override var cloneExistsResponse = EXCEPTION
     @JsonIgnore
@@ -94,5 +96,18 @@ data class DefaultGitLocalConfiguration(override var projectName: String = notSp
         if (projectName == notSpecified) {
             throw GitPlusConfigurationException("project name must be set using either local.projectName() or remote.repoName()")
         }
+    }
+
+    override fun copyFrom(other: GitLocalConfiguration) {
+        this.active = other.active
+        this.projectDirParent = other.projectDirParent
+        this.projectName = other.projectName
+        this.cloneExistsResponse = other.cloneExistsResponse
+        this.fileDeleteApprover = other.fileDeleteApprover
+        this.taggerName = other.taggerName
+        this.taggerEmail = other.taggerEmail
+        this.create = other.create
+        this.cloneFromRemote = other.cloneFromRemote
+        this.projectCreator = other.projectCreator
     }
 }

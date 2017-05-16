@@ -14,8 +14,7 @@ class DefaultWikiLocal @Inject constructor(
         gitInitChecker: GitInitChecker) :
 
         DefaultGitLocal(branchConfigProvider, gitProvider, localConfiguration, gitInitChecker),
-        WikiLocal,
-        GitLocalConfiguration by localConfiguration {
+        WikiLocal {
 
 
     private val log = LoggerFactory.getLogger(this.javaClass.name)

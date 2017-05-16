@@ -17,7 +17,7 @@ class DefaultGitRemoteResolver @Inject constructor(override val remotes: Mutable
         // map defined in GitPlusModule
         val remote = remotes.get(serviceProvider)!!.get()
         // copy any changes which have been made to the configuration
-        remote.configuration.copy(configuration)
+        remote.configuration.copyFrom(configuration)
         return remote
     }
 

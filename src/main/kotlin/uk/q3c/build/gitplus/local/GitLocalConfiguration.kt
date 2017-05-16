@@ -61,7 +61,7 @@ interface GitLocalConfiguration {
      */
     fun projectDir(): File
 
-
+    fun copyFrom(other: GitLocalConfiguration)
     fun validate(remote: GitRemote)
     fun projectCreator(projectCreator: ProjectCreator): GitLocalConfiguration
 }

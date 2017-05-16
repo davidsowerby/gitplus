@@ -124,7 +124,7 @@ data class DefaultGitRemoteConfiguration(
     }
 
 
-    override fun copy(other: GitRemoteConfiguration) {
+    override fun copyFrom(other: GitRemoteConfiguration) {
         this.projectDescription = other.projectDescription
         this.projectHomePage = other.projectHomePage
         this.publicProject = other.publicProject

@@ -32,7 +32,7 @@ import java.util.*
  * [branchConfigProvider] is necessary only to enable unit testing.  JGit uses a number of concrete classes directly, which
  * prevents mocking
  */
-open class DefaultGitLocal @Inject constructor(val branchConfigProvider: BranchConfigProvider, val gitProvider: GitProvider, override var localConfiguration: GitLocalConfiguration, val gitInitChecker: GitInitChecker) : GitLocal, GitLocalConfiguration by localConfiguration {
+open class DefaultGitLocal @Inject constructor(val branchConfigProvider: BranchConfigProvider, val gitProvider: GitProvider, override val localConfiguration: GitLocalConfiguration, val gitInitChecker: GitInitChecker) : GitLocal, GitLocalConfiguration by localConfiguration {
 
 
     override lateinit var git: Git

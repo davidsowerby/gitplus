@@ -54,7 +54,8 @@ interface GitRemoteConfiguration {
      * Copy configuration values from another instance.  Cannot use the copy method provided by a data class, because
      * that is a copy constructor, returning a new instance
      */
-    fun copy(other: GitRemoteConfiguration)
+
+    fun copyFrom(other: GitRemoteConfiguration)
 
     fun active(value: Boolean): GitRemoteConfiguration
 
@@ -64,6 +65,7 @@ interface GitRemoteConfiguration {
      * @throws GitPlusConfigurationException if invalid configuration found
      */
     fun validate(local: GitLocal)
+
 }
 
 enum class ServiceProvider {
