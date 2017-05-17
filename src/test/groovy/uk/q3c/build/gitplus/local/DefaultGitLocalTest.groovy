@@ -64,22 +64,27 @@ class DefaultGitLocalTest extends Specification {
     Repository repo = Mock(Repository)
     GitInitChecker initChecker = new DefaultGitInitChecker()
     GitInitChecker mockInitChecker = Mock(GitInitChecker)
+    GitCloner cloner
 
 
     BranchConfigProvider branchConfigProvider = Mock(BranchConfigProvider)
     BranchConfig branchConfig = Mock(BranchConfig)
     ProjectCreator mockProjectCreator = Mock(ProjectCreator)
+    String baseUrl = "repo/base"
+    String wikiUrl = "repo/base/wiki"
 
     def setup() {
+        cloner = new MockGitCloner()
         gitProvider = new DefaultGitProvider()
         configuration = new DefaultGitLocalConfiguration()
         mockGitProvider.openRepository(configuration) >> mockGit
         temp = temporaryFolder.getRoot()
+
     }
 
     def "construct with null configuration throws IllegalArgumentException"() {
         when:
-        gitLocal = new DefaultGitLocal(branchConfigProvider, gitProvider, null, mockInitChecker)
+        gitLocal = new DefaultGitLocal(branchConfigProvider, gitProvider, null, mockInitChecker, cloner)
 
         then:
         thrown(IllegalArgumentException)
@@ -87,7 +92,7 @@ class DefaultGitLocalTest extends Specification {
 
     def "null gitProvider causes IllegalArgumentException in constructor"() {
         when:
-        new DefaultGitLocal(branchConfigProvider, null, configuration, mockInitChecker)
+        new DefaultGitLocal(branchConfigProvider, null, configuration, mockInitChecker, cloner)
 
         then:
         thrown IllegalArgumentException
@@ -743,6 +748,7 @@ class DefaultGitLocalTest extends Specification {
         gitRemote.repoUser >> 'davidsowerby'
         gitRemote.repoName >> 'scratch'
         gitRemote.cloneUrl() >> 'https://github.com/davidsowerby/scratch.git'
+        gitRemote.repoBaselUrl() >> 'https://github.com/davidsowerby/scratch'
         configuration.cloneFromRemote(true).projectDirParent(temp).projectName('scratch')
         gitLocal = createGitLocal(false, false, false)
         gitLocal.remote = gitRemote
@@ -982,6 +988,29 @@ class DefaultGitLocalTest extends Specification {
 
     }
 
+    def "clone uses base url "() {
+        given:
+        gitRemote.repoBaselUrl() >> baseUrl
+        gitRemote.wikiUrl() >> wikiUrl
+        configuration.cloneFromRemote = true
+        configuration.projectName = 'wiggly'
+        configuration.projectDirParent = temp
+        gitRemote.repoBaselUrl() >> baseUrl
+        gitLocal = createGitLocal(true, true, true, true)
+        gitLocal.remote = gitRemote
+        MockGitCloner mockCloner = cloner as MockGitCloner
+
+        when:
+        gitLocal.cloneRemote()
+
+        then:
+
+        mockCloner.cloned
+        mockCloner.localDir == new File(temp, 'wiggly')
+        mockCloner.remoteUrl == baseUrl
+
+    }
+
 /**
  * Tested in DefaultGitHubRemote2 - easier that way
  */
@@ -997,12 +1026,19 @@ class DefaultGitLocalTest extends Specification {
     }
 
     private GitLocal createGitLocal(boolean usingMockGit, boolean usingMockInitChecker, boolean initDone) {
+
+        createGitLocal(usingMockGit, usingMockInitChecker, initDone, false)
+    }
+
+    private GitLocal createGitLocal(boolean usingMockGit, boolean usingMockInitChecker, boolean initDone, boolean useMockCloner) {
         GitInitChecker initCheckerUsed = (usingMockInitChecker) ? mockInitChecker : initChecker
         GitProvider gitProvider1 = usingMockGit ? mockGitProvider : gitProvider
+        cloner = useMockCloner ? new MockGitCloner() : new DefaultGitCloner()
+
         if (usingMockInitChecker) {
             mockInitChecker.isInitDone() >> initDone
         }
-        new DefaultGitLocal(branchConfigProvider, gitProvider1, configuration, initCheckerUsed)
+        new DefaultGitLocal(branchConfigProvider, gitProvider1, configuration, initCheckerUsed, cloner)
     }
 
 

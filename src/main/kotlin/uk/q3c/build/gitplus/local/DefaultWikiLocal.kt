@@ -11,9 +11,10 @@ class DefaultWikiLocal @Inject constructor(
         branchConfigProvider: BranchConfigProvider,
         gitProvider: GitProvider,
         localConfiguration: GitLocalConfiguration,
-        gitInitChecker: GitInitChecker) :
+        gitInitChecker: GitInitChecker,
+        gitCloner: GitCloner)
 
-        DefaultGitLocal(branchConfigProvider, gitProvider, localConfiguration, gitInitChecker),
+    : DefaultGitLocal(branchConfigProvider, gitProvider, localConfiguration, gitInitChecker, gitCloner),
         WikiLocal {
 
 
@@ -33,6 +34,9 @@ class DefaultWikiLocal @Inject constructor(
         }
     }
 
+    override fun remoteUrl(): String {
+        return remote.wikiCloneUrl()
+    }
 
     override fun prepare(remote: GitRemote) {
         throw UnsupportedOperationException("For WikiLocal, use prepare(GitRemote,GitLocal)")

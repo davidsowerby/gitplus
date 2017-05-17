@@ -35,14 +35,16 @@ class DefaultWikiLocalTest extends Specification {
     StoredConfig repoConfig = Mock(StoredConfig)
     Set<String> remotes = Mock(Set)
     GitInitChecker mockInitChecker = Mock(GitInitChecker)
+    MockGitCloner cloner
 
     def setup() {
+        cloner = new MockGitCloner()
         temp = temporaryFolder.getRoot()
         localConfiguration = new DefaultGitLocalConfiguration()
         gitLocal.getLocalConfiguration() >> localConfiguration
         branchConfigProvider.get(_, _) >> branchConfig
         mockGitProvider.openRepository(_) >> mockGit
-        wikiLocal = new DefaultWikiLocal(branchConfigProvider, mockGitProvider, new DefaultGitLocalConfiguration(), mockInitChecker)
+        wikiLocal = new DefaultWikiLocal(branchConfigProvider, mockGitProvider, new DefaultGitLocalConfiguration(), mockInitChecker, cloner)
         wikiLocal.active = true
     }
 
@@ -148,5 +150,27 @@ class DefaultWikiLocalTest extends Specification {
 
         then:
         thrown UnsupportedOperationException
+    }
+
+    def "clone uses base url "() {
+        given:
+        wikiLocal.localConfiguration.cloneFromRemote = true
+        wikiLocal.localConfiguration.projectName = 'wiggly'
+        wikiLocal.localConfiguration.projectDirParent = temp
+        String baseUrl = 'repo/base/url'
+        String wikiUrl = 'repo/base/url.wiki'
+        gitRemote.repoBaselUrl() >> baseUrl
+        gitRemote.wikiCloneUrl() >> wikiUrl
+        gitLocal.remote = gitRemote
+        wikiLocal.remote = gitRemote
+
+        when:
+        wikiLocal.cloneRemote()
+
+        then:
+        cloner.cloned
+        cloner.localDir == new File(temp, 'wiggly')
+        cloner.remoteUrl == wikiUrl
+
     }
 }

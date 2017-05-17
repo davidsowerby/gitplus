@@ -32,7 +32,14 @@ import java.util.*
  * [branchConfigProvider] is necessary only to enable unit testing.  JGit uses a number of concrete classes directly, which
  * prevents mocking
  */
-open class DefaultGitLocal @Inject constructor(val branchConfigProvider: BranchConfigProvider, val gitProvider: GitProvider, override val localConfiguration: GitLocalConfiguration, val gitInitChecker: GitInitChecker) : GitLocal, GitLocalConfiguration by localConfiguration {
+open class DefaultGitLocal @Inject constructor(
+        val branchConfigProvider: BranchConfigProvider,
+        val gitProvider: GitProvider,
+        override val localConfiguration: GitLocalConfiguration,
+        val gitInitChecker: GitInitChecker,
+        val gitCloner: GitCloner)
+
+    : GitLocal, GitLocalConfiguration by localConfiguration {
 
 
     override lateinit var git: Git
@@ -110,7 +117,7 @@ open class DefaultGitLocal @Inject constructor(val branchConfigProvider: BranchC
 
 
             } catch (e: Exception) {
-                throw GitLocalException("Unable to clone " + remote.repoBaselUrl(), e)
+                throw GitLocalException("Unable to clone " + remoteUrl(), e)
             }
         } else {
             log.debug("cloneRemote() called but ignored, as config has cloneRemote == false")
@@ -118,9 +125,11 @@ open class DefaultGitLocal @Inject constructor(val branchConfigProvider: BranchC
     }
 
     private fun doClone(localDir: File) {
-        log.debug("cloning remote from: {}", remote.repoBaselUrl())
-        Git.cloneRepository().setURI(remote.cloneUrl()).setDirectory(localDir).call()
-        gitInitChecker.initDone()
+        gitCloner.doClone(localDir, remoteUrl(), gitInitChecker)
+    }
+
+    open fun remoteUrl(): String {
+        return remote.repoBaselUrl()
     }
 
     private fun deleteFolderIfApproved(localDir: File) {

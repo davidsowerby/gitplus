@@ -43,13 +43,15 @@ class DefaultGitHubRemoteTest2 extends Specification {
         result1 == result2
     }
 
-    def "latest commit for local and remote"() {
+    def "latest commit for local and remote, clone wiki"() {
         given:
         final String project = 'q3c-testUtil'
         gitPlus.local.projectName = project
         gitPlus.local.projectDirParent = temp
         gitPlus.local.cloneFromRemote(true)
         gitPlus.remote.repoUser('davidsowerby').repoName(project)
+        gitPlus.wikiLocal.active = true
+        gitPlus.wikiLocal.cloneFromRemote = true
 
         when:
         gitPlus.execute()
@@ -62,6 +64,9 @@ class DefaultGitHubRemoteTest2 extends Specification {
         remote1 == remote2
         remote1 == local1
         remote1 == local2
+        gitPlus.wikiLocal.projectDir().exists()
+        new File(gitPlus.wikiLocal.projectDir(), "Home.md").exists()
+        new File(gitPlus.wikiLocal.projectDir(), ".git").exists()
 
     }
 

@@ -43,5 +43,6 @@ public class GitPlusModule extends AbstractModule {
         bind(GitProvider.class).to(DefaultGitProvider.class);
         bind(BranchConfigProvider.class).to(DefaultBranchConfigProvider.class);
         bind(GitInitChecker.class).to(DefaultGitInitChecker.class);
+        bind(GitCloner.class).to(DefaultGitCloner.class);
     }
 }

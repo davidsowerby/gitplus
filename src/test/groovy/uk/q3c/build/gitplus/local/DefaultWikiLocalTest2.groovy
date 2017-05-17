@@ -18,9 +18,10 @@ class DefaultWikiLocalTest2 extends Specification {
     GitRemote remote = Mock(GitRemote)
     Git git = Mock(Git)
     GitInitChecker mockInitChecker = Mock(GitInitChecker)
+    GitCloner cloner = Mock(GitCloner)
 
     def setup() {
-        wikiLocal = new DefaultWikiLocal(branchConfigProvider, gitProvider, localConfiguration, mockInitChecker)
+        wikiLocal = new DefaultWikiLocal(branchConfigProvider, gitProvider, localConfiguration, mockInitChecker, cloner)
         gitLocal.projectDirParent >> new File('.')
         gitLocal.taggerEmail >> "xx"
         gitLocal.taggerName >> "xx"
