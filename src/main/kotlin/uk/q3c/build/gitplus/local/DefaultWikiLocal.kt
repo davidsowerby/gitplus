@@ -40,7 +40,7 @@ class DefaultWikiLocal @Inject constructor(
 
     override fun prepare(remote: GitRemote, local: GitLocal) {
         if (active) {
-            log.debug("preparing")
+            log.debug("preparing wiki element of GitLocal")
             projectName("${local.projectName}.wiki")
             projectDirParent(local.projectDirParent)
             taggerEmail(local.taggerEmail)

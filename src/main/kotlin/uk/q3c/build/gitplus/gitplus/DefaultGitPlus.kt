@@ -1,5 +1,7 @@
 package uk.q3c.build.gitplus.gitplus
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.SerializationFeature
 import com.google.inject.Inject
 import org.apache.commons.io.FileUtils
 import org.slf4j.LoggerFactory
@@ -10,6 +12,7 @@ import uk.q3c.build.gitplus.remote.GitRemote
 import uk.q3c.build.gitplus.remote.GitRemoteResolver
 import uk.q3c.build.gitplus.remote.ServiceProvider
 import java.io.File
+import java.io.StringWriter
 import java.util.*
 
 
@@ -36,7 +39,18 @@ class DefaultGitPlus @Inject constructor(override val local: GitLocal,
 
 
     override fun execute(): GitPlus {
-        log.debug("executing GitPlus")
+        if (log.isDebugEnabled) {
+            val objectMapper = ObjectMapper()
+            objectMapper.configure(SerializationFeature.INDENT_OUTPUT, true)
+            val swLocal = StringWriter()
+            val swWiki = StringWriter()
+            val swRemote = StringWriter()
+            objectMapper.writeValue(swLocal, local.localConfiguration)
+            objectMapper.writeValue(swWiki, wikiLocal.localConfiguration)
+            objectMapper.writeValue(swRemote, remote.configuration)
+
+            log.debug("executing GitPlus with configuration of: \nGitLocal:\n{}\nGitRemote:\n{}\nWikiLocal:\n{}", swLocal.toString(), swRemote.toString(), swWiki.toString())
+        }
         remote = selectedRemote()
         local.prepare(remote)
         wikiLocal.prepare(remote, local)

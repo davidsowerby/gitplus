@@ -41,7 +41,7 @@ open class DefaultGitLocal @Inject constructor(val branchConfigProvider: BranchC
 
     override fun prepare(remote: GitRemote) {
         if (active) {
-            log.debug("preparing")
+            log.debug("preparing GitLocal")
             this.remote = remote
             localConfiguration.validate(remote)
             git = gitProvider.openRepository(localConfiguration)
@@ -57,6 +57,7 @@ open class DefaultGitLocal @Inject constructor(val branchConfigProvider: BranchC
             val gitDir = File(localConfiguration.projectDir(), ".git")
             repo = FileRepository(gitDir)
             repo.create()
+            log.debug("repo created")
             gitInitChecker.initDone()
             projectCreator.invoke(localConfiguration)
             add(projectDir())

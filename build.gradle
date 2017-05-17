@@ -24,7 +24,7 @@ task wrapper(type: Wrapper) {
 }
 
 group = 'uk.q3c.build'
-version = '0.24.5.80'
+version = '0.24.6.81'
 
 simplycd {
     test {
@@ -50,6 +50,7 @@ dependencies {
 
     // JSON
     compile 'com.fasterxml.jackson.core:jackson-annotations:2.8.8'
+    compile 'com.fasterxml.jackson.core:jackson-databind:2.8.8'
 
     //git and github
     compile 'org.eclipse.jgit:org.eclipse.jgit:4.7.0.201704051617-r'
@@ -77,8 +78,7 @@ dependencies {
     testCompile 'org.objenesis:objenesis:2.2' // needed for Spock mocking
     testCompile 'org.spockframework:spock-guice:1.0-groovy-2.4' // Spock with Guice
 
-    //json testing
-    testCompile 'com.fasterxml.jackson.core:jackson-databind:2.8.8'
+
 
 
 }
