@@ -39,6 +39,11 @@ class DefaultGitPlus @Inject constructor(override val local: GitLocal,
 
 
     override fun execute(): GitPlus {
+        remote = selectedRemote()
+        local.prepare(remote)
+        wikiLocal.prepare(remote, local)
+        remote.prepare(local)
+        log.debug("preparation stage complete")
         if (log.isDebugEnabled) {
             val objectMapper = ObjectMapper()
             objectMapper.configure(SerializationFeature.INDENT_OUTPUT, true)
@@ -51,12 +56,6 @@ class DefaultGitPlus @Inject constructor(override val local: GitLocal,
 
             log.debug("executing GitPlus with configuration of: \nGitLocal:\n{}\nGitRemote:\n{}\nWikiLocal:\n{}", swLocal.toString(), swRemote.toString(), swWiki.toString())
         }
-        remote = selectedRemote()
-        local.prepare(remote)
-        wikiLocal.prepare(remote, local)
-        remote.prepare(local)
-        log.debug("preparation stage complete")
-
         try {
             if (local.create && remote.create) {
                 createLocalAndRemote()
