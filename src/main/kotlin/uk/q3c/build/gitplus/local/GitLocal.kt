@@ -2,8 +2,12 @@ package uk.q3c.build.gitplus.local
 
 import com.google.common.collect.ImmutableList
 import org.eclipse.jgit.api.Git
+import org.eclipse.jgit.api.MergeCommand.FastForwardMode
+import org.eclipse.jgit.api.MergeCommand.FastForwardMode.FF
+import org.eclipse.jgit.api.MergeResult
 import org.eclipse.jgit.api.Status
 import org.eclipse.jgit.dircache.DirCache
+import org.eclipse.jgit.merge.MergeStrategy
 import uk.q3c.build.gitplus.GitSHA
 import uk.q3c.build.gitplus.remote.GitRemote
 import java.io.File
@@ -250,4 +254,16 @@ interface GitLocal : GitLocalConfiguration, AutoCloseable {
      * Pushes all tags
      */
     fun pushAllTags(): PushResponse
+
+
+    /**
+     * Merges [branch] according to the [strategy].  [branch] is just the simple name, for example 'develop'
+     *
+     * @throws GitLocalException if the merge generates an exception, or if [MergeResult] is not successful.
+     * In the latter case, the exception contains the merge result
+     *
+     * @return [MergeResult]
+     */
+    fun mergeBranch(branch: GitBranch, strategy: MergeStrategy = MergeStrategy.THEIRS, fastForward: FastForwardMode = FF): MergeResult
+
 }

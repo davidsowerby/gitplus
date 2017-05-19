@@ -4,8 +4,10 @@ import com.google.common.collect.ImmutableList
 import org.apache.commons.io.FileUtils
 import org.eclipse.jgit.api.*
 import org.eclipse.jgit.lib.BranchConfig
+import org.eclipse.jgit.lib.Ref
 import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.lib.StoredConfig
+import org.eclipse.jgit.merge.MergeStrategy
 import org.eclipse.jgit.transport.CredentialsProvider
 import org.eclipse.jgit.transport.PushResult
 import org.eclipse.jgit.transport.RemoteRefUpdate
@@ -253,7 +255,6 @@ class DefaultGitLocalTest extends Specification {
 
         then:
         noExceptionThrown()
-
     }
 
 
@@ -408,9 +409,75 @@ class DefaultGitLocalTest extends Specification {
         GitLocalException gle = thrown()
         gle.message.contains("Unable to checkout branch branch")
     }
-    /**
-     * Uses existing project as older commits will not then be subject to change
-     */
+
+    def "mergeBranch"() {
+        given:
+        createScratchRepo()
+        GitBranch masterBranch = gitLocal.masterBranch()
+        GitBranch simplycdBranch = new GitBranch("simplycd")
+        File f1 = createFileAndAddToGit()
+        gitLocal.commit("committed to master")
+        gitLocal.checkoutNewBranch(simplycdBranch)
+        File f2 = createFileAndAddToGit()
+        gitLocal.commit("committed to simplycd")
+
+        when:
+        gitLocal.checkoutBranch(masterBranch)
+        MergeResult result = gitLocal.mergeBranch(simplycdBranch, MergeStrategy.THEIRS, MergeCommand.FastForwardMode.FF)
+
+        then:
+        noExceptionThrown()
+        result.getMergeStatus().isSuccessful()
+    }
+
+    def "mergeBranch is not successful"() {
+        given:
+        Repository repository = Mock(Repository)
+        mockGit.repository >> repository
+        Ref simplyCdRef = Mock(Ref)
+        repository.findRef("simplycd") >> simplyCdRef
+        MergeCommand mergeCommand = Mock(MergeCommand)
+        mockGit.merge() >> mergeCommand
+        MergeResult mergeResult = Mock(MergeResult)
+        mergeCommand.call() >> mergeResult
+        MergeResult.MergeStatus mergeStatus = Mock(MergeResult.MergeStatus)
+        mergeResult.getMergeStatus() >> mergeStatus
+        mergeResult.toString() >> "totally banjaxed"
+        mergeStatus.isSuccessful() >> false
+        gitLocal = createGitLocal(true, true, true)
+        gitLocal.localConfiguration.projectName("wiggly")
+        gitLocal.prepare(gitRemote)
+        GitBranch simplycdBranch = new GitBranch("simplycd")
+
+        when:
+        gitLocal.mergeBranch(simplycdBranch, MergeStrategy.THEIRS, MergeCommand.FastForwardMode.FF)
+
+        then:
+        GitLocalException ex = thrown GitLocalException
+        ex.message.contains("totally banjaxed")
+        ex.message.contains("Merge unsuccessful")
+    }
+
+    def "mergeBranch throws exception"() {
+        given:
+        Repository repository = Mock(Repository)
+        mockGit.repository >>> { throw new IllegalArgumentException() }
+        gitLocal = createGitLocal(true, true, true)
+        gitLocal.localConfiguration.projectName("wiggly")
+        gitLocal.prepare(gitRemote)
+        GitBranch simplycdBranch = new GitBranch("simplycd")
+
+        when:
+        gitLocal.mergeBranch(simplycdBranch, MergeStrategy.THEIRS, MergeCommand.FastForwardMode.FF)
+
+        then:
+        GitLocalException ex = thrown GitLocalException
+        ex.message.contains("Exception thrown during merge")
+    }
+
+/**
+ * Uses existing project as older commits will not then be subject to change
+ */
     def "checkout specific commit"() {
 
         given:

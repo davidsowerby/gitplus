@@ -3,15 +3,14 @@ package uk.q3c.build.gitplus.local
 import com.google.common.collect.ImmutableList
 import com.google.inject.Inject
 import org.apache.commons.io.FileUtils
+import org.eclipse.jgit.api.*
 import org.eclipse.jgit.api.CreateBranchCommand.SetupUpstreamMode
-import org.eclipse.jgit.api.Git
-import org.eclipse.jgit.api.PushCommand
-import org.eclipse.jgit.api.Status
 import org.eclipse.jgit.dircache.DirCache
 import org.eclipse.jgit.internal.storage.file.FileRepository
 import org.eclipse.jgit.lib.Constants
 import org.eclipse.jgit.lib.PersonIdent
 import org.eclipse.jgit.lib.Repository
+import org.eclipse.jgit.merge.MergeStrategy
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.revwalk.RevTag
 import org.eclipse.jgit.revwalk.RevWalk
@@ -563,6 +562,25 @@ open class DefaultGitLocal @Inject constructor(
         return GitBranch("master")
     }
 
+    override fun mergeBranch(branch: GitBranch, strategy: MergeStrategy, fastForward: MergeCommand.FastForwardMode): MergeResult {
+        var mergeFailMsg = ""
+        try {
+            val mergeCommand = git.merge()
+            val ref1 = git.repository.findRef(branch.name)
+            mergeCommand.include(ref1)
+            mergeCommand.setStrategy(strategy)
+            val mergeResult: MergeResult = mergeCommand.call()
+            if (mergeResult.mergeStatus.isSuccessful) {
+                return mergeResult
+            }
+            mergeFailMsg = mergeResult.toString()
+
+        } catch(e: Exception) {
+            throw GitLocalException("Exception thrown during merge", e)
+        }
+        // mergeResult is not successful
+        throw GitLocalException("Merge unsuccessful:\n" + mergeFailMsg)
+    }
 
 }
 
