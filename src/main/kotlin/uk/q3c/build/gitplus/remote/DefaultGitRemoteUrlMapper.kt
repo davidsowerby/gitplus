@@ -8,7 +8,7 @@ package uk.q3c.build.gitplus.remote
  */
 open class DefaultGitRemoteUrlMapper : GitRemoteUrlMapper {
 
-    lateinit override var parent: GitRemote
+    lateinit override var parent: GitRemoteConfiguration
 
 
     /**

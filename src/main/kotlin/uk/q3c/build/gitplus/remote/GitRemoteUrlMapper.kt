@@ -5,7 +5,7 @@ package uk.q3c.build.gitplus.remote
  */
 interface GitRemoteUrlMapper {
 
-    var parent: GitRemote
+    var parent: GitRemoteConfiguration
 
     /**
      * The base url for the repo being used, typically derived from [repoUser] and [repoName].  For GitHub, for example,

@@ -563,7 +563,7 @@ open class DefaultGitLocal @Inject constructor(
     }
 
     override fun mergeBranch(branch: GitBranch, strategy: MergeStrategy, fastForward: MergeCommand.FastForwardMode): MergeResult {
-        var mergeFailMsg = ""
+        val mergeFailMsg: String
         try {
             val mergeCommand = git.merge()
             val ref1 = git.repository.findRef(branch.name)
