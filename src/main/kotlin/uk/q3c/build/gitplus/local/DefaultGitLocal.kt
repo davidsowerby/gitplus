@@ -499,6 +499,7 @@ open class DefaultGitLocal @Inject constructor(
                     branchCommits.add(gitCommit)
                 }
             }
+            log.debug("Total of {} commits found", branchCommits.size)
             return ImmutableList.copyOf(branchCommits)
         } catch (e: Exception) {
             throw GitLocalException("Reading commits for branch '${branch.name}' failed", e)
@@ -511,7 +512,9 @@ open class DefaultGitLocal @Inject constructor(
 
     override fun latestCommitSHA(branch: GitBranch): GitSHA {
         val commits = extractCommitsFor(branch)
-        return GitSHA(commits.first().hash)
+        val latestCommit = commits.first().hash
+        log.debug("latest commit for '{}' branch is {}", branch.name, latestCommit)
+        return GitSHA(latestCommit)
     }
 
 

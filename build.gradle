@@ -10,7 +10,7 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath 'uk.q3c.simplycd:simplycd-lifecycle:0.6.1.14'
+        classpath 'uk.q3c.simplycd:simplycd-lifecycle:0.9.10.52'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
 
     }
@@ -24,12 +24,14 @@ task wrapper(type: Wrapper) {
 }
 
 group = 'uk.q3c.build'
-version = '0.26.0.85'
+version = '0.26.1.86'
 
 simplycd {
-    test {
-        complexity = 66
-        method = 67
+    thresholds {
+        test{
+            complexity = 66
+            method = 67
+        }
     }
 
     integrationTest {
@@ -77,8 +79,6 @@ dependencies {
     testCompile 'cglib:cglib-nodep:3.2.0' // needed for Spock mocking
     testCompile 'org.objenesis:objenesis:2.2' // needed for Spock mocking
     testCompile 'org.spockframework:spock-guice:1.0-groovy-2.4' // Spock with Guice
-
-
 
 
 }
