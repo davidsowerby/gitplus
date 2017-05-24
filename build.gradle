@@ -24,7 +24,7 @@ task wrapper(type: Wrapper) {
 }
 
 group = 'uk.q3c.build'
-version = '0.26.1.86'
+version = '0.26.2.87'
 
 simplycd {
     thresholds {

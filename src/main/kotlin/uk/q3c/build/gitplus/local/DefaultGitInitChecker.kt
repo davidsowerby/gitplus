@@ -27,7 +27,14 @@ class DefaultGitInitChecker : GitInitChecker {
         }
     }
 
+    /**
+     * We keep a local flag for performance but if a check is requested explicitly and shows as not init'd, re-evaluate,
+     * and only throw an exception if still not init'd
+     */
     override fun checkInitDone() {
+        if (!initDone) {
+            evaluateInitializationState()
+        }
         if (!initDone) {
             throw GitLocalException("Git repository has not been initialized")
         }
