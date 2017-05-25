@@ -36,7 +36,7 @@ class DefaultGitInitChecker : GitInitChecker {
             evaluateInitializationState()
         }
         if (!initDone) {
-            throw GitLocalException("Git repository has not been initialized")
+            throw GitLocalException("Git repository at ${git.repository.directory} has not been initialized")
         }
     }
 
