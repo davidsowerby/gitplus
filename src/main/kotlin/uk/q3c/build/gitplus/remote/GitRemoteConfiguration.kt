@@ -1,6 +1,7 @@
 package uk.q3c.build.gitplus.remote
 
-import uk.q3c.build.gitplus.local.GitLocal
+import uk.q3c.build.gitplus.gitplus.GitPlusConfigurationException
+import uk.q3c.build.gitplus.local.GitLocalConfiguration
 
 /**
  *
@@ -64,7 +65,7 @@ interface GitRemoteConfiguration {
      *
      * @throws GitPlusConfigurationException if invalid configuration found
      */
-    fun validate(local: GitLocal)
+    fun validate(local: GitLocalConfiguration)
 
 }
 

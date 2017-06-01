@@ -3,7 +3,7 @@ package uk.q3c.build.gitplus.remote
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.google.common.collect.ImmutableMap
 import uk.q3c.build.gitplus.gitplus.GitPlusConfigurationException
-import uk.q3c.build.gitplus.local.GitLocal
+import uk.q3c.build.gitplus.local.GitLocalConfiguration
 import uk.q3c.build.gitplus.notSpecified
 
 /**
@@ -110,7 +110,7 @@ data class DefaultGitRemoteConfiguration(
         repoName = segments[2]
     }
 
-    override fun validate(local: GitLocal) {
+    override fun validate(local: GitLocalConfiguration) {
         if (repoName == notSpecified) {
             repoName(local.projectName)
         }

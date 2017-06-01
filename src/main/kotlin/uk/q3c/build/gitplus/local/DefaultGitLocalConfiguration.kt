@@ -6,7 +6,7 @@ import uk.q3c.build.gitplus.gitplus.FileDeleteApprover
 import uk.q3c.build.gitplus.gitplus.GitPlusConfigurationException
 import uk.q3c.build.gitplus.local.CloneExistsResponse.EXCEPTION
 import uk.q3c.build.gitplus.notSpecified
-import uk.q3c.build.gitplus.remote.GitRemote
+import uk.q3c.build.gitplus.remote.GitRemoteConfiguration
 import java.io.File
 
 /**
@@ -83,7 +83,7 @@ data class DefaultGitLocalConfiguration(override var projectName: String = notSp
         return this
     }
 
-    override fun validate(remote: GitRemote) {
+    override fun validate(remote: GitRemoteConfiguration) {
 
         if (create && cloneFromRemote) {
             throw GitPlusConfigurationException("Local repo cannot be both created and cloned")

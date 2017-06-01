@@ -10,30 +10,30 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath 'uk.q3c.simplycd:simplycd-lifecycle:0.9.10.52'
+        classpath 'uk.q3c.kaytee:kaytee-plugin:0.9.19.63'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
 
     }
 }
 
 apply plugin: 'kotlin'
-apply plugin: 'uk.q3c.simplycd'
+apply plugin: 'uk.q3c.kaytee'
 
 task wrapper(type: Wrapper) {
     gradleVersion = '3.2.1'
 }
 
 group = 'uk.q3c.build'
-version = '0.26.3.88'
+version = '0.27.0.89'
 
-simplycd {
-    thresholds {
-        test{
-            complexity = 66
-            method = 67
-        }
+kaytee {
+    unitTest {
+//        thresholds {
+//            complexity = 66
+//            method = 67
+//        }
+
     }
-
     integrationTest {
         enabled = true
     }

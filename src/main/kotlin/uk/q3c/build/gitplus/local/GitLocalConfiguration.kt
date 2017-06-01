@@ -1,7 +1,7 @@
 package uk.q3c.build.gitplus.local
 
 import uk.q3c.build.gitplus.gitplus.FileDeleteApprover
-import uk.q3c.build.gitplus.remote.GitRemote
+import uk.q3c.build.gitplus.remote.GitRemoteConfiguration
 import java.io.File
 
 /**
@@ -62,7 +62,11 @@ interface GitLocalConfiguration {
     fun projectDir(): File
 
     fun copyFrom(other: GitLocalConfiguration)
-    fun validate(remote: GitRemote)
+
+    /**
+     * Validates the configuration against potential inconsistencies
+     */
+    fun validate(remote: GitRemoteConfiguration)
     fun projectCreator(projectCreator: ProjectCreator): GitLocalConfiguration
 }
 

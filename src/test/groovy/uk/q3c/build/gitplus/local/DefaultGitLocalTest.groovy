@@ -643,7 +643,7 @@ class DefaultGitLocalTest extends Specification {
 
     def "GitLocalException when calls made, repo not init()'d"() {
         given:
-        String exceptionMessage = "Git repository has not been initialized"
+        String exceptionMessage = "has not been initialized"
         configuration.create(true).projectName("scratch").projectDirParent(temp)
         gitLocal = createGitLocal(false, false, false)
         gitLocal.prepare(gitRemote)
@@ -687,7 +687,7 @@ class DefaultGitLocalTest extends Specification {
 
     def "GitLocalException when calls made, repo does not exist"() {
         given:
-        String exceptionMessage = "Git repository has not been initialized"
+        String exceptionMessage = "has not been initialized"
         configuration.create(true).projectName("scratch").projectDirParent(temp)
         gitLocal = createGitLocal(false, false, false)
         gitLocal.prepare(gitRemote)
