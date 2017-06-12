@@ -39,6 +39,10 @@ kaytee {
     integrationTest {
         enabled = true
     }
+
+    mergeToMaster{
+        enabled=false
+    }
 }
 
 ext.assertjVersion = '3.3.0'
