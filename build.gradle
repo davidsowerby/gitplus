@@ -1,6 +1,7 @@
 //noinspection GrPackage
 buildscript {
     ext.kotlin_version = '1.1.2-2'
+    ext.kaytee_plugin_version='0.11.2.0'
     repositories {
         mavenLocal()
         maven {
@@ -10,7 +11,7 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath 'uk.q3c.kaytee:kaytee-plugin:0.9.19.63'
+        classpath "uk.q3c.kaytee:kaytee-plugin:$kaytee_plugin_version"
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
 
     }
@@ -24,16 +25,17 @@ task wrapper(type: Wrapper) {
 }
 
 group = 'uk.q3c.build'
-version = '0.27.0.89'
 
 kaytee {
+    baseVersion='0.27.1.0'
     unitTest {
-//        thresholds {
-//            complexity = 66
-//            method = 67
-//        }
-
+        qualityGate = true
+        thresholds{
+            complexity=67
+            method=69
+        }
     }
+
     integrationTest {
         enabled = true
     }
@@ -61,9 +63,6 @@ dependencies {
     //guice
     compile 'com.google.inject:guice:4.1.0'
     compile 'com.google.inject.extensions:guice-multibindings:4.1.0'
-
-    //integration testing
-    integrationTestCompile 'org.spockframework:spock-core:1.0-groovy-2.4'
 
     // kotlin
     compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
