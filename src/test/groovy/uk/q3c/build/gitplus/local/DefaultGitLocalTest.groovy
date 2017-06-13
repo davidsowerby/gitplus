@@ -805,8 +805,8 @@ class DefaultGitLocalTest extends Specification {
         commit1.getFullMessage() == ('commit 1')
         commit2.getHash() != null
         commit2.getHash().length() == 40
-        developCommits.asList().get(0).hash == gitLocal.latestDevelopCommitSHA().sha
-        gitLocal.latestDevelopCommitSHA().sha == gitLocal.latestDevelopCommitSHA().sha
+        developCommits.asList().get(0).hash == gitLocal.headDevelopCommitSHA().sha
+        gitLocal.headDevelopCommitSHA().sha == gitLocal.headDevelopCommitSHA().sha
     }
 
 
@@ -1081,7 +1081,7 @@ class DefaultGitLocalTest extends Specification {
 /**
  * Tested in DefaultGitHubRemote2 - easier that way
  */
-    def "latest commit"() {
+    def "head commit"() {
         expect: true
     }
 

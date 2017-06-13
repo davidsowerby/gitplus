@@ -77,7 +77,7 @@ class DefaultGitHubRemoteIntegrationTest extends Specification {
         localProjectDir.exists() // local file copy
         File wikiLocalProjectDir = new File(temp, 'dummy.wiki')
         wikiLocalProjectDir.exists() // local file copy
-        gitPlus.local.latestDevelopCommitSHA() == gitPlus.remote.latestDevelopCommitSHA()
+        gitPlus.local.headDevelopCommitSHA() == gitPlus.remote.developHeadCommit()
         new File(gitPlus.local.projectDir(), 'README.md').exists()
 
         when:

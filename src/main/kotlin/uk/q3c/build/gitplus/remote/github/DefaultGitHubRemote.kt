@@ -236,13 +236,13 @@ class DefaultGitHubRemote @Inject constructor(override val configuration: GitRem
             return map
         }
 
-    override fun latestCommitSHA(branch: GitBranch): GitSHA {
+    override fun headCommit(branch: GitBranch): GitSHA {
         val developBranch = getBranch(branch)
         return GitSHA(developBranch.commit().sha())
     }
 
-    override fun latestDevelopCommitSHA(): GitSHA {
-        return latestCommitSHA(GitBranch("develop"))
+    override fun developHeadCommit(): GitSHA {
+        return headCommit(GitBranch("develop"))
     }
 
     override fun prepare(local: GitLocal) {

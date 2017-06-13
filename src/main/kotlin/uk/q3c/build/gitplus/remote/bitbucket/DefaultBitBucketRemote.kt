@@ -28,7 +28,7 @@ class DefaultBitBucketRemote @Inject constructor(override val configuration: Git
         TODO()
     }
 
-    override fun latestCommitSHA(branch: GitBranch): GitSHA {
+    override fun headCommit(branch: GitBranch): GitSHA {
         TODO()
     }
 
@@ -78,7 +78,7 @@ class DefaultBitBucketRemote @Inject constructor(override val configuration: Git
     override val labelsAsMap: Map<String, String>
         get() = throw NotImplementedError()
 
-    override fun latestDevelopCommitSHA(): GitSHA {
+    override fun developHeadCommit(): GitSHA {
         TODO()
     }
 }

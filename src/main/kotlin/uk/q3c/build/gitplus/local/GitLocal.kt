@@ -221,14 +221,14 @@ interface GitLocal : GitLocalConfiguration, AutoCloseable {
     fun verifyRemoteFromLocal()
 
     /**
-     * Returns a [GitSHA] instance, which encapsulates the hash for the latest commit in [branch]
+     * Returns a [GitSHA] instance, which encapsulates the hash for the HEAD commit in [branch]
      */
-    fun latestCommitSHA(branch: GitBranch): GitSHA
+    fun headCommitSHA(branch: GitBranch): GitSHA
 
     /**
-     * Returns a [GitSHA] instance, which encapsulates the hash for the latest commit in the 'develop' branch
+     * Returns a [GitSHA] instance, which encapsulates the hash for the HEAD commit in the 'develop' branch
      */
-    fun latestDevelopCommitSHA(): GitSHA
+    fun headDevelopCommitSHA(): GitSHA
 
     /**
      * Returns the 'develop' branch

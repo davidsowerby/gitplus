@@ -7,6 +7,7 @@ import spock.guice.UseModules
 import spock.lang.Specification
 import uk.q3c.build.gitplus.gitplus.GitPlus
 import uk.q3c.build.gitplus.local.GitBranch
+import uk.q3c.build.gitplus.local.GitLocalException
 import uk.q3c.build.gitplus.remote.github.GitHubRemote
 
 /**
@@ -29,21 +30,21 @@ class DefaultGitHubRemoteTest2 extends Specification {
         temp = temporaryFolder.getRoot()
     }
 
-    def "latestCommit()"() {
+    def "headCommit()"() {
         given:
         remote.repoUser = 'davidsowerby'
         remote.repoName = 'q3c-testUtil'
 
         when:
-        String result1 = remote.latestCommitSHA(new GitBranch('develop'))
-        String result2 = remote.latestDevelopCommitSHA()
+        String result1 = remote.headCommit(new GitBranch('develop'))
+        String result2 = remote.developHeadCommit()
 
         then:
         result1 != null
         result1 == result2
     }
 
-    def "latest commit for local and remote, clone wiki"() {
+    def "head commit for local and remote, clone wiki"() {
         given:
         final String project = 'q3c-testUtil'
         gitPlus.local.projectName = project
@@ -55,10 +56,10 @@ class DefaultGitHubRemoteTest2 extends Specification {
 
         when:
         gitPlus.execute()
-        String remote1 = gitPlus.remote.latestCommitSHA(new GitBranch('develop'))
-        String remote2 = gitPlus.remote.latestDevelopCommitSHA()
-        String local1 = gitPlus.local.latestCommitSHA(new GitBranch('develop'))
-        String local2 = gitPlus.local.latestDevelopCommitSHA()
+        String remote1 = gitPlus.remote.headCommit(new GitBranch('develop'))
+        String remote2 = gitPlus.remote.developHeadCommit()
+        String local1 = gitPlus.local.headCommitSHA(new GitBranch('develop'))
+        String local2 = gitPlus.local.headDevelopCommitSHA()
 
         then:
         remote1 == remote2
@@ -67,6 +68,12 @@ class DefaultGitHubRemoteTest2 extends Specification {
         gitPlus.wikiLocal.projectDir().exists()
         new File(gitPlus.wikiLocal.projectDir(), "Home.md").exists()
         new File(gitPlus.wikiLocal.projectDir(), ".git").exists()
+
+        when: "non-existent branch requested"
+        gitPlus.local.headCommitSHA(new GitBranch('rubbish'))
+
+        then:
+        thrown GitLocalException
 
     }
 

@@ -92,14 +92,14 @@ interface GitRemote : GitRemoteConfiguration, GitRemoteUrlMapper {
     val labelsAsMap: Map<String, String>
 
     /**
-     * Returns the hash for the latest commit on the develop branch.  Exactly the same as calling [latestCommitSHA] with branchName of 'develop'
+     * Returns the hash for the HEAD commit on the develop branch.  Exactly the same as calling [headCommit] with branchName of 'develop'
      */
-    fun latestDevelopCommitSHA(): GitSHA
+    fun developHeadCommit(): GitSHA
 
     /**
-     * Returns the latest commit (SHA) for [branch]
+     * Returns the HEAD commit (SHA) for [branch]
      */
-    fun latestCommitSHA(branch: GitBranch): GitSHA
+    fun headCommit(branch: GitBranch): GitSHA
 
     /**
      * Returns true if the remote contains a branch with name [branch.name]

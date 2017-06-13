@@ -21,7 +21,7 @@ import static uk.q3c.build.gitplus.remote.ServiceProvider.GITHUB
 class DefaultGitPlusTest extends Specification {
 
     @Rule
-    TemporaryFolder temporaryFolder = new TemporaryFolder();
+    TemporaryFolder temporaryFolder = new TemporaryFolder()
     File temp
 
     DefaultGitPlus gitplus
@@ -201,20 +201,7 @@ class DefaultGitPlusTest extends Specification {
         expect:
         gitplus.getRemoteResolver() == gitRemoteProvider
     }
-//
-//
-//
-//    def "latest develop commit"() {
-//        given:
-//        DefaultGitPlus gitPlus = new DefaultGitPlus()
-//        gitPlus.getConfiguration().repoUser('davidsowerby').repoName('krail')
-//
-//        when:
-//        String result = gitPlus.latestRemoteDevelopCommit()
-//
-//        then:
-//        result.equals('ebee0ed82aa55d91ca274270059f79454e17db1a')
-//    }
+
 
     private void defaultProject() {
         local.getProjectName() >> projectName

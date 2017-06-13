@@ -22,10 +22,10 @@ class DefaultBitBucketRemoteTest extends Specification {
         remote = new DefaultBitBucketRemote(configuration, bitBucketProvider, remoteRequest, new BitBucketUrlMapper())
     }
 
-    def "latestCommit"() {
+    def "headCommit"() {
 
         when:
-        remote.latestCommitSHA(new GitBranch('develop'))
+        remote.headCommit(new GitBranch('develop'))
 
         then:
         thrown NotImplementedError
@@ -130,10 +130,10 @@ class DefaultBitBucketRemoteTest extends Specification {
         thrown NotImplementedError
     }
 
-    def "latestDevelopCommit"() {
+    def "headDevelopCommit"() {
 
         when:
-        remote.latestDevelopCommitSHA()
+        remote.developHeadCommit()
 
         then:
         thrown NotImplementedError

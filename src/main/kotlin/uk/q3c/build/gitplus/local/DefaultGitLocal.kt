@@ -506,15 +506,15 @@ open class DefaultGitLocal @Inject constructor(
         }
     }
 
-    override fun latestDevelopCommitSHA(): GitSHA {
-        return latestCommitSHA(developBranch())
+    override fun headDevelopCommitSHA(): GitSHA {
+        return headCommitSHA(developBranch())
     }
 
-    override fun latestCommitSHA(branch: GitBranch): GitSHA {
-        val commits = extractCommitsFor(branch)
-        val latestCommit = commits.first().hash
-        log.debug("latest commit for '{}' branch is {}", branch.name, latestCommit)
-        return GitSHA(latestCommit)
+    override fun headCommitSHA(branch: GitBranch): GitSHA {
+        val b = git.repository.findRef(branch.name) ?: throw GitLocalException("There is no '$branch' branch")
+        val commitId = b.objectId.name
+        log.debug("HEAD commit for '{}' branch is {}", branch.name, commitId)
+        return GitSHA(commitId)
     }
 
 

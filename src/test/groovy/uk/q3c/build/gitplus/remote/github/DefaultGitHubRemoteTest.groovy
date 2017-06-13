@@ -43,7 +43,7 @@ class DefaultGitHubRemoteTest extends Specification {
 
     def setup() {
 
-        gitHub = new MkGithub(USER);
+        gitHub = new MkGithub(USER)
         Repos.RepoCreate repoCreate = new Repos.RepoCreate('dummy', false)
         repo = gitHub.repos().create(repoCreate)
         krailConfiguration = new DefaultGitRemoteConfiguration().repoUser(USER).repoName('krail')
@@ -53,7 +53,7 @@ class DefaultGitHubRemoteTest extends Specification {
 
     }
 
-    def "latestCommit, also checks branch not found"() {
+    def "headCommit, also checks branch not found"() {
         given:
         Github mockGitHub = Mock(Github)
         Repos mockRepos = Mock(Repos)
@@ -81,8 +81,8 @@ class DefaultGitHubRemoteTest extends Specification {
 
 
         when:
-        GitSHA hash1 = remote.latestCommitSHA(new GitBranch('develop'))
-        GitSHA hash2 = remote.latestDevelopCommitSHA()
+        GitSHA hash1 = remote.headCommit(new GitBranch('develop'))
+        GitSHA hash2 = remote.developHeadCommit()
 
         then:
         hash1 != null
