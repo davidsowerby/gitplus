@@ -1,7 +1,7 @@
 //noinspection GrPackage
 buildscript {
     ext.kotlin_version = '1.1.2-2'
-    ext.kaytee_plugin_version = '0.11.3.0'
+    ext.kaytee_plugin_version = '0.12.2.0'
     repositories {
         mavenLocal()
         maven {
@@ -27,7 +27,7 @@ task wrapper(type: Wrapper) {
 group = 'uk.q3c.build'
 
 kaytee {
-    baseVersion = '0.27.3.0'
+    baseVersion = '0.27.4.0'
     unitTest {
         qualityGate = true
         thresholds {
@@ -38,10 +38,6 @@ kaytee {
 
     integrationTest {
         enabled = true
-    }
-
-    mergeToMaster {
-        enabled = false
     }
 }
 bintray {
