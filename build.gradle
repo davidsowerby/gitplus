@@ -27,7 +27,7 @@ task wrapper(type: Wrapper) {
 group = 'uk.q3c.build'
 
 kaytee {
-    baseVersion = '0.27.4.0'
+    baseVersion = '0.27.5.0'
     unitTest {
         qualityGate = true
         thresholds {
@@ -60,7 +60,7 @@ dependencies {
     compile 'com.fasterxml.jackson.core:jackson-databind:2.8.8'
 
     //git and github
-    compile 'org.eclipse.jgit:org.eclipse.jgit:4.7.0.201704051617-r'
+    compile 'org.eclipse.jgit:org.eclipse.jgit:4.8.0.201706111038-r'
     compile 'com.jcabi:jcabi-github:0.31'
 
     //guice
