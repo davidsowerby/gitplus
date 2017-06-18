@@ -879,6 +879,34 @@ class DefaultGitLocalTest extends Specification {
         1 * mockGit.pull() >> pc
     }
 
+    def "status works or fails"() {
+        given:
+        StatusCommand sc = Mock(StatusCommand)
+        Status status = Mock(Status)
+        configuration.projectName = 'wiggly'
+        gitLocal = createGitLocal(true, true, true)
+        gitLocal.remote = gitRemote
+        gitLocal.prepare(gitRemote)
+        IOException ioe = new IOException()
+
+
+        when:
+        gitLocal.status()
+
+        then:
+        1 * mockGit.status() >> sc
+        1 * sc.call() >> status
+
+        when: "call fails"
+        gitLocal.status()
+
+        then:
+        1 * mockGit.status() >> { throw ioe }
+        GitLocalException gle = thrown()
+        gle.cause == ioe
+
+    }
+
     def "pull failure causes GLE"() {
         given:
         PullCommand pull = Mock(PullCommand)
@@ -886,6 +914,7 @@ class DefaultGitLocalTest extends Specification {
         gitLocal = createGitLocal(true, true, true)
         gitLocal.remote = gitRemote
         gitLocal.prepare(gitRemote)
+        mockGit.pull() >> pull
         pull.call() >> { throw new IOException() }
 
         when:
@@ -893,7 +922,30 @@ class DefaultGitLocalTest extends Specification {
 
         then:
         GitLocalException gle = thrown()
-        gle.message.contains("Pull failed")
+        gle.message.contains("Pull of current branch failed")
+    }
+
+    def "pull with branch name failure causes GLE"() {
+        given:
+        String branch = 'master'
+        PullCommand pull = Mock(PullCommand)
+        configuration.projectName = 'wiggly'
+        gitLocal = createGitLocal(true, true, true)
+        gitLocal.remote = gitRemote
+        gitLocal.prepare(gitRemote)
+        mockGit.pull() >> pull
+
+
+        when:
+        gitLocal.pull(branch)
+
+        then:
+        1 * pull.setRemoteBranchName(branch)
+
+        then:
+        1 * pull.call() >> { throw new IOException() }
+        GitLocalException gle = thrown()
+        gle.message.contains("Pull of 'master' branch failed")
     }
 
     def "masterBranch"() {

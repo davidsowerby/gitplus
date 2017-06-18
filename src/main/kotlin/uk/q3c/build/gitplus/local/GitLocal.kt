@@ -49,7 +49,15 @@ interface GitLocal : GitLocalConfiguration, AutoCloseable {
      */
     fun prepare(remote: GitRemote)
 
+    /**
+     * Executes a Git pull, defaulting to the current branch
+     */
     fun pull()
+
+    /**
+     * Executes a Git pull, using [branchName]
+     */
+    fun pull(branchName: String)
 
     /**
      * If [create] is true, creates a local Git repo, and initialises it. If [create] is false, this call does nothing

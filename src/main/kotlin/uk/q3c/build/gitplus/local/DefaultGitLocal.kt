@@ -146,7 +146,17 @@ open class DefaultGitLocal @Inject constructor(
             val pull = git.pull()
             pull.call()
         } catch (e: Exception) {
-            throw GitLocalException("Pull failed", e)
+            throw GitLocalException("Pull of current branch failed", e)
+        }
+    }
+
+    override fun pull(branchName: String) {
+        try {
+            val pull = git.pull()
+            pull.remoteBranchName = branchName
+            pull.call()
+        } catch (e: Exception) {
+            throw GitLocalException("Pull of '$branchName' branch failed", e)
         }
     }
 
@@ -239,7 +249,7 @@ open class DefaultGitLocal @Inject constructor(
 
 
     override fun createBranch(branchName: String) {
-        log.debug("creating branch '{}'", branchName)
+        log.info("creating branch '{}'", branchName)
         checkInitDone()
         try {
             git.branchCreate().setName(branchName).call()
@@ -269,6 +279,7 @@ open class DefaultGitLocal @Inject constructor(
 
 
     override fun commit(message: String): GitSHA {
+        log.info("Git commit with message '$message'")
         checkInitDone()
         try {
             val commit = git.commit().setMessage(message).call()
