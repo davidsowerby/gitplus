@@ -11,6 +11,7 @@ import java.io.File
 class DefaultProjectCreator : ProjectCreator {
 
     override fun invoke(configuration: GitLocalConfiguration) {
-        FileUtils.write(File(configuration.projectDir(), "# README.md"), configuration.projectName)
+        val file = File(configuration.projectDir(), "README.md")
+        FileUtils.write(file, "# ${configuration.projectName}")
     }
 }

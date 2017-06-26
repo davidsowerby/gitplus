@@ -40,7 +40,8 @@ interface GitLocalConfiguration {
 
     /**
      * Effectively used as a callback after the local Git repository has been initialised, to enable the creation of project directories
-     * and files.  By default, simply adds a README.md to the [projectDir]
+     * and files.  By default, simply adds a README.md to the [projectDir].  Have a look at https://github.com/davidsowerby/projectadmin for
+     * at least one other project creator
      */
     var projectCreator: ProjectCreator
 

@@ -5,15 +5,15 @@ import com.google.inject.Provider
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
-import uk.q3c.build.gitplus.local.GitCommit
-import uk.q3c.build.gitplus.local.GitLocal
-import uk.q3c.build.gitplus.local.WikiLocal
+import uk.q3c.build.gitplus.GitPlusFactory
+import uk.q3c.build.gitplus.local.*
 import uk.q3c.build.gitplus.remote.*
 import uk.q3c.build.gitplus.remote.bitbucket.BitBucketRemote
 import uk.q3c.build.gitplus.remote.github.GitHubRemote
 
 import static uk.q3c.build.gitplus.remote.ServiceProvider.BITBUCKET
 import static uk.q3c.build.gitplus.remote.ServiceProvider.GITHUB
+
 /**
  * Created by David Sowerby on 13 Mar 2016
  */
@@ -90,6 +90,42 @@ class DefaultGitPlusTest extends Specification {
         0 * local.push(_, _)
     }
 
+    def "create remote repo only, no local or wiki"() {
+        given:
+        defaultProject()
+        local.active >> false
+        wikiLocal.active >> false
+        gitHubRemote.active >> true
+        gitHubRemote.create >> true
+
+
+        when:
+        gitplus.execute()
+
+        then:
+        0 * local.cloneRemote()
+        0 * wikiLocal.cloneRemote()
+        1 * gitHubRemote.createRepo()
+        0 * local.push(_, _)
+    }
+
+    def "execute fails, throws GitPlusException"() {
+        given:
+        defaultProject()
+        local.active >> false
+        wikiLocal.active >> false
+        gitHubRemote.active >> true
+        gitHubRemote.create >> true
+
+
+        when:
+        gitplus.execute()
+
+        then:
+        1 * gitHubRemote.createRepo() >> { throw new IOException() }
+        thrown GitPlusException
+    }
+
     def "clone remote repo, with wiki"() {
         given:
         defaultProject()
@@ -132,15 +168,132 @@ class DefaultGitPlusTest extends Specification {
     }
 
 
-    def "clone and create false for local, verify remote origin from existing local"() {
+    def "cloneFromRemote sets up configuration correctly"() {
         given:
-        defaultProject()
+        GitPlus gitplus = GitPlusFactory.instance
+        String projectName = "wiggly"
+        String remoteUser = "davidsowerby"
+        boolean includeWiki = false
 
-        when:
-        gitplus.execute()
+        when: "wiki not active, default cloneExistsResponse"
+        gitplus.cloneFromRemote(temp, remoteUser, projectName, includeWiki)
+        gitplus.prepare()
 
         then:
-        1 * gitHubRemote.verifyFromLocal()
+        gitplus.local.active
+        gitplus.local.projectName == projectName
+        gitplus.local.projectDirParent == temp
+        gitplus.local.projectDir() == new File(temp, projectName)
+        gitplus.local.cloneExistsResponse == CloneExistsResponse.EXCEPTION
+        gitplus.remote.repoName == projectName
+        gitplus.remote.repoUser == remoteUser
+        !gitplus.wikiLocal.active
+
+        when: "wiki active, changed cloneExistsResponse"
+        includeWiki = true
+        gitplus.cloneFromRemote(temp, remoteUser, projectName, includeWiki, CloneExistsResponse.DELETE)
+        gitplus.prepare()
+
+
+        then:
+        gitplus.local.active
+        gitplus.local.projectName == projectName
+        gitplus.local.projectDirParent == temp
+        gitplus.local.projectDir() == new File(temp, projectName)
+        gitplus.local.cloneExistsResponse == CloneExistsResponse.DELETE
+        gitplus.remote.active
+        gitplus.remote.repoName == projectName
+        gitplus.remote.repoUser == remoteUser
+        gitplus.wikiLocal.active
+        gitplus.wikiLocal.projectName == projectName + ".wiki"
+        gitplus.wikiLocal.projectDirParent == temp
+        gitplus.wikiLocal.projectDir() == new File(temp, projectName + ".wiki")
+        gitplus.wikiLocal.cloneExistsResponse == CloneExistsResponse.DELETE
+    }
+
+    def "createLocalAndRemote sets up configuration correctly"() {
+        given:
+        GitPlus gitplus = GitPlusFactory.instance
+        String projectName = "wiggly"
+        String remoteUser = "davidsowerby"
+        boolean includeWiki = false
+        ProjectCreator otherCreator = Mock(ProjectCreator)
+
+        when: "default project creator, no wiki"
+        gitplus.createLocalAndRemote(temp, remoteUser, projectName, includeWiki, true)
+        gitplus.prepare()
+
+        then:
+        gitplus.local.active
+        gitplus.local.create
+        gitplus.local.projectName == projectName
+        gitplus.local.projectDirParent == temp
+        gitplus.local.projectDir() == new File(temp, projectName)
+        !gitplus.wikiLocal.active
+        gitplus.remote.active
+        gitplus.remote.repoName == projectName
+        gitplus.remote.repoUser == remoteUser
+        gitplus.remote.publicProject
+        !gitplus.wikiLocal.active
+
+        when: "other project creator, wiki included"
+        includeWiki = true
+        gitplus.createLocalAndRemote(temp, remoteUser, projectName, includeWiki, false, otherCreator)
+        gitplus.prepare()
+
+        then:
+        gitplus.local.active
+        gitplus.local.projectName == projectName
+        gitplus.local.projectDirParent == temp
+        gitplus.local.projectDir() == new File(temp, projectName)
+        gitplus.local.projectCreator == otherCreator
+        gitplus.remote.active
+        gitplus.remote.repoName == projectName
+        gitplus.remote.repoUser == remoteUser
+        !gitplus.remote.publicProject
+        gitplus.wikiLocal.active
+        gitplus.wikiLocal.projectName == projectName + ".wiki"
+        gitplus.wikiLocal.projectDirParent == temp
+        gitplus.wikiLocal.projectDir() == new File(temp, projectName + ".wiki")
+
+    }
+
+    def "useRemoteOnly"() {
+        given:
+        GitPlus gitplus = GitPlusFactory.instance
+        String projectName = "wiggly"
+        String remoteUser = "davidsowerby"
+
+        when:
+        gitplus.useRemoteOnly(remoteUser, projectName)
+        gitplus.prepare()
+
+        then:
+        !gitplus.local.active
+        gitplus.remote.active
+        gitplus.remote.repoName == projectName
+        gitplus.remote.repoUser == remoteUser
+        !gitplus.wikiLocal.active
+
+    }
+
+    def "createRemoteOnly"() {
+        given:
+        GitPlus gitplus = GitPlusFactory.instance
+        String projectName = "wiggly"
+        String remoteUser = "davidsowerby"
+
+        when:
+        gitplus.createRemoteOnly(remoteUser, projectName, true)
+        gitplus.prepare()
+
+        then:
+        !gitplus.local.active
+        gitplus.remote.active
+        gitplus.remote.publicProject
+        gitplus.remote.repoName == projectName
+        gitplus.remote.repoUser == remoteUser
+        !gitplus.wikiLocal.active
     }
 
 
@@ -152,7 +305,6 @@ class DefaultGitPlusTest extends Specification {
         1 * local.close()
         1 * wikiLocal.close()
     }
-
 
     /**
      * All this tests is that DefaultGitLocal is called to provide the commits

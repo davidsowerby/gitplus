@@ -18,6 +18,7 @@ import uk.q3c.build.gitplus.remote.github.DefaultGitHubProvider
 import uk.q3c.build.gitplus.remote.github.DefaultGitHubRemote
 import uk.q3c.build.gitplus.remote.github.GitHubUrlMapper
 import uk.q3c.build.gitplus.util.FileBuildPropertiesLoader
+
 /**
  * This test needs to delete the 'dummy' repo in cleanup.  This test is a bit weird because it has to use deleteRepo to clean up, but also tests deleteRepo
  *
@@ -61,10 +62,13 @@ class DefaultGitHubRemoteIntegrationTest extends Specification {
     def "lifecycle"() {
         given:
 
-        gitPlus.local.create(true).projectDirParent(temp).projectName('dummy')
-        gitPlus.remote.repoUser('davidsowerby').create(true).publicProject(true).mergeIssueLabels(true)
-        gitPlus.wikiLocal.active(true)
-        gitPlus.wikiLocal.create(true)
+        gitPlus.createLocalAndRemote(temp, 'davidsowerby', 'dummy', true, true)
+        gitPlus.remote.mergeIssueLabels = true
+
+//        gitPlus.local.create(true).projectDirParent(temp).projectName('dummy')
+//        gitPlus.remote.repoUser('davidsowerby').create(true).publicProject(true).mergeIssueLabels(true)
+//        gitPlus.wikiLocal.active(true)
+//        gitPlus.wikiLocal.create(true)
 
         when:
         gitPlus.execute()
@@ -94,8 +98,28 @@ class DefaultGitHubRemoteIntegrationTest extends Specification {
         then:
         r1.successful
 
+        when:
+        GitPlus gitplus2 = GitPlusFactory.instance
+        gitplus2.useRemoteOnly('davidsowerby', 'dummy')
+        gitplus2.execute()
+
+        then:
+        gitplus2.remote.getIssue(9)
+
+
     }
 
+    def "create remote only"() {
+        given:
+        gitPlus.createRemoteOnly('davidsowerby', 'dummy', true)
+
+        when:
+        gitPlus.execute()
+        createTestIssues(1)
+
+        then:
+        gitPlus.remote.getIssue(1)  // remote repo there, with issues created
+    }
 
     def createTestIssues(int number) {
         List<String> labels = ImmutableList.of('bug', 'documentation', 'quality', 'bug', 'task', 'bug', 'performance', 'enhancement', 'task', 'bug')
@@ -151,24 +175,24 @@ class DefaultGitHubRemoteIntegrationTest extends Specification {
  * @param repoName
  * @return
  */
-    @SuppressWarnings("GrMethodMayBeStatic")
-    private void waitRemoteRepoExists(String repoName) {
-        println 'waiting for repo to exist'
-        DefaultGitRemoteConfiguration dummyConfiguration = new DefaultGitRemoteConfiguration()
-        dummyConfiguration.repoUser('davidsowerby').repoName('dummy').confirmDelete("I really, really want to delete the davidsowerby/dummy repo from GitHub")
-        GitRemote remote = new DefaultGitHubRemote(dummyConfiguration, new DefaultGitHubProvider(new FileBuildPropertiesLoader()), new DefaultRemoteRequest(), new GitHubUrlMapper())
-        def timeout = 20
-        Set<String> names = remote.listRepositoryNames()
-        while (!names.contains(repoName) && timeout > 0) {
-            println 'waiting 1 second for api, ' + timeout + ' before timeout'
-            Thread.sleep(1000)
-            timeout--
-            names = remote.listRepositoryNames()
-        }
-        if (timeout <= 0) {
-            throw new RuntimeException("Timed out")
-        }
-    }
+//    @SuppressWarnings("GrMethodMayBeStatic")
+//    private void waitRemoteRepoExists(String repoName) {
+//        println 'waiting for repo to exist'
+//        DefaultGitRemoteConfiguration dummyConfiguration = new DefaultGitRemoteConfiguration()
+//        dummyConfiguration.repoUser('davidsowerby').repoName('dummy').confirmDelete("I really, really want to delete the davidsowerby/dummy repo from GitHub")
+//        GitRemote remote = new DefaultGitHubRemote(dummyConfiguration, new DefaultGitHubProvider(new FileBuildPropertiesLoader()), new DefaultRemoteRequest(), new GitHubUrlMapper())
+//        def timeout = 20
+//        Set<String> names = remote.listRepositoryNames()
+//        while (!names.contains(repoName) && timeout > 0) {
+//            println 'waiting 1 second for api, ' + timeout + ' before timeout'
+//            Thread.sleep(1000)
+//            timeout--
+//            names = remote.listRepositoryNames()
+//        }
+//        if (timeout <= 0) {
+//            throw new RuntimeException("Timed out")
+//        }
+//    }
 
     @SuppressWarnings("GrMethodMayBeStatic")
     private boolean remoteRepoExists(String repoName) {

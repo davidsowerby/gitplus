@@ -29,7 +29,7 @@
 | create                | if true create a local repo in projectDir - mutually exclusive with *clone*          | false                     |
 | fileDeleteApprover    | approves / rejects calls to delete a file. A bit of protection from config errors    | delete always rejected    |
 | projectDirParent      | the parent directory for projectDir                                                  | current dir               |
-| projectName           | name of project if createProject true.    **REQUIRED**                               | remote.repoName           |
+| projectName           | name of project.    **REQUIRED**                               | remote.repoName           |
 | taggerEmail           | the user email to put on a tag when tag() called                                     | load from properties      |
 | taggerName            | the user name to put on a tag when tag() called                                      | load from properties      |
 

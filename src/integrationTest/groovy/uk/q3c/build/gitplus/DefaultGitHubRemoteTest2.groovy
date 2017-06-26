@@ -46,13 +46,10 @@ class DefaultGitHubRemoteTest2 extends Specification {
 
     def "head commit for local and remote, clone wiki"() {
         given:
-        final String project = 'q3c-testUtil'
-        gitPlus.local.projectName = project
-        gitPlus.local.projectDirParent = temp
-        gitPlus.local.cloneFromRemote(true)
-        gitPlus.remote.repoUser('davidsowerby').repoName(project)
-        gitPlus.wikiLocal.active = true
-        gitPlus.wikiLocal.cloneFromRemote = true
+        final String projectName = 'q3c-testUtil'
+        final String remoteUser = 'davidsowerby'
+        gitPlus.cloneFromRemote(temp, remoteUser, projectName, true)
+
 
         when:
         gitPlus.execute()

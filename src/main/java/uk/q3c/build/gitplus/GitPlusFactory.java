@@ -10,6 +10,10 @@ import uk.q3c.build.gitplus.gitplus.GitPlus;
 @SuppressWarnings("ClassWithOnlyPrivateConstructors")
 public class GitPlusFactory {
 
+    private GitPlusFactory() {
+        // don't want this used
+    }
+
     public static GitPlus getInstance() {
         final Injector injector = Guice.createInjector(new GitPlusModule());
         return injector.getInstance(GitPlus.class);

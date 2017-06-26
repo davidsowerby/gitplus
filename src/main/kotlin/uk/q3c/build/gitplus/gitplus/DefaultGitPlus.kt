@@ -3,22 +3,19 @@ package uk.q3c.build.gitplus.gitplus
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.google.inject.Inject
-import org.apache.commons.io.FileUtils
 import org.slf4j.LoggerFactory
-import uk.q3c.build.gitplus.local.GitBranch
-import uk.q3c.build.gitplus.local.GitLocal
-import uk.q3c.build.gitplus.local.WikiLocal
+import uk.q3c.build.gitplus.local.*
 import uk.q3c.build.gitplus.remote.GitRemote
 import uk.q3c.build.gitplus.remote.GitRemoteResolver
 import uk.q3c.build.gitplus.remote.ServiceProvider
 import java.io.File
 import java.io.StringWriter
-import java.util.*
 
 
 class DefaultGitPlus @Inject constructor(override val local: GitLocal,
                                          override val wikiLocal: WikiLocal,
                                          val remoteResolver: GitRemoteResolver) : GitPlus {
+
 
     private val log = LoggerFactory.getLogger(this.javaClass.name)
     override lateinit var serviceProvider: ServiceProvider
@@ -37,13 +34,75 @@ class DefaultGitPlus @Inject constructor(override val local: GitLocal,
         wikiLocal.close()
     }
 
+    override fun useRemoteOnly(remoteRepoUserName: String, projectName: String) {
+        local.active = false
+        remote.repoUser = remoteRepoUserName
+        remote.repoName = projectName
+    }
 
-    override fun execute(): GitPlus {
+    override fun createRemoteOnly(remoteRepoUserName: String, projectName: String, publicProject: Boolean) {
+        local.active = false
+        remote.repoUser = remoteRepoUserName
+        remote.repoName = projectName
+        remote.create = true
+        remote.publicProject = publicProject
+    }
+
+    override fun createLocalAndRemote(parentDir: File, remoteRepoUserName: String, projectName: String, includeWiki: Boolean, publicRepo: Boolean) {
+        createLocalAndRemote(parentDir, remoteRepoUserName, projectName, includeWiki, publicRepo, DefaultProjectCreator())
+    }
+
+    override fun createLocalAndRemote(parentDir: File, remoteRepoUserName: String, projectName: String, includeWiki: Boolean, publicRepo: Boolean, projectCreator: ProjectCreator) {
+        remote.repoUser = remoteRepoUserName
+        remote.repoName = projectName
+        remote.create = true
+        remote.publicProject = publicRepo
+
+        local.projectDirParent = parentDir
+        local.projectName = projectName
+        local.cloneFromRemote = false
+        local.create = true
+        local.projectCreator = projectCreator
+
+        wikiLocal.active = includeWiki
+        wikiLocal.projectDirParent = parentDir
+        wikiLocal.cloneFromRemote = false
+        wikiLocal.create = true
+    }
+
+
+    override fun cloneFromRemote(cloneParentDir: File, remoteRepoUserName: String, projectName: String, includeWiki: Boolean) {
+        cloneFromRemote(cloneParentDir, remoteRepoUserName, projectName, includeWiki, CloneExistsResponse.EXCEPTION)
+    }
+
+    override fun cloneFromRemote(cloneParentDir: File, remoteRepoUserName: String, projectName: String, includeWiki: Boolean, cloneExistsResponse: CloneExistsResponse) {
+        remote.repoUser = remoteRepoUserName
+        remote.repoName = projectName
+
+        local.projectDirParent = cloneParentDir
+        local.projectName = projectName
+        local.cloneFromRemote = true
+        local.create = false
+        local.cloneExistsResponse = cloneExistsResponse
+
+        wikiLocal.active = includeWiki
+        wikiLocal.projectDirParent = cloneParentDir
+        wikiLocal.cloneFromRemote = true
+        wikiLocal.create = false
+        wikiLocal.cloneExistsResponse = cloneExistsResponse
+    }
+
+    override fun prepare() {
         remote = selectedRemote()
         local.prepare(remote)
         wikiLocal.prepare(remote, local)
         remote.prepare(local)
         log.debug("preparation stage complete")
+    }
+
+
+    override fun execute(): GitPlus {
+        prepare()
         if (log.isDebugEnabled) {
             val objectMapper = ObjectMapper()
             objectMapper.configure(SerializationFeature.INDENT_OUTPUT, true)
@@ -58,20 +117,22 @@ class DefaultGitPlus @Inject constructor(override val local: GitLocal,
         }
         try {
             if (local.create && remote.create) {
-                createLocalAndRemote()
+                createBoth()
                 processWiki()
+                return this
+            }
+            if (remote.create) {
+                remote.createRepo()
                 return this
             }
             if (local.cloneFromRemote) {
                 local.cloneRemote()
             } else if (local.create) {
                 local.createAndInitialise()
-            } else {
-                remote.verifyFromLocal()  // We are not creating anything just use it as it is
             }
             processWiki()
         } catch (e: Exception) {
-            throw GitPlusException("Failed to create or verify repository", e)
+            throw GitPlusException("Failed to create or clone repository", e)
         }
 
         return this
@@ -95,30 +156,17 @@ class DefaultGitPlus @Inject constructor(override val local: GitLocal,
     }
 
     /**
-     * Creates local repo, remote repo, master and develop branches, a README, and if createProject is true also creates the project (and pushes to remote)
-     * as well.  Finishes with 'develop' branch selected
+     * Creates local repo, remote repo, master and develop branches, invokes the ProjectCreator (which by default only creates a README)
+     * and pushes to remote.  Finishes with 'develop' branch selected
      */
-    private fun createLocalAndRemote() {
+    private fun createBoth() {
         log.debug("creating both local and remote repos")
         local.createAndInitialise()
-        addReadmeToLocal()
         local.commit("Initial commit")
         remote.createRepo()
         local.setOrigin()
         local.push(false)
         local.checkoutNewBranch(GitBranch(DEVELOP_BRANCH))
-    }
-
-
-    /**
-     * Creates a README file with just the project name in it, and adds the file to Git
-     */
-    private fun addReadmeToLocal() {
-        val f = File(local.projectDir(), "README.md")
-        val lines = ArrayList<String>()
-        lines.add("# " + local.projectName)
-        FileUtils.writeLines(f, lines)
-        local.add(f)
     }
 
 
