@@ -67,7 +67,7 @@ class DefaultGitPlus @Inject constructor(override val local: GitLocal,
             } else if (local.create) {
                 local.createAndInitialise()
             } else {
-                local.verifyRemoteFromLocal()  // We are not creating anything just use it as it is
+                remote.verifyFromLocal()  // We are not creating anything just use it as it is
             }
             processWiki()
         } catch (e: Exception) {
@@ -84,8 +84,6 @@ class DefaultGitPlus @Inject constructor(override val local: GitLocal,
             } else if (wikiLocal.create) {
                 wikiLocal.createAndInitialise()
                 wikiLocal.setOrigin()
-            } else {
-                wikiLocal.verifyRemoteFromLocal()  // We are not creating anything just use it as it is
             }
         } else {
             log.debug("useWiki set to false, nothing done for the wiki")

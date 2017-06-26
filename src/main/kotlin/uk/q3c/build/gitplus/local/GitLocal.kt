@@ -223,12 +223,6 @@ interface GitLocal : GitLocalConfiguration, AutoCloseable {
     fun tagLightweight(tagMsg: String)
 
     /**
-     * Reads the Git local information (by using the equivalent of 'git remote show origin') to get remote information.
-     * Can be used with existing project instead of explicitly setting the remote url
-     */
-    fun verifyRemoteFromLocal()
-
-    /**
      * Returns a [GitSHA] instance, which encapsulates the hash for the HEAD commit in [branch]
      */
     fun headCommitSHA(branch: GitBranch): GitSHA

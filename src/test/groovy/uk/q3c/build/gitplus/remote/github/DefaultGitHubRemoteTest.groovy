@@ -417,6 +417,32 @@ class DefaultGitHubRemoteTest extends Specification {
 
     }
 
+    def "verifyFromLocal"() {
+        given:
+        GitLocal local = Mock(GitLocal)
+        gitHubProvider.get(dummyConfiguration, GitRemote.TokenScope.RESTRICTED) >> gitHub
+        remote = new DefaultGitHubRemote(dummyConfiguration, gitHubProvider, remoteRequest, new GitHubUrlMapper())
+        String origin = "https://github.com/davidsowerby/gitplus"
+
+        when:
+        remote.prepare(local)
+        remote.verifyFromLocal()
+
+        then:
+        1 * local.active >> false
+        thrown GitPlusConfigurationException
+
+        when:
+        remote.prepare(local)
+        remote.verifyFromLocal()
+
+        then:
+        1 * local.active >> true
+        1 * local.getOrigin() >> origin
+        remote.cloneUrl() == "${origin}.git"
+
+
+    }
 
     private void createLabels() {
         Repo r = gitHub.repos().get(dummyCoordinates)

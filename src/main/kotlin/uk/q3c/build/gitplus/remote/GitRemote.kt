@@ -2,6 +2,7 @@ package uk.q3c.build.gitplus.remote
 
 import org.eclipse.jgit.transport.CredentialsProvider
 import uk.q3c.build.gitplus.GitSHA
+import uk.q3c.build.gitplus.gitplus.GitPlus
 import uk.q3c.build.gitplus.local.GitBranch
 import uk.q3c.build.gitplus.local.GitLocal
 import uk.q3c.build.gitplus.remote.github.DefaultGitHubRemote
@@ -14,6 +15,12 @@ interface GitRemote : GitRemoteConfiguration, GitRemoteUrlMapper {
 
     val configuration: GitRemoteConfiguration
     val urlMapper: GitRemoteUrlMapper
+
+    /**
+     * Reference to the related local Git instance.  Will not be initialised until [prepare] has been called (invoked by
+     * [GitPlus.execute])
+     */
+    var local: GitLocal
 
     enum class TokenScope {
         RESTRICTED, CREATE_REPO, DELETE_REPO
@@ -107,6 +114,14 @@ interface GitRemote : GitRemoteConfiguration, GitRemoteUrlMapper {
     fun hasBranch(branch: GitBranch): Boolean
 
     fun prepare(local: GitLocal)
+
+    /**
+     * Reads the Git local information (by using the equivalent of 'git remote show origin') to get remote information,
+     * instead of explicitly setting the remote url.  Will fail configuration if local is not active
+     */
+    fun verifyFromLocal()
+
+
 
 
 }

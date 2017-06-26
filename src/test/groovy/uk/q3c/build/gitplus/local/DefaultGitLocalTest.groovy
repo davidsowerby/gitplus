@@ -1,6 +1,7 @@
 package uk.q3c.build.gitplus.local
 
 import com.google.common.collect.ImmutableList
+import com.google.common.collect.ImmutableSet
 import org.apache.commons.io.FileUtils
 import org.eclipse.jgit.api.*
 import org.eclipse.jgit.lib.BranchConfig
@@ -15,6 +16,7 @@ import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
 import uk.q3c.build.gitplus.GitSHA
+import uk.q3c.build.gitplus.gitplus.DefaultGitPlus
 import uk.q3c.build.gitplus.gitplus.FileDeleteApprover
 import uk.q3c.build.gitplus.gitplus.GitPlusConfigurationException
 import uk.q3c.build.gitplus.remote.GitRemote
@@ -171,6 +173,43 @@ class DefaultGitLocalTest extends Specification {
 
     }
 
+    def "getOrigin has no origin defined"() {
+
+        given:
+        Repository repository = Mock(Repository)
+        mockGit.repository >> repository
+        StoredConfig storedConfig = Mock(StoredConfig)
+        repository.config >> storedConfig
+        gitLocal = createGitLocal(true, true, true)
+
+        when: "there is no origin section in stored config"
+        gitLocal.prepare(gitRemote)
+        gitLocal.getOrigin()
+
+        then: "throws exception"
+        1 * gitRemote.repoName >> 'wiggly'
+        1 * storedConfig.getSubsections(DefaultGitPlus.REMOTE) >> ImmutableSet.of("a")
+        thrown GitLocalException
+    }
+
+    def "retrieving origin throws exception, catch & throw GitLocalException"() {
+
+        given:
+        Repository repository = Mock(Repository)
+        mockGit.repository >> repository
+        StoredConfig storedConfig = Mock(StoredConfig)
+        repository.config >> storedConfig
+        gitLocal = createGitLocal(true, true, true)
+
+        when: "there is no origin section in stored config"
+        gitLocal.prepare(gitRemote)
+        gitLocal.getOrigin()
+
+        then: "throws exception"
+        1 * gitRemote.repoName >> 'wiggly'
+        1 * storedConfig.getSubsections(DefaultGitPlus.REMOTE) >> { throw new NullPointerException() }
+        thrown GitLocalException
+    }
 
     def "set origin from remote"() {
         given:
@@ -1044,26 +1083,6 @@ class DefaultGitLocalTest extends Specification {
         gle.message == "Unable to set origin"
     }
 
-
-    def "verify remote from local, passes origin to remote"() {
-        given:
-        createScratchRepo()
-        gitRemote.cloneUrl() >> 'cloneurl.git'
-
-        when:
-        gitLocal.verifyRemoteFromLocal()
-
-        then: "origin has not been set"
-        thrown GitLocalException
-
-        when:
-        gitLocal.setOrigin()
-        gitLocal.verifyRemoteFromLocal()
-
-        then:
-
-        1 * gitRemote.setupFromOrigin('cloneurl.git')
-    }
 
     def "currentCommitHash gets exception, throw GLE"() {
 

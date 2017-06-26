@@ -17,6 +17,11 @@ import uk.q3c.build.gitplus.remote.github.DefaultGitHubRemote
 class DefaultBitBucketRemote @Inject constructor(override val configuration: GitRemoteConfiguration, val bitBucketProvider: BitBucketProvider, val remoteRequest: RemoteRequest, override val urlMapper: BitBucketUrlMapper) :
         BitBucketRemote,
         GitRemoteConfiguration by configuration, GitRemoteUrlMapper by urlMapper {
+    override lateinit var local: GitLocal
+
+    override fun verifyFromLocal() {
+        TODO()
+    }
 
 
     override fun prepare(local: GitLocal) {

@@ -7,7 +7,6 @@ import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
 import uk.q3c.build.gitplus.local.GitCommit
 import uk.q3c.build.gitplus.local.GitLocal
-import uk.q3c.build.gitplus.local.GitLocalException
 import uk.q3c.build.gitplus.local.WikiLocal
 import uk.q3c.build.gitplus.remote.*
 import uk.q3c.build.gitplus.remote.bitbucket.BitBucketRemote
@@ -141,7 +140,7 @@ class DefaultGitPlusTest extends Specification {
         gitplus.execute()
 
         then:
-        1 * local.verifyRemoteFromLocal()
+        1 * gitHubRemote.verifyFromLocal()
     }
 
 
@@ -154,16 +153,6 @@ class DefaultGitPlusTest extends Specification {
         1 * wikiLocal.close()
     }
 
-    def "GitPlusException when createOrVerify fails"() {
-        given:
-        local.verifyRemoteFromLocal() >> { throw new GitLocalException("msg") }
-
-        when:
-        gitplus.execute()
-
-        then:
-        thrown GitPlusException
-    }
 
     /**
      * All this tests is that DefaultGitLocal is called to provide the commits

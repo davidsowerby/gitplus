@@ -52,7 +52,6 @@ open class DefaultGitLocal @Inject constructor(
             localConfiguration.validate(remote)
             git = gitProvider.openRepository(localConfiguration)
             gitInitChecker.setGit(git)
-
         }
     }
 
@@ -484,9 +483,6 @@ open class DefaultGitLocal @Inject constructor(
 
     }
 
-    override fun verifyRemoteFromLocal() {
-        remote.setupFromOrigin(getOrigin())
-    }
 
     private fun extractDateFromIdent(personIdent: PersonIdent): ZonedDateTime {
         return personIdent.`when`.toInstant().atZone(personIdent.timeZone.toZoneId())

@@ -8,6 +8,7 @@ import org.eclipse.jgit.transport.CredentialsProvider
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider
 import org.slf4j.LoggerFactory
 import uk.q3c.build.gitplus.GitSHA
+import uk.q3c.build.gitplus.gitplus.GitPlusConfigurationException
 import uk.q3c.build.gitplus.local.GitBranch
 import uk.q3c.build.gitplus.local.GitLocal
 import uk.q3c.build.gitplus.remote.*
@@ -41,6 +42,7 @@ class DefaultGitHubRemote @Inject constructor(override val configuration: GitRem
     private val log = LoggerFactory.getLogger(this.javaClass.name)
     private var gitHub: Github = getGitHub(RESTRICTED)
     private var currentTokenScope: GitRemote.TokenScope = RESTRICTED
+    lateinit override var local: GitLocal
 
     init {
         urlMapper.parent = this
@@ -246,8 +248,17 @@ class DefaultGitHubRemote @Inject constructor(override val configuration: GitRem
     }
 
     override fun prepare(local: GitLocal) {
+        this.local = local
         if (active) {
             validate(local)
+        }
+    }
+
+    override fun verifyFromLocal() {
+        if (local.active) {
+            setupFromOrigin(local.getOrigin())
+        } else {
+            throw GitPlusConfigurationException("GitRemote cannot be verified from a GitLocal which is not active")
         }
     }
 

@@ -9,9 +9,7 @@ import org.eclipse.jgit.transport.CredentialsProvider
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
-import uk.q3c.build.gitplus.gitplus.DefaultGitPlus
 import uk.q3c.build.gitplus.remote.GitRemote
-
 /**
  * Created by David Sowerby on 30 Oct 2016
  */
@@ -66,27 +64,6 @@ class DefaultWikiLocalTest extends Specification {
         wikiLocal.taggerEmail == 'me@there'
     }
 
-    // https://github.com/davidsowerby/gitplus/issues/107
-    def "Wiki does not set remote repoName"() {
-        given:
-        mockGit.repository >> repository
-        repository.config >> repoConfig
-        repoConfig.getSubsections(DefaultGitPlus.REMOTE) >> remotes
-        remotes.contains(DefaultGitPlus.ORIGIN) >> true
-        repoConfig.getString(DefaultGitPlus.REMOTE, DefaultGitPlus.ORIGIN, DefaultGitPlus.URL) >> "someUrl"
-        localConfiguration.projectName('wiggly').projectDirParent(temp)
-        gitLocal.getProjectName() >> 'wiggly'
-        gitLocal.getProjectDirParent() >> temp
-        gitLocal.getTaggerEmail() >> 'me@there'
-        gitLocal.getTaggerName() >> 'me'
-        wikiLocal.prepare(gitRemote, gitLocal)
-
-        when:
-        wikiLocal.verifyRemoteFromLocal()
-
-        then:
-        0 * gitRemote.setupFromOrigin(_)
-    }
 
     def "push"() {
         given:
