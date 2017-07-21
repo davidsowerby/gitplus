@@ -1,6 +1,6 @@
 //noinspection GrPackage
 buildscript {
-    ext.kotlin_version = '1.1.3'
+    ext.kotlin_version = '1.1.3-2'
     ext.kaytee_plugin_version = '0.12.8.0'
     repositories {
         mavenLocal()
@@ -27,7 +27,7 @@ task wrapper(type: Wrapper) {
 group = 'uk.q3c.build'
 
 kaytee {
-    baseVersion = '0.29.1.0'
+    baseVersion = '0.29.2.0'
     unitTest {
         qualityGate = true
         thresholds {
@@ -61,7 +61,7 @@ dependencies {
 
     //git and github
     compile 'org.eclipse.jgit:org.eclipse.jgit:4.8.0.201706111038-r'
-    compile 'com.jcabi:jcabi-github:0.31'
+    compile 'com.jcabi:jcabi-github:0.32'
 
     //guice
     compile 'com.google.inject:guice:4.1.0'
