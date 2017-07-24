@@ -14,6 +14,7 @@ import uk.q3c.build.gitplus.local.GitLocal
 import uk.q3c.build.gitplus.remote.*
 import uk.q3c.build.gitplus.remote.GitRemote.TokenScope.*
 import java.io.IOException
+import java.lang.AssertionError
 import java.util.*
 
 /**
@@ -65,6 +66,8 @@ class DefaultGitHubRemote @Inject constructor(override val configuration: GitRem
             return GPIssue(repo.issues().get(issueNumber))
         } catch (e: Exception) {
             throw GitRemoteException("Unable to retrieve issue $issueNumber from $remoteRepoName", e)
+        } catch (ae: AssertionError) {
+            throw GitRemoteException("Unable to retrieve issue $issueNumber from $remoteRepoName, number or repo name is probably invalid")
         }
 
     }

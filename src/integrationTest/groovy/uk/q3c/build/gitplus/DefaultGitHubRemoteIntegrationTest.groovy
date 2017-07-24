@@ -11,9 +11,7 @@ import uk.q3c.build.gitplus.gitplus.DefaultGitPlus
 import uk.q3c.build.gitplus.gitplus.GitPlus
 import uk.q3c.build.gitplus.local.GitBranch
 import uk.q3c.build.gitplus.local.PushResponse
-import uk.q3c.build.gitplus.remote.DefaultGitRemoteConfiguration
-import uk.q3c.build.gitplus.remote.DefaultRemoteRequest
-import uk.q3c.build.gitplus.remote.GitRemote
+import uk.q3c.build.gitplus.remote.*
 import uk.q3c.build.gitplus.remote.github.DefaultGitHubProvider
 import uk.q3c.build.gitplus.remote.github.DefaultGitHubRemote
 import uk.q3c.build.gitplus.remote.github.GitHubUrlMapper
@@ -65,11 +63,6 @@ class DefaultGitHubRemoteIntegrationTest extends Specification {
         gitPlus.createLocalAndRemote(temp, 'davidsowerby', 'dummy', true, true)
         gitPlus.remote.mergeIssueLabels = true
 
-//        gitPlus.local.create(true).projectDirParent(temp).projectName('dummy')
-//        gitPlus.remote.repoUser('davidsowerby').create(true).publicProject(true).mergeIssueLabels(true)
-//        gitPlus.wikiLocal.active(true)
-//        gitPlus.wikiLocal.create(true)
-
         when:
         gitPlus.execute()
         createTestIssues(10)
@@ -102,11 +95,22 @@ class DefaultGitHubRemoteIntegrationTest extends Specification {
         GitPlus gitplus2 = GitPlusFactory.instance
         gitplus2.useRemoteOnly('davidsowerby', 'dummy')
         gitplus2.execute()
+        GPIssue issue9 = gitplus2.remote.getIssue(9)
+
+        then: "is a valid issue"
+        issue9.title == "Issue 9 Title"
+
+        when: "issue number is invalid"
+        GPIssue issue20 = gitplus2.remote.getIssue(20)
 
         then:
-        gitplus2.remote.getIssue(9)
+        thrown GitRemoteException
 
+        when: "getIssue has invalid repo"
+        gitplus2.remote.getIssue("davidsowerby", "krail-master", 315)
 
+        then:
+        thrown GitRemoteException
     }
 
     def "create remote only"() {
@@ -123,7 +127,7 @@ class DefaultGitHubRemoteIntegrationTest extends Specification {
 
     def createTestIssues(int number) {
         List<String> labels = ImmutableList.of('bug', 'documentation', 'quality', 'bug', 'task', 'bug', 'performance', 'enhancement', 'task', 'bug')
-        for (int i = 0; i < number; i++) {
+        for (int i = 1; i <= number; i++) {
             gitPlus.remote.createIssue('Issue ' + i + ' Title', 'Some stuff about the issue', labels.get(i % 10))
         }
 
