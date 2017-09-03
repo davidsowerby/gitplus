@@ -6,7 +6,8 @@ import spock.lang.Specification
 import uk.q3c.build.gitplus.gitplus.GitPlusConfigurationException
 import uk.q3c.build.gitplus.local.GitLocal
 
-import static uk.q3c.build.gitplus.ConstantsKt.notSpecified
+import static uk.q3c.build.gitplus.ConstantsKt.*
+
 /**
  * Created by David Sowerby on 31 Oct 2016
  */
@@ -42,6 +43,7 @@ class DefaultGitRemoteConfigurationTest extends Specification {
         ObjectMapper objectMapper = new ObjectMapper()
         StringWriter sw = new StringWriter()
         configuration.repoName('wiggly').projectHomePage('funky.pigeon')
+        configuration.version = 99
 
         when:
         objectMapper.writeValue(sw, configuration)
@@ -49,6 +51,7 @@ class DefaultGitRemoteConfigurationTest extends Specification {
 
         then:
         configuration == configuration2
+        configuration2.version == 99
     }
 
     def "IssueLabels"() {

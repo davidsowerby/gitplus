@@ -14,7 +14,7 @@ import java.io.File
  */
 data class DefaultGitLocalConfiguration(override var projectName: String = notSpecified) : GitLocalConfiguration {
 
-
+    override var version = 1
     override var active = true
     override var cloneExistsResponse = EXCEPTION
     @JsonIgnore
@@ -109,5 +109,6 @@ data class DefaultGitLocalConfiguration(override var projectName: String = notSp
         this.create = other.create
         this.cloneFromRemote = other.cloneFromRemote
         this.projectCreator = other.projectCreator
+        this.version = other.version
     }
 }

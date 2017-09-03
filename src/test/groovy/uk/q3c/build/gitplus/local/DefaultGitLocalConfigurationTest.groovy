@@ -57,6 +57,7 @@ class DefaultGitLocalConfigurationTest extends Specification {
         ObjectMapper objectMapper = new ObjectMapper()
         StringWriter sw = new StringWriter()
         configuration.projectName('wiggly').taggerEmail('funky@pigeon')
+        configuration.setVersion(23)
 
         when:
         objectMapper.writeValue(sw, configuration)
@@ -64,6 +65,7 @@ class DefaultGitLocalConfigurationTest extends Specification {
 
         then:
         configuration == configuration2
+        configuration2.version == 23
     }
 
     def "copyFrom"() {
@@ -71,7 +73,7 @@ class DefaultGitLocalConfigurationTest extends Specification {
         DefaultGitLocalConfiguration configuration2 = new DefaultGitLocalConfiguration()
 
         when: "defaults compared"
-        configuration2.copyFrom(configuration2)
+        configuration2.copyFrom(configuration)
 
         then:
         configuration == configuration2

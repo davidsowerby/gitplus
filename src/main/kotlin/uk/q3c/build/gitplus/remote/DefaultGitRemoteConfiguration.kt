@@ -15,6 +15,7 @@ data class DefaultGitRemoteConfiguration(
 
     : GitRemoteConfiguration {
 
+    override var version = 1
     override var active = true
     override var confirmDelete: String = ""
     @JsonIgnore
@@ -137,6 +138,7 @@ data class DefaultGitRemoteConfiguration(
         this.repoDeleteApprover = other.repoDeleteApprover
         this.providerBaseUrl = other.providerBaseUrl
         this.active = other.active
+        this.version = other.version
     }
 
 

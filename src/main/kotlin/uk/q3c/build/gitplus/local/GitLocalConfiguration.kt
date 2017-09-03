@@ -8,6 +8,10 @@ import java.io.File
  * Created by David Sowerby on 17 Oct 2016
  */
 interface GitLocalConfiguration {
+    /**
+     * Version of configuration structure.  Has to be var to allow loading from JSON
+     */
+    var version: Int
 
     /**
      * If true, the local Git instance is considered active.  Switch to false if you only want to work with the remote

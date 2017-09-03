@@ -12,6 +12,11 @@ import uk.q3c.build.gitplus.local.GitLocalConfiguration
  */
 interface GitRemoteConfiguration {
     /**
+     * Version of configuration structure. Has to be var to allow loading from JSON
+     */
+    var version: Int
+
+    /**
      * If true, the remote Git instance is considered active.  Switch to false if you only want to work with the local
      * instance
      */
