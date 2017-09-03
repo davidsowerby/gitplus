@@ -33,7 +33,7 @@ class DefaultGitHubRemoteTest2 extends Specification {
     def "headCommit()"() {
         given:
         remote.repoUser = 'davidsowerby'
-        remote.repoName = 'q3c-testUtil'
+        remote.repoName = 'q3c-testutils'
 
         when:
         String result1 = remote.headCommit(new GitBranch('develop'))
@@ -46,13 +46,14 @@ class DefaultGitHubRemoteTest2 extends Specification {
 
     def "head commit for local and remote, clone wiki"() {
         given:
-        final String projectName = 'q3c-testUtil'
+        final String projectName = 'q3c-testutils'
         final String remoteUser = 'davidsowerby'
         gitPlus.cloneFromRemote(temp, remoteUser, projectName, true)
 
 
         when:
         gitPlus.execute()
+        gitPlus.local.checkoutRemoteBranch(new GitBranch("develop"))
         String remote1 = gitPlus.remote.headCommit(new GitBranch('develop'))
         String remote2 = gitPlus.remote.developHeadCommit()
         String local1 = gitPlus.local.headCommitSHA(new GitBranch('develop'))

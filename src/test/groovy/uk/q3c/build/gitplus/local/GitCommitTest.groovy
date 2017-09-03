@@ -32,13 +32,14 @@ class GitCommitTest extends Specification {
     }
 
 
-    def "construct, equals and hashcode"() {
+    def "commit details correct"() {
         given:
-        gitPlus.local.projectDirParent(temp).cloneFromRemote(true).projectName('q3c-testUtil')
-        gitPlus.remote.repoUser('davidsowerby').repoName('q3c-testUtil')
+        gitPlus.local.projectDirParent(temp).cloneFromRemote(true).projectName('q3c-testutils')
+        gitPlus.remote.repoUser('davidsowerby').repoName('q3c-testutils')
         gitPlus.execute()
 
         when:
+        gitPlus.local.checkoutRemoteBranch(new GitBranch('develop'))
         ImmutableList<GitCommit> commits = gitPlus.local.extractDevelopCommits() // develop is default branch
         GitCommit commit1 = commits.get(commits.size() - 1)
         GitCommit commit2 = commits.get(commits.size() - 2)

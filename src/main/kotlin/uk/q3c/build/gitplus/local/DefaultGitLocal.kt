@@ -9,6 +9,7 @@ import org.eclipse.jgit.dircache.DirCache
 import org.eclipse.jgit.internal.storage.file.FileRepository
 import org.eclipse.jgit.lib.Constants
 import org.eclipse.jgit.lib.PersonIdent
+import org.eclipse.jgit.lib.Ref
 import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.merge.MergeStrategy
 import org.eclipse.jgit.revwalk.RevCommit
@@ -85,6 +86,23 @@ open class DefaultGitLocal @Inject constructor(
             git.close()
         } catch (uip: UninitializedPropertyAccessException) {
             // do nothing, if git was not initialised we do not need to close it
+        }
+    }
+
+    override fun checkoutRemoteBranch(branch: GitBranch): Ref {
+        try {
+            val ref = git.checkout()
+                    .setCreateBranch(true).setName(branch.name)
+                    .setUpstreamMode(CreateBranchCommand.SetupUpstreamMode.TRACK)
+                    .setStartPoint("origin/${branch.name}")
+                    .call()
+            if (ref == null) {
+                throw GitLocalException("JGit unable to checkout remote branch ${branch.name}")
+            } else {
+                return ref
+            }
+        } catch (e: Exception) {
+            throw GitLocalException("Failed to checkout remote branch ${branch.name}", e)
         }
     }
 
@@ -585,7 +603,7 @@ open class DefaultGitLocal @Inject constructor(
             }
             mergeFailMsg = mergeResult.toString()
 
-        } catch(e: Exception) {
+        } catch (e: Exception) {
             throw GitLocalException("Exception thrown during merge", e)
         }
         // mergeResult is not successful

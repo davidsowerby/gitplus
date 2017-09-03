@@ -6,3 +6,4 @@ gitplus.ipr
 build/*
 .gradle
 classes
+out

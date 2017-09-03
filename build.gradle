@@ -1,7 +1,7 @@
 //noinspection GrPackage
 buildscript {
-    ext.kotlin_version = '1.1.3-2'
-    ext.kaytee_plugin_version = '0.15.2.0'
+    ext.kotlin_version = '1.1.4-2'
+    ext.kaytee_plugin_version = '0.18.2.0'
     repositories {
         mavenLocal()
         maven {
@@ -21,13 +21,15 @@ apply plugin: 'kotlin'
 apply plugin: 'uk.q3c.kaytee'
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '3.2.1'
+    gradleVersion = '4.1'
 }
 
 group = 'uk.q3c.build'
 
 kaytee {
-    baseVersion = '0.29.3.0'
+    version{
+        number = '0.30.0.0'
+    }
     unitTest {
         qualityGate = true
         thresholds {
@@ -44,9 +46,9 @@ bintray {
     user = 'dsowerby'
 }
 
-ext.assertjVersion = '3.3.0'
+ext.assertjVersion = '3.8.0'
 ext.commonsLangVersion = '3.3.2'
-ext.guavaVersion = '19.0'
+ext.guavaVersion = '23.0'
 
 repositories {
     jcenter()
@@ -56,8 +58,8 @@ repositories {
 dependencies {
 
     // JSON
-    compile 'com.fasterxml.jackson.core:jackson-annotations:2.8.8'
-    compile 'com.fasterxml.jackson.core:jackson-databind:2.8.8'
+    compile 'com.fasterxml.jackson.core:jackson-annotations:2.9.0'
+    compile 'com.fasterxml.jackson.core:jackson-databind:2.9.0'
 
     //git and github
     compile 'org.eclipse.jgit:org.eclipse.jgit:4.8.0.201706111038-r'
@@ -72,15 +74,15 @@ dependencies {
     compile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
 
     //Logging
-    compile 'org.slf4j:slf4j-api:1.7.5'
-    compile 'ch.qos.logback:logback-classic:1.1.2'
-    compile 'ch.qos.logback:logback-core:1.1.2'
+    compile 'org.slf4j:slf4j-api:1.7.25'
+    compile 'ch.qos.logback:logback-classic:1.2.3'
+    compile 'ch.qos.logback:logback-core:1.2.3'
 
     //unit testing
-    testCompile 'org.spockframework:spock-core:1.0-groovy-2.4'
-    testCompile 'cglib:cglib-nodep:3.2.0' // needed for Spock mocking
-    testCompile 'org.objenesis:objenesis:2.2' // needed for Spock mocking
-    testCompile 'org.spockframework:spock-guice:1.0-groovy-2.4' // Spock with Guice
+    testCompile 'org.spockframework:spock-core:1.1-groovy-2.4'
+    testCompile 'cglib:cglib-nodep:3.2.5' // needed for Spock mocking
+    testCompile 'org.objenesis:objenesis:2.6' // needed for Spock mocking
+    testCompile 'org.spockframework:spock-guice:1.1-groovy-2.4' // Spock with Guice
 
 
 }

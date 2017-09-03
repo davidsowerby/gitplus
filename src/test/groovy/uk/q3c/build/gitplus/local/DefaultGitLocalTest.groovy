@@ -21,8 +21,7 @@ import uk.q3c.build.gitplus.gitplus.FileDeleteApprover
 import uk.q3c.build.gitplus.gitplus.GitPlusConfigurationException
 import uk.q3c.build.gitplus.remote.GitRemote
 
-import static uk.q3c.build.gitplus.local.CloneExistsResponse.DELETE
-import static uk.q3c.build.gitplus.local.CloneExistsResponse.PULL
+import static uk.q3c.build.gitplus.local.CloneExistsResponse.*
 
 /**
  * Created by David Sowerby on 17 Mar 2016
@@ -520,7 +519,7 @@ class DefaultGitLocalTest extends Specification {
     def "checkout specific commit"() {
 
         given:
-        final String testProject = 'q3c-testUtil'
+        final String testProject = 'q3c-testutils'
         gitRemote.repoUser >> 'davidsowerby'
         gitRemote.repoName >> testProject
         gitRemote.repoBaselUrl() >> 'https://github.com/davidsowerby/' + testProject
@@ -528,16 +527,11 @@ class DefaultGitLocalTest extends Specification {
         gitLocal = createGitLocal(false, false, false)
         gitLocal.remote = gitRemote
         configuration.projectName(testProject).projectDirParent(temp).cloneFromRemote(true)
-        String commitHash = 'f6d1f2269daefeb4375ef5d2a2c2400101df6aa5'
+        String commitHash = 'bbc4185540916d9d5f1fb5114b9181f50d444c45'
         gitLocal.prepare(gitRemote)
 
         when:
         gitLocal.cloneRemote()
-
-        then:
-        gitLocal.currentBranch().equals(gitLocal.developBranch())
-
-        when:
         gitLocal.checkoutCommit(new GitSHA(commitHash))
 
         then:
@@ -552,13 +546,9 @@ class DefaultGitLocalTest extends Specification {
         gitLocal.currentCommitHash().equals(commitHash)
     }
 
-    /**
-     * Uses existing project as older commits will not then be subject to change
-     */
-    def "checkout specific commit using new branch"() {
-
+    def "checkout remote branch"() {
         given:
-        final String testProject = 'q3c-testUtil'
+        final String testProject = 'q3c-testutils'
         gitRemote.repoUser >> 'davidsowerby'
         gitRemote.repoName >> testProject
         gitRemote.repoBaselUrl() >> 'https://github.com/davidsowerby/' + testProject
@@ -566,14 +556,51 @@ class DefaultGitLocalTest extends Specification {
         gitLocal = createGitLocal(false, false, false)
         gitLocal.remote = gitRemote
         configuration.projectName(testProject).projectDirParent(temp).cloneFromRemote(true)
-        String commitHash = 'f6d1f2269daefeb4375ef5d2a2c2400101df6aa5'
+        gitLocal.prepare(gitRemote)
+
+        when: "branch is valid"
+        gitLocal.cloneRemote()
+        gitLocal.checkoutRemoteBranch(new GitBranch("develop"))
+
+        then: "is successful"
+        gitLocal.currentBranch().equals(gitLocal.developBranch())
+
+        when: "name does not exist remotely"
+        gitLocal.checkoutRemoteBranch(new GitBranch("rubbish"))
+
+        then: "exception thrown"
+        thrown GitLocalException
+
+        when: "branch already exists"
+        gitLocal.checkoutRemoteBranch(new GitBranch("develop"))
+
+        then: "exception thrown"
+        thrown GitLocalException
+
+
+    }
+/**
+     * Uses existing project as older commits will not then be subject to change
+     */
+    def "checkout specific commit using new branch"() {
+
+        given:
+        final String testProject = 'q3c-testutils'
+        gitRemote.repoUser >> 'davidsowerby'
+        gitRemote.repoName >> testProject
+        gitRemote.repoBaselUrl() >> 'https://github.com/davidsowerby/' + testProject
+        gitRemote.cloneUrl() >> 'https://github.com/davidsowerby/' + testProject + ".git"
+        gitLocal = createGitLocal(false, false, false)
+        gitLocal.remote = gitRemote
+        configuration.projectName(testProject).projectDirParent(temp).cloneFromRemote(true)
+        String commitHash = 'bbc4185540916d9d5f1fb5114b9181f50d444c45'
         gitLocal.prepare(gitRemote)
 
         when:
         gitLocal.cloneRemote()
 
         then:
-        gitLocal.currentBranch().equals(gitLocal.developBranch())
+        gitLocal.currentBranch().equals(gitLocal.masterBranch())
 
         when:
         gitLocal.checkoutCommit(new GitSHA(commitHash), "temptest")

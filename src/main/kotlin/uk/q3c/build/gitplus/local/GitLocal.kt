@@ -1,18 +1,19 @@
 package uk.q3c.build.gitplus.local
 
 import com.google.common.collect.ImmutableList
+import org.eclipse.jgit.api.CheckoutCommand
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.MergeCommand.FastForwardMode
 import org.eclipse.jgit.api.MergeCommand.FastForwardMode.FF
 import org.eclipse.jgit.api.MergeResult
 import org.eclipse.jgit.api.Status
 import org.eclipse.jgit.dircache.DirCache
+import org.eclipse.jgit.lib.Ref
 import org.eclipse.jgit.merge.MergeStrategy
 import uk.q3c.build.gitplus.GitSHA
 import uk.q3c.build.gitplus.gitplus.GitPlusConfigurationException
 import uk.q3c.build.gitplus.remote.GitRemote
 import java.io.File
-
 /**
  * Created by David Sowerby on 17 Oct 2016
  */
@@ -28,12 +29,13 @@ interface GitLocal : GitLocalConfiguration, AutoCloseable {
     fun init()
 
     /**
-     * Clones the remote repo to local.  The clone url is taken from [.configuration].  If a local directory already exists which would have to be
+     * Clones the remote repo to local.  The clone url is taken from [localConfiguration].  If a local directory already exists which would have to be
      * overwritten (presumably because of an earlier clone), the outcome is determined by [localConfiguration.getCloneExistsResponse]:
      *  1. DELETE - deletes the local copy and clones from remote
      *  1. PULL - executes a Git 'pull' instead of a clone
      *  1. EXCEPTION - throws a GitLocalException
      *
+     *  Note that JGit behaves differently to Git CLI, from GitHub at least.  Git clones and checks out the default branch, JGit clones and checks out the 'master' branch*
      */
     fun cloneRemote()
 
@@ -269,4 +271,10 @@ interface GitLocal : GitLocalConfiguration, AutoCloseable {
      */
     fun mergeBranch(branch: GitBranch, strategy: MergeStrategy = MergeStrategy.THEIRS, fastForward: FastForwardMode = FF): MergeResult
 
+    /**
+     * Creates a local branch, sets it to tracking the remote branch, and checks out
+     *
+     * @throws GitLocalException wrapping any of the exceptions from [CheckoutCommand.call], or if JGit returns null from the underlying [CheckoutCommand.call]
+     */
+    fun checkoutRemoteBranch(branch: GitBranch): Ref
 }
