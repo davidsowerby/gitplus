@@ -10,28 +10,28 @@ import uk.q3c.build.gitplus.remote.github.DefaultGitHubProvider
 import uk.q3c.build.gitplus.remote.github.DefaultGitHubRemote
 import uk.q3c.build.gitplus.remote.github.GitHubRemote
 import uk.q3c.build.gitplus.remote.github.GitHubUrlMapper
-import uk.q3c.build.gitplus.util.FileBuildPropertiesLoader
+import uk.q3c.build.gitplus.util.PropertiesResolver
 
-import static uk.q3c.build.gitplus.remote.ServiceProvider.BITBUCKET
-import static uk.q3c.build.gitplus.remote.ServiceProvider.GITHUB
+import static uk.q3c.build.gitplus.remote.ServiceProvider.*
 
 /**
  * Created by David Sowerby on 26 Oct 2016
  */
 class DefaultGitRemoteResolverTest extends Specification {
 
-
+    PropertiesResolver apiPropertiesResolver = Mock(PropertiesResolver)
     static GitRemoteConfiguration gitRemoteConfiguration1 = new DefaultGitRemoteConfiguration()
     GitRemoteConfiguration gitRemoteConfiguration2 = new DefaultGitRemoteConfiguration()
 
 
     Map<ServiceProvider, Provider<GitRemote>> serviceProviders
 
-    GitHubRemote gitHubRemote = new DefaultGitHubRemote(gitRemoteConfiguration2, new DefaultGitHubProvider(new FileBuildPropertiesLoader()), new DefaultRemoteRequest(), new GitHubUrlMapper())
+    GitHubRemote gitHubRemote = new DefaultGitHubRemote(gitRemoteConfiguration2, new DefaultGitHubProvider(), new DefaultRemoteRequest(), new GitHubUrlMapper())
     Provider<GitHubRemote> gitHubProvider = Mock(Provider)
 
     BitBucketRemote bitBucketRemote = new DefaultBitBucketRemote(gitRemoteConfiguration2, new DefaultBitBucketProvider(), new DefaultRemoteRequest(), new BitBucketUrlMapper())
     Provider<BitBucketRemote> bitBucketProvider = Mock(Provider)
+
 
     def setup() {
         gitHubProvider.get() >> gitHubRemote

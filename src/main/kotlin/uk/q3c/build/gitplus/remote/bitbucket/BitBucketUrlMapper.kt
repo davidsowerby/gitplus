@@ -8,6 +8,6 @@ import uk.q3c.build.gitplus.remote.DefaultGitRemoteUrlMapper
 class BitBucketUrlMapper : DefaultGitRemoteUrlMapper() {
 
     override fun cloneUrl(): String {
-        return "https://${parent.repoUser}@${parent.providerBaseUrl}"
+        return "https://${owner.repoUser}@${owner.providerBaseUrl}"
     }
 }

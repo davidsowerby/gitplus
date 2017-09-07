@@ -1,41 +1,33 @@
 package uk.q3c.build.gitplus.remote.github
 
-import com.google.inject.Inject
 import com.jcabi.github.Github
 import com.jcabi.github.RtGithub
+import com.jcabi.http.wire.RetryWire
 import uk.q3c.build.gitplus.remote.GitRemote.TokenScope
-import uk.q3c.build.gitplus.remote.GitRemoteConfiguration
 import uk.q3c.build.gitplus.remote.ServiceProvider
-import uk.q3c.build.gitplus.util.BuildPropertiesLoader
+import uk.q3c.build.gitplus.util.PropertiesResolver
+
 
 /**
  * Created by David Sowerby on 21 Mar 2016
  */
-class DefaultGitHubProvider @Inject constructor(val propertiesLoader: BuildPropertiesLoader) : GitHubProvider {
 
-    val serviceProvider: ServiceProvider = ServiceProvider.GITHUB
+class DefaultGitHubProvider : GitHubProvider {
 
-    override operator fun get(configuration: GitRemoteConfiguration, tokenScope: TokenScope): Github {
-        val token: String
+    override fun get(propertiesResolver: PropertiesResolver, tokenScope: TokenScope): Github {
         when (tokenScope) {
-            TokenScope.RESTRICTED -> token = apiTokenRestricted()
-            TokenScope.CREATE_REPO -> token = apiTokenCreateRepo()
-            TokenScope.DELETE_REPO -> token = apiTokenDeleteRepo()
+            TokenScope.CREATE_ISSUE -> return create(propertiesResolver.apiTokenIssueCreate(ServiceProvider.GITHUB))
+            TokenScope.CREATE_REPO -> return create(propertiesResolver.apiTokenRepoCreate(ServiceProvider.GITHUB))
+            TokenScope.DELETE_REPO -> return create(propertiesResolver.apiTokenRepoDelete(ServiceProvider.GITHUB))
         }
-        return RtGithub(token)
     }
 
-    override fun apiTokenRestricted(): String {
-        return propertiesLoader.apiTokenRestricted(serviceProvider)
+    fun create(oauthKey: String): RtGithub {
+        return RtGithub(
+                RtGithub(oauthKey).entry().through(RetryWire::class.java)
+        )
     }
 
 
-    override fun apiTokenCreateRepo(): String {
-        return propertiesLoader.apiTokenRepoCreate(serviceProvider)
-    }
-
-    override fun apiTokenDeleteRepo(): String {
-        return propertiesLoader.apiTokenRepoDelete(serviceProvider)
-    }
 }
 

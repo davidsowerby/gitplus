@@ -2,6 +2,7 @@ package uk.q3c.build.gitplus.local
 
 import org.eclipse.jgit.api.Git
 import spock.lang.Specification
+import uk.q3c.build.gitplus.gitplus.GitPlus
 import uk.q3c.build.gitplus.remote.GitRemote
 
 /**
@@ -16,15 +17,17 @@ class DefaultGitLocalTest2 extends Specification {
     GitRemote remote = Mock(GitRemote)
     Git git = Mock(Git)
     GitInitChecker mockInitChecker = Mock(GitInitChecker)
+    GitPlus gitPlus = Mock(GitPlus)
 
     def setup() {
+        gitPlus.remote >> remote
         gitLocal = new DefaultGitLocal(branchConfigProvider, gitProvider, localConfiguration, mockInitChecker, new DefaultGitCloner())
     }
 
     def "prepare does not validate if not active"() {
 
         when:
-        gitLocal.prepare(remote)
+        gitLocal.prepare(gitPlus)
 
         then:
         1 * localConfiguration.getActive() >> true
@@ -33,7 +36,7 @@ class DefaultGitLocalTest2 extends Specification {
 
         when:
         gitLocal.active = false
-        gitLocal.prepare(remote)
+        gitLocal.prepare(gitPlus)
 
         then:
         1 * localConfiguration.getActive() >> false

@@ -10,11 +10,13 @@ import org.eclipse.jgit.transport.URIish
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider
 import spock.lang.Specification
 import uk.q3c.build.gitplus.GitSHA
+import uk.q3c.build.gitplus.gitplus.GitPlus
 import uk.q3c.build.gitplus.gitplus.GitPlusConfigurationException
 import uk.q3c.build.gitplus.local.GitBranch
 import uk.q3c.build.gitplus.local.GitLocal
 import uk.q3c.build.gitplus.remote.*
-import uk.q3c.build.gitplus.util.FileBuildPropertiesLoader
+import uk.q3c.build.gitplus.util.APIProperty
+import uk.q3c.build.gitplus.util.FilePropertiesLoader
 
 import javax.json.JsonObject
 import javax.json.JsonReader
@@ -39,6 +41,8 @@ class DefaultGitHubRemoteTest extends Specification {
     GitHubProvider gitHubProvider = Mock(GitHubProvider)
     RemoteRequest remoteRequest = Mock(RemoteRequest)
     Repo repo
+    GitPlus gitPlus = Mock(GitPlus)
+    GitLocal gitLocal = Mock(GitLocal)
 
 
     def setup() {
@@ -50,6 +54,7 @@ class DefaultGitHubRemoteTest extends Specification {
         scratchConfiguration = new DefaultGitRemoteConfiguration().repoUser(USER).repoName('scratch')
         dummyConfiguration = new DefaultGitRemoteConfiguration().repoUser(USER).repoName('dummy')
         emptyConfiguration = new DefaultGitRemoteConfiguration()
+        gitPlus.local >> gitLocal
 
     }
 
@@ -76,8 +81,9 @@ class DefaultGitHubRemoteTest extends Specification {
         mockRepos.get(new Coordinates.Simple(USER, 'dummy')) >> mockRepo
         mockRepo.branches() >> branches
         branches.iterate() >> branchIterable
-        gitHubProvider.get(dummyConfiguration, GitRemote.TokenScope.RESTRICTED) >> mockGitHub
+        gitHubProvider.get(gitPlus, GitRemote.TokenScope.CREATE_ISSUE) >> mockGitHub
         remote = new DefaultGitHubRemote(dummyConfiguration, gitHubProvider, remoteRequest, new GitHubUrlMapper())
+        remote.prepare(gitPlus)
 
 
         when:
@@ -109,11 +115,10 @@ class DefaultGitHubRemoteTest extends Specification {
         given:
         GitRemoteConfiguration configuration = new DefaultGitRemoteConfiguration()
         remote = new DefaultGitHubRemote(configuration, gitHubProvider, remoteRequest, new GitHubUrlMapper())
-        GitLocal gitLocal = Mock(GitLocal)
         gitLocal.projectName >> 'wiggly'
 
         when:
-        remote.prepare(gitLocal)
+        remote.prepare(gitPlus)
 
         then: "validate fails"
         thrown GitPlusConfigurationException
@@ -123,18 +128,21 @@ class DefaultGitHubRemoteTest extends Specification {
 
         when:
         remote = new DefaultGitHubRemote(null, gitHubProvider, remoteRequest, new GitHubUrlMapper())
+        remote.propertiesResolver = gitPlus
 
         then:
         thrown IllegalArgumentException
 
         when:
         remote = new DefaultGitHubRemote(scratchConfiguration, null, remoteRequest, new GitHubUrlMapper())
+        remote.prepare(gitPlus)
 
         then:
         thrown IllegalArgumentException
 
         when:
         remote = new DefaultGitHubRemote(scratchConfiguration, gitHubProvider, null, new GitHubUrlMapper())
+        remote.prepare(gitPlus)
 
         then:
         thrown IllegalArgumentException
@@ -144,6 +152,7 @@ class DefaultGitHubRemoteTest extends Specification {
     def "fix words"() {
         given:
         remote = new DefaultGitHubRemote(krailConfiguration, gitHubProvider, remoteRequest, new GitHubUrlMapper())
+        remote.prepare(gitPlus)
 
         expect:
         remote.isIssueFixWord("fix")
@@ -158,8 +167,9 @@ class DefaultGitHubRemoteTest extends Specification {
     def "get issue, user repo and issue number"() {
         given:
         repo.issues().create('title', 'body')
-        gitHubProvider.get(dummyConfiguration, GitRemote.TokenScope.RESTRICTED) >> gitHub
+        gitHubProvider.get(gitPlus, GitRemote.TokenScope.CREATE_ISSUE) >> gitHub
         remote = new DefaultGitHubRemote(dummyConfiguration, gitHubProvider, remoteRequest, new GitHubUrlMapper())
+        remote.prepare(gitPlus)
 
         when:
         GPIssue issue = remote.getIssue(USER, 'dummy', 1)
@@ -183,8 +193,9 @@ class DefaultGitHubRemoteTest extends Specification {
     def "get issue, user repo and issue number, not current repo"() {
         given:
         repo.issues().create('title', 'body')
-        gitHubProvider.get(scratchConfiguration, GitRemote.TokenScope.RESTRICTED) >> gitHub
+        gitHubProvider.get(gitPlus, GitRemote.TokenScope.CREATE_ISSUE) >> gitHub
         remote = new DefaultGitHubRemote(scratchConfiguration, gitHubProvider, remoteRequest, new GitHubUrlMapper())
+        remote.prepare(gitPlus)
 
         when:
         GPIssue issue = remote.getIssue(USER, 'dummy', 1)
@@ -197,8 +208,9 @@ class DefaultGitHubRemoteTest extends Specification {
         given:
 
         repo.issues().create('title', 'body')
-        gitHubProvider.get(dummyConfiguration, GitRemote.TokenScope.RESTRICTED) >> gitHub
+        gitHubProvider.get(gitPlus, GitRemote.TokenScope.CREATE_ISSUE) >> gitHub
         remote = new DefaultGitHubRemote(dummyConfiguration, gitHubProvider, remoteRequest, new GitHubUrlMapper())
+        remote.prepare(gitPlus)
 
         when:
         GPIssue issue = remote.getIssue(1)
@@ -210,13 +222,13 @@ class DefaultGitHubRemoteTest extends Specification {
 
     def "api status, all possible return values"() {
         given:
-        String apiKey = new FileBuildPropertiesLoader().apiTokenRestricted(ServiceProvider.GITHUB)
-        gitHubProvider.apiTokenRestricted() >> apiKey
-        gitHubProvider.get(krailConfiguration, GitRemote.TokenScope.RESTRICTED) >> gitHub
+        String apiKey = new FilePropertiesLoader().getPropertyValue(APIProperty.ISSUE_CREATE_TOKEN, ServiceProvider.GITHUB)
+        gitPlus.apiTokenIssueCreate(ServiceProvider.GITHUB) >> apiKey
+        gitHubProvider.get(gitPlus, GitRemote.TokenScope.CREATE_ISSUE) >> gitHub
         JsonReader jsonReader = Mock(JsonReader)
         JsonObject jsonObject = Mock(JsonObject)
         remote = new DefaultGitHubRemote(krailConfiguration, gitHubProvider, remoteRequest, new GitHubUrlMapper())
-
+        remote.prepare(gitPlus)
 
         when:
         DefaultGitHubRemote.Status result = remote.apiStatus()
@@ -237,9 +249,10 @@ class DefaultGitHubRemoteTest extends Specification {
 
     def "api not available to return status"() {
         given:
-        String apiKey = new FileBuildPropertiesLoader().apiTokenRestricted(ServiceProvider.GITHUB)
-        gitHubProvider.apiTokenRestricted() >> apiKey
+        String apiKey = new FilePropertiesLoader().getPropertyValue(APIProperty.ISSUE_CREATE_TOKEN, ServiceProvider.GITHUB)
+        gitPlus.apiTokenIssueCreate(ServiceProvider.GITHUB) >> apiKey
         remote = new DefaultGitHubRemote(krailConfiguration, gitHubProvider, remoteRequest, new GitHubUrlMapper())
+        remote.prepare(gitPlus)
 
         when:
         DefaultGitHubRemote.Status result = remote.apiStatus()
@@ -251,8 +264,9 @@ class DefaultGitHubRemoteTest extends Specification {
 
     def "create issue"() {
         given:
-        gitHubProvider.get(dummyConfiguration, GitRemote.TokenScope.RESTRICTED) >> gitHub
+        gitHubProvider.get(gitPlus, GitRemote.TokenScope.CREATE_ISSUE) >> gitHub
         remote = new DefaultGitHubRemote(dummyConfiguration, gitHubProvider, remoteRequest, new GitHubUrlMapper())
+        remote.prepare(gitPlus)
         final String TITLE = 'title'
         final String BODY = 'body'
         final String[] LABELS = ['bug', 'build'] as String
@@ -270,20 +284,24 @@ class DefaultGitHubRemoteTest extends Specification {
 
     def "credentials provider"() {
         given:
-        gitHubProvider.get(dummyConfiguration, GitRemote.TokenScope.RESTRICTED) >> gitHub
+        String apiKey = new FilePropertiesLoader().getPropertyValue(APIProperty.ISSUE_CREATE_TOKEN, ServiceProvider.GITHUB)
+        gitPlus.apiTokenIssueCreate(ServiceProvider.GITHUB) >> apiKey
+        gitHubProvider.get(gitPlus, GitRemote.TokenScope.CREATE_ISSUE) >> gitHub
         remote = new DefaultGitHubRemote(dummyConfiguration, gitHubProvider, remoteRequest, new GitHubUrlMapper())
+        remote.prepare(gitPlus)
 
         expect:
         remote.getCredentialsProvider() instanceof UsernamePasswordCredentialsProvider
-        passwordMatches(remote.getCredentialsProvider() as UsernamePasswordCredentialsProvider, gitHubProvider.apiTokenRestricted())
+        passwordMatches(remote.getCredentialsProvider() as UsernamePasswordCredentialsProvider, gitPlus.apiTokenIssueCreate(ServiceProvider.GITHUB))
     }
 
 
     def "credentials provider exception"() {
         given:
         GitRemoteConfiguration mockConfiguration = Mock(GitRemoteConfiguration)
-        gitHubProvider.apiTokenRestricted() >> { throw new IOException() }
+        gitPlus.apiTokenIssueCreate(ServiceProvider.GITHUB) >> { throw new IOException("Fake exception") }
         remote = new DefaultGitHubRemote(mockConfiguration, gitHubProvider, remoteRequest, new GitHubUrlMapper())
+        remote.prepare(gitPlus)
 
         when:
         remote.getCredentialsProvider()
@@ -298,8 +316,9 @@ class DefaultGitHubRemoteTest extends Specification {
         Repos repos = Mock(Repos)
         Github gitHub1 = Mock(Github)
         gitHub1.repos() >> repos
-        gitHubProvider.get(dummyConfiguration, GitRemote.TokenScope.RESTRICTED) >> gitHub1
+        gitHubProvider.get(gitPlus, GitRemote.TokenScope.CREATE_ISSUE) >> gitHub1
         remote = new DefaultGitHubRemote(dummyConfiguration, gitHubProvider, remoteRequest, new GitHubUrlMapper())
+        remote.prepare(gitPlus)
 
         when:
         remote.deleteRepo()
@@ -312,8 +331,9 @@ class DefaultGitHubRemoteTest extends Specification {
     def "delete repo"() {
         given:
         dummyConfiguration.confirmDelete("I really, really want to delete the davidsowerby/dummy repo from GitHub")
-        gitHubProvider.get(dummyConfiguration, GitRemote.TokenScope.DELETE_REPO) >> gitHub
+        gitHubProvider.get(gitPlus, GitRemote.TokenScope.DELETE_REPO) >> gitHub
         remote = new DefaultGitHubRemote(dummyConfiguration, gitHubProvider, remoteRequest, new GitHubUrlMapper())
+        remote.prepare(gitPlus)
         repo = gitHub.repos().get(dummyCoordinates) // make sure set up is correct
 
         when:
@@ -331,10 +351,11 @@ class DefaultGitHubRemoteTest extends Specification {
         repos.create(_) >> { throw new IOException() }
         Github gitHub1 = Mock(Github)
         gitHub1.repos() >> repos
-        gitHubProvider.get(dummyConfiguration, GitRemote.TokenScope.CREATE_REPO) >> gitHub1
+        gitHubProvider.get(gitPlus, GitRemote.TokenScope.CREATE_REPO) >> gitHub1
 
         dummyConfiguration.publicProject(true)
         remote = new DefaultGitHubRemote(dummyConfiguration, gitHubProvider, remoteRequest, new GitHubUrlMapper())
+        remote.prepare(gitPlus)
 
         when:
         remote.createRepo()
@@ -346,9 +367,10 @@ class DefaultGitHubRemoteTest extends Specification {
 
     def "create repo successful, no label merge"() {
         given:
-        gitHubProvider.get(dummyConfiguration, GitRemote.TokenScope.CREATE_REPO) >> gitHub
-        gitHubProvider.get(dummyConfiguration, GitRemote.TokenScope.RESTRICTED) >> gitHub // for call to getLabelsAsMap()
+        gitHubProvider.get(gitPlus, GitRemote.TokenScope.CREATE_REPO) >> gitHub
+        gitHubProvider.get(gitPlus, GitRemote.TokenScope.CREATE_ISSUE) >> gitHub // for call to getLabelsAsMap()
         remote = new DefaultGitHubRemote(dummyConfiguration, gitHubProvider, remoteRequest, new GitHubUrlMapper())
+        remote.prepare(gitPlus)
 
         when:
         remote.createRepo()
@@ -361,9 +383,10 @@ class DefaultGitHubRemoteTest extends Specification {
     def "create repo successful, with label merge"() {
         given:
         dummyConfiguration.mergeIssueLabels(true)
-        gitHubProvider.get(dummyConfiguration, GitRemote.TokenScope.CREATE_REPO) >> gitHub
-        gitHubProvider.get(dummyConfiguration, GitRemote.TokenScope.RESTRICTED) >> gitHub // for call to mergeLabels()
+        gitHubProvider.get(gitPlus, GitRemote.TokenScope.CREATE_REPO) >> gitHub
+        gitHubProvider.get(gitPlus, GitRemote.TokenScope.CREATE_ISSUE) >> gitHub // for call to mergeLabels()
         remote = new DefaultGitHubRemote(dummyConfiguration, gitHubProvider, remoteRequest, new GitHubUrlMapper())
+        remote.prepare(gitPlus)
 
         when:
         remote.createRepo()
@@ -376,8 +399,9 @@ class DefaultGitHubRemoteTest extends Specification {
 
     def "get urls"() {
         given:
-        gitHubProvider.get(dummyConfiguration, GitRemote.TokenScope.RESTRICTED) >> gitHub
+        gitHubProvider.get(gitPlus, GitRemote.TokenScope.CREATE_ISSUE) >> gitHub
         remote = new DefaultGitHubRemote(dummyConfiguration, gitHubProvider, remoteRequest, new GitHubUrlMapper())
+        remote.prepare(gitPlus)
 
         expect:
         remote.tagUrl() == "https://github.com/davidsowerby/dummy/tree/"
@@ -393,8 +417,9 @@ class DefaultGitHubRemoteTest extends Specification {
     def "listRepoNames"() {
         given:
         createSomeRepos()
-        gitHubProvider.get(dummyConfiguration, GitRemote.TokenScope.RESTRICTED) >> gitHub
+        gitHubProvider.get(gitPlus, GitRemote.TokenScope.CREATE_ISSUE) >> gitHub
         remote = new DefaultGitHubRemote(dummyConfiguration, gitHubProvider, remoteRequest, new GitHubUrlMapper())
+        remote.prepare(gitPlus)
 
         expect:
         remote.listRepositoryNames().containsAll(ImmutableList.of('krail', 'krail-jpa', 'scratch', 'dummy'))
@@ -404,8 +429,9 @@ class DefaultGitHubRemoteTest extends Specification {
     def "merge labels"() {
         given:
         createLabels()
-        gitHubProvider.get(dummyConfiguration, GitRemote.TokenScope.RESTRICTED) >> gitHub
+        gitHubProvider.get(gitPlus, GitRemote.TokenScope.CREATE_ISSUE) >> gitHub
         remote = new DefaultGitHubRemote(dummyConfiguration, gitHubProvider, remoteRequest, new GitHubUrlMapper())
+        remote.prepare(gitPlus)
 
         when:
         remote.mergeLabels()
@@ -419,26 +445,26 @@ class DefaultGitHubRemoteTest extends Specification {
 
     def "verifyFromLocal"() {
         given:
-        GitLocal local = Mock(GitLocal)
-        gitHubProvider.get(dummyConfiguration, GitRemote.TokenScope.RESTRICTED) >> gitHub
+        gitHubProvider.get(gitPlus, GitRemote.TokenScope.CREATE_ISSUE) >> gitHub
         remote = new DefaultGitHubRemote(dummyConfiguration, gitHubProvider, remoteRequest, new GitHubUrlMapper())
+        remote.prepare(gitPlus)
         String origin = "https://github.com/davidsowerby/gitplus"
 
         when:
-        remote.prepare(local)
+        remote.prepare(gitPlus)
         remote.verifyFromLocal()
 
         then:
-        1 * local.active >> false
+        1 * gitLocal.active >> false
         thrown GitPlusConfigurationException
 
         when:
-        remote.prepare(local)
+        remote.prepare(gitPlus)
         remote.verifyFromLocal()
 
         then:
-        1 * local.active >> true
-        1 * local.getOrigin() >> origin
+        1 * gitLocal.active >> true
+        1 * gitLocal.getOrigin() >> origin
         remote.cloneUrl() == "${origin}.git"
 
 

@@ -4,7 +4,6 @@ import org.eclipse.jgit.transport.CredentialsProvider
 import uk.q3c.build.gitplus.GitSHA
 import uk.q3c.build.gitplus.gitplus.GitPlus
 import uk.q3c.build.gitplus.local.GitBranch
-import uk.q3c.build.gitplus.local.GitLocal
 import uk.q3c.build.gitplus.remote.github.DefaultGitHubRemote
 import java.io.IOException
 
@@ -17,13 +16,12 @@ interface GitRemote : GitRemoteConfiguration, GitRemoteUrlMapper {
     val urlMapper: GitRemoteUrlMapper
 
     /**
-     * Reference to the related local Git instance.  Will not be initialised until [prepare] has been called (invoked by
-     * [GitPlus.execute])
+     * The parent or 'owner' of this GitRemote instance.  Not valid until after [GitPlus.execute] or [GitPlus.evaluate] has been called
      */
-    var local: GitLocal
+    var parent: GitPlus
 
     enum class TokenScope {
-        RESTRICTED, CREATE_REPO, DELETE_REPO
+        CREATE_ISSUE, CREATE_REPO, DELETE_REPO
     }
 
     fun isIssueFixWord(word: String): Boolean
@@ -113,7 +111,7 @@ interface GitRemote : GitRemoteConfiguration, GitRemoteUrlMapper {
      */
     fun hasBranch(branch: GitBranch): Boolean
 
-    fun prepare(local: GitLocal)
+    fun prepare(parent: GitPlus)
 
     /**
      * Reads the Git local information (by using the equivalent of 'git remote show origin') to get remote information,

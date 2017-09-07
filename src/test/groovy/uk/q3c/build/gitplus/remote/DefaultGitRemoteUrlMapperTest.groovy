@@ -17,7 +17,7 @@ class DefaultGitRemoteUrlMapperTest extends Specification {
         remote.providerBaseUrl >> 'github.com'
         remoteConfiguration.repoUser >> 'davidsowerby'
         remoteConfiguration.repoName >> 'krail'
-        mapper.parent = remote
+        mapper.owner = remote
 
     }
 

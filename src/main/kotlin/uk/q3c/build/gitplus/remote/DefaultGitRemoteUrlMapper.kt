@@ -8,14 +8,14 @@ package uk.q3c.build.gitplus.remote
  */
 open class DefaultGitRemoteUrlMapper : GitRemoteUrlMapper {
 
-    lateinit override var parent: GitRemoteConfiguration
+    lateinit override var owner: GitRemoteConfiguration
 
 
     /**
      * This is the same for both GitHub and BitBucket
      */
     override fun repoBaselUrl(): String {
-        return "https://${parent.providerBaseUrl}/${parent.remoteRepoFullName()}"
+        return "https://${owner.providerBaseUrl}/${owner.remoteRepoFullName()}"
     }
 
     /**

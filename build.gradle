@@ -1,6 +1,6 @@
 //noinspection GrPackage
 buildscript {
-    ext.kotlin_version = '1.1.4-2'
+    ext.kotlin_version = '1.1.4-3'
     ext.kaytee_plugin_version = '0.18.2.0'
     repositories {
         mavenLocal()
@@ -27,7 +27,7 @@ task wrapper(type: Wrapper) {
 group = 'uk.q3c.build'
 
 kaytee {
-    version{
+    version {
         number = '0.30.0.0'
     }
     unitTest {
@@ -78,11 +78,15 @@ dependencies {
     compile 'ch.qos.logback:logback-classic:1.2.3'
     compile 'ch.qos.logback:logback-core:1.2.3'
 
+    // 'published' mocks
+    compile 'org.mockito:mockito-core:2.9.0'
+
     //unit testing
-    testCompile 'org.spockframework:spock-core:1.1-groovy-2.4'
+    testCompile 'org.spockframework:spock-core:1.0-groovy-2.4'
     testCompile 'cglib:cglib-nodep:3.2.5' // needed for Spock mocking
     testCompile 'org.objenesis:objenesis:2.6' // needed for Spock mocking
-    testCompile 'org.spockframework:spock-guice:1.1-groovy-2.4' // Spock with Guice
+    testCompile 'org.spockframework:spock-guice:1.0-groovy-2.4' // Spock with Guice
+    testCompile 'uk.q3c.util:q3c-testutils:0.11.0.1'
 
 
 }

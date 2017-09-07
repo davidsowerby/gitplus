@@ -14,7 +14,7 @@ class BitBucketUrlMapperTest extends Specification {
     def setup() {
         remote.getRepoUser() >> 'davidsowerby'
         mapper = new BitBucketUrlMapper()
-        mapper.setParent(remote)
+        mapper.owner = remote
     }
 
     def "CloneUrl"() {

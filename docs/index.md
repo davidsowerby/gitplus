@@ -27,7 +27,7 @@ A factory is available for use outside Guice.  Use with a try-resources block:
 ```
 try (GitPlus gitPlus = GitPlusFactory.getInstance()) {
     final GitLocal gitLocal = gitPlus.getLocal();
-    final GitLocalConfiguration localConfig = gitLocal.getLocalConfiguration();
+    final GitLocalConfiguration localConfig = gitLocal.getConfiguration();
     // do stuff
 }
 catch (Exception e){

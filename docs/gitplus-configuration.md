@@ -1,4 +1,12 @@
-##Remote configuration
+## GitPlus configuration
+
+| name                  | purpose                                                                              | default                   |
+|-----------------------|--------------------------------------------------------------------------------------|---------------------------|
+| propertiesLoaders  | provide loader(s) for different sources of properties (typically used for API tokens)            | FileAPIPropertiesLoader, <user.home>/gitplus  |
+
+
+
+## Remote configuration
 
 
 | name                  | purpose                                                                              | default                   |
@@ -16,8 +24,7 @@
 | projectHomePage       | a project home page, for remote repo                                                 | empty string              |
 | publicProject         | if true, remote repo is public                                                       | false                     |
 | repoDeleteApprover    | approves / rejects calls to delete remote repo, used with confirmRemoteDelete        | DefaultRemoteRepoDeleteApprover |
-| taggerEmail           | the user email to put on a tag when tag() called                                     | load from properties      |
-| taggerName            | the user name to put on a tag when tag() called                                      | load from properties      |
+
 
 
 ## Local Configuration
@@ -30,8 +37,7 @@
 | fileDeleteApprover    | approves / rejects calls to delete a file. A bit of protection from config errors    | delete always rejected    |
 | projectDirParent      | the parent directory for projectDir                                                  | current dir               |
 | projectName           | name of project.    **REQUIRED**                               | remote.repoName           |
-| taggerEmail           | the user email to put on a tag when tag() called                                     | load from properties      |
-| taggerName            | the user name to put on a tag when tag() called                                      | load from properties      |
+
 
 
 ## Wiki Configuration

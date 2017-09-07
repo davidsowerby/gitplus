@@ -5,3 +5,4 @@ package uk.q3c.build.gitplus
  */
 
 val notSpecified: String = "not specified"
+val BINTRAY_TOKEN = "bintrayToken"

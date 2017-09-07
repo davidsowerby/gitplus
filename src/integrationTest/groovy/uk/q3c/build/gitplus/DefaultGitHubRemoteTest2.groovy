@@ -8,7 +8,6 @@ import spock.lang.Specification
 import uk.q3c.build.gitplus.gitplus.GitPlus
 import uk.q3c.build.gitplus.local.GitBranch
 import uk.q3c.build.gitplus.local.GitLocalException
-import uk.q3c.build.gitplus.remote.github.GitHubRemote
 
 /**
  * Created by David Sowerby on 11 Mar 2016
@@ -21,23 +20,25 @@ class DefaultGitHubRemoteTest2 extends Specification {
     File temp
 
     @Inject
-    GitHubRemote remote
-
-    @Inject
     GitPlus gitPlus
+
+    final String projectName = 'q3c-testutils'
+    final String remoteUser = 'davidsowerby'
 
     def setup() {
         temp = temporaryFolder.getRoot()
+        gitPlus.remote.repoUser = remoteUser
+        gitPlus.remote.repoName = projectName
+        gitPlus.propertiesFromGradle()
     }
 
     def "headCommit()"() {
         given:
-        remote.repoUser = 'davidsowerby'
-        remote.repoName = 'q3c-testutils'
+        gitPlus.execute()
 
         when:
-        String result1 = remote.headCommit(new GitBranch('develop'))
-        String result2 = remote.developHeadCommit()
+        String result1 = gitPlus.remote.headCommit(new GitBranch('develop'))
+        String result2 = gitPlus.remote.developHeadCommit()
 
         then:
         result1 != null
@@ -46,13 +47,11 @@ class DefaultGitHubRemoteTest2 extends Specification {
 
     def "head commit for local and remote, clone wiki"() {
         given:
-        final String projectName = 'q3c-testutils'
-        final String remoteUser = 'davidsowerby'
-        gitPlus.cloneFromRemote(temp, remoteUser, projectName, true)
 
+        gitPlus.cloneFromRemote(temp, remoteUser, projectName, true)
+        gitPlus.execute()
 
         when:
-        gitPlus.execute()
         gitPlus.local.checkoutRemoteBranch(new GitBranch("develop"))
         String remote1 = gitPlus.remote.headCommit(new GitBranch('develop'))
         String remote2 = gitPlus.remote.developHeadCommit()

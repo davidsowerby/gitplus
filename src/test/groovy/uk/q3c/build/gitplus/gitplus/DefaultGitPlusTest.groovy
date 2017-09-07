@@ -10,9 +10,10 @@ import uk.q3c.build.gitplus.local.*
 import uk.q3c.build.gitplus.remote.*
 import uk.q3c.build.gitplus.remote.bitbucket.BitBucketRemote
 import uk.q3c.build.gitplus.remote.github.GitHubRemote
+import uk.q3c.build.gitplus.util.PropertiesResolver
 
-import static uk.q3c.build.gitplus.remote.ServiceProvider.BITBUCKET
-import static uk.q3c.build.gitplus.remote.ServiceProvider.GITHUB
+import static org.mockito.Mockito.*
+import static uk.q3c.build.gitplus.remote.ServiceProvider.*
 
 /**
  * Created by David Sowerby on 13 Mar 2016
@@ -39,9 +40,12 @@ class DefaultGitPlusTest extends Specification {
     WikiLocal wikiLocal = Mock(WikiLocal)
     final String projectName = "scratch"
     File projDirParent
+    PropertiesResolver propertiesResolver
+    GitPlusConfiguration gitPlusConfiguration = new DefaultGitPlusConfiguration()
 
 
     def setup() {
+        propertiesResolver = mock(PropertiesResolver)
         gitRemoteConfiguration = new DefaultGitRemoteConfiguration()
         gitHubProvider.get() >> gitHubRemote
         gitHubRemote.getConfiguration() >> gitRemoteConfiguration
@@ -52,7 +56,7 @@ class DefaultGitPlusTest extends Specification {
         serviceProviders.put(BITBUCKET, bitBucketProvider)
         temp = temporaryFolder.getRoot()
         gitRemoteProvider = new DefaultGitRemoteResolver(serviceProviders)
-        gitplus = new DefaultGitPlus(local, wikiLocal, gitRemoteProvider)
+        gitplus = new DefaultGitPlus(local, wikiLocal, gitRemoteProvider, propertiesResolver, gitPlusConfiguration)
         projDirParent = temp
     }
 
@@ -71,6 +75,7 @@ class DefaultGitPlusTest extends Specification {
         0 * gitHubRemote.createRepo()
         0 * local.push(_, _)
     }
+
 
 
     def "clone remote repo, no wiki"() {
@@ -177,7 +182,7 @@ class DefaultGitPlusTest extends Specification {
 
         when: "wiki not active, default cloneExistsResponse"
         gitplus.cloneFromRemote(temp, remoteUser, projectName, includeWiki)
-        gitplus.prepare()
+        gitplus.evaluate()
 
         then:
         gitplus.local.active
@@ -192,7 +197,7 @@ class DefaultGitPlusTest extends Specification {
         when: "wiki active, changed cloneExistsResponse"
         includeWiki = true
         gitplus.cloneFromRemote(temp, remoteUser, projectName, includeWiki, CloneExistsResponse.DELETE)
-        gitplus.prepare()
+        gitplus.evaluate()
 
 
         then:
@@ -221,7 +226,7 @@ class DefaultGitPlusTest extends Specification {
 
         when: "default project creator, no wiki"
         gitplus.createLocalAndRemote(temp, remoteUser, projectName, includeWiki, true)
-        gitplus.prepare()
+        gitplus.evaluate()
 
         then:
         gitplus.local.active
@@ -239,7 +244,7 @@ class DefaultGitPlusTest extends Specification {
         when: "other project creator, wiki included"
         includeWiki = true
         gitplus.createLocalAndRemote(temp, remoteUser, projectName, includeWiki, false, otherCreator)
-        gitplus.prepare()
+        gitplus.evaluate()
 
         then:
         gitplus.local.active
@@ -266,7 +271,7 @@ class DefaultGitPlusTest extends Specification {
 
         when:
         gitplus.useRemoteOnly(remoteUser, projectName)
-        gitplus.prepare()
+        gitplus.evaluate()
 
         then:
         !gitplus.local.active
@@ -285,7 +290,7 @@ class DefaultGitPlusTest extends Specification {
 
         when:
         gitplus.createRemoteOnly(remoteUser, projectName, true)
-        gitplus.prepare()
+        gitplus.evaluate()
 
         then:
         !gitplus.local.active

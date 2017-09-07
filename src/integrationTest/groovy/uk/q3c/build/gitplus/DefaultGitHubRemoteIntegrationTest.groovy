@@ -11,11 +11,9 @@ import uk.q3c.build.gitplus.gitplus.DefaultGitPlus
 import uk.q3c.build.gitplus.gitplus.GitPlus
 import uk.q3c.build.gitplus.local.GitBranch
 import uk.q3c.build.gitplus.local.PushResponse
-import uk.q3c.build.gitplus.remote.*
-import uk.q3c.build.gitplus.remote.github.DefaultGitHubProvider
-import uk.q3c.build.gitplus.remote.github.DefaultGitHubRemote
-import uk.q3c.build.gitplus.remote.github.GitHubUrlMapper
-import uk.q3c.build.gitplus.util.FileBuildPropertiesLoader
+import uk.q3c.build.gitplus.remote.GPIssue
+import uk.q3c.build.gitplus.remote.GitRemoteException
+import uk.q3c.build.gitplus.util.FilePropertiesLoader
 
 /**
  * This test needs to delete the 'dummy' repo in cleanup.  This test is a bit weird because it has to use deleteRepo to clean up, but also tests deleteRepo
@@ -33,17 +31,17 @@ class DefaultGitHubRemoteIntegrationTest extends Specification {
     @Inject
     GitPlus gitPlus
 
+    GitPlus gitPlusForSetup
+
 
     def setup() {
         println 'cleaning up at start'
-        println 'checking api status'
-        if (gitPlus.remote.apiStatus() == DefaultGitHubRemote.Status.RED) {
-            throw new UnsupportedOperationException("Service Provider API is down")
-        }
+
         if (remoteRepoExists('dummy')) {
             deleteRepo()
             waitRemoteRepoNotExists('dummy')
         }
+        gitPlus.configuration.propertiesLoaders.add(new FilePropertiesLoader().sourceFromGradle())
         temp = temporaryFolder.getRoot()
     }
 
@@ -59,7 +57,6 @@ class DefaultGitHubRemoteIntegrationTest extends Specification {
 
     def "lifecycle"() {
         given:
-
         gitPlus.createLocalAndRemote(temp, 'davidsowerby', 'dummy', true, true)
         gitPlus.remote.mergeIssueLabels = true
 
@@ -94,6 +91,7 @@ class DefaultGitHubRemoteIntegrationTest extends Specification {
         when:
         GitPlus gitplus2 = GitPlusFactory.instance
         gitplus2.useRemoteOnly('davidsowerby', 'dummy')
+        gitplus2.configuration.propertiesLoaders.add(new FilePropertiesLoader().sourceFromGradle())
         gitplus2.execute()
         GPIssue issue9 = gitplus2.remote.getIssue(9)
 
@@ -167,44 +165,20 @@ class DefaultGitHubRemoteIntegrationTest extends Specification {
      */
     @SuppressWarnings("GrMethodMayBeStatic")
     private void deleteRepo() {
-        DefaultGitRemoteConfiguration dummyConfiguration = new DefaultGitRemoteConfiguration()
-        dummyConfiguration.repoUser('davidsowerby').repoName('dummy').confirmDelete("I really, really want to delete the davidsowerby/dummy repo from GitHub")
-        GitRemote remote = new DefaultGitHubRemote(dummyConfiguration, new DefaultGitHubProvider(new FileBuildPropertiesLoader()), new DefaultRemoteRequest(), new GitHubUrlMapper())
+        configureGitplusForSetup()
+        gitPlusForSetup.remote.configuration.confirmDelete("I really, really want to delete the davidsowerby/dummy repo from GitHub")
         println 'deleting repo'
-        remote.deleteRepo()
+        gitPlusForSetup.execute()
+        gitPlusForSetup.remote.deleteRepo()
     }
 
-/**
- * returns as soon as it finds repoName.  Use waitRemoteRepoNotExists for fast return of not found
- * @param repoName
- * @return
- */
-//    @SuppressWarnings("GrMethodMayBeStatic")
-//    private void waitRemoteRepoExists(String repoName) {
-//        println 'waiting for repo to exist'
-//        DefaultGitRemoteConfiguration dummyConfiguration = new DefaultGitRemoteConfiguration()
-//        dummyConfiguration.repoUser('davidsowerby').repoName('dummy').confirmDelete("I really, really want to delete the davidsowerby/dummy repo from GitHub")
-//        GitRemote remote = new DefaultGitHubRemote(dummyConfiguration, new DefaultGitHubProvider(new FileBuildPropertiesLoader()), new DefaultRemoteRequest(), new GitHubUrlMapper())
-//        def timeout = 20
-//        Set<String> names = remote.listRepositoryNames()
-//        while (!names.contains(repoName) && timeout > 0) {
-//            println 'waiting 1 second for api, ' + timeout + ' before timeout'
-//            Thread.sleep(1000)
-//            timeout--
-//            names = remote.listRepositoryNames()
-//        }
-//        if (timeout <= 0) {
-//            throw new RuntimeException("Timed out")
-//        }
-//    }
 
     @SuppressWarnings("GrMethodMayBeStatic")
     private boolean remoteRepoExists(String repoName) {
-        DefaultGitRemoteConfiguration dummyConfiguration = new DefaultGitRemoteConfiguration()
-        dummyConfiguration.repoUser('davidsowerby').repoName('dummy')
-        GitRemote remote = new DefaultGitHubRemote(dummyConfiguration, new DefaultGitHubProvider(new FileBuildPropertiesLoader()), new DefaultRemoteRequest(), new GitHubUrlMapper())
+        configureGitplusForSetup()
+        gitPlusForSetup.execute()
         println 'getting repo names'
-        Set<String> names = remote.listRepositoryNames()
+        Set<String> names = gitPlusForSetup.remote.listRepositoryNames()
         println 'names retrieved'
         return names.contains(repoName)
     }
@@ -217,11 +191,12 @@ class DefaultGitHubRemoteIntegrationTest extends Specification {
     @SuppressWarnings("GrMethodMayBeStatic")
     private void waitRemoteRepoNotExists(String repoName) {
         println 'waiting for repo not to exist'
-        DefaultGitRemoteConfiguration dummyConfiguration = new DefaultGitRemoteConfiguration()
-        dummyConfiguration.repoUser('davidsowerby').repoName('dummy')
-        GitRemote remote = new DefaultGitHubRemote(dummyConfiguration, new DefaultGitHubProvider(new FileBuildPropertiesLoader()), new DefaultRemoteRequest(), new GitHubUrlMapper())
+
+        configureGitplusForSetup()
+        gitPlusForSetup.execute()
+
         def timeout = 20
-        Set<String> names = remote.listRepositoryNames()
+        Set<String> names = gitPlusForSetup.remote.listRepositoryNames()
         while (names.contains(repoName) && timeout > 0) {
             println 'waiting 1 second for api, ' + timeout + ' before timeout'
             Thread.sleep(1000)
@@ -231,6 +206,15 @@ class DefaultGitHubRemoteIntegrationTest extends Specification {
         if (timeout <= 0) {
             throw new RuntimeException("Timed out")
         }
+    }
+
+
+    private configureGitplusForSetup() {
+        gitPlusForSetup = GitPlusFactory.instance // we want fresh config every time
+        gitPlusForSetup.remote.configuration
+                .repoUser('davidsowerby')
+                .repoName('dummy')
+        gitPlusForSetup.configuration.propertiesLoaders.add(new FilePropertiesLoader().sourceFromGradle())
     }
 
 

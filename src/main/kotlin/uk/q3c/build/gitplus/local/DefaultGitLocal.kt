@@ -18,8 +18,8 @@ import org.eclipse.jgit.revwalk.RevWalk
 import org.slf4j.LoggerFactory
 import uk.q3c.build.gitplus.GitSHA
 import uk.q3c.build.gitplus.gitplus.DefaultGitPlus
+import uk.q3c.build.gitplus.gitplus.GitPlus
 import uk.q3c.build.gitplus.local.Tag.TagType
-import uk.q3c.build.gitplus.remote.GitRemote
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.IOException
@@ -35,37 +35,37 @@ import java.util.*
 open class DefaultGitLocal @Inject constructor(
         val branchConfigProvider: BranchConfigProvider,
         val gitProvider: GitProvider,
-        override val localConfiguration: GitLocalConfiguration,
+        override val configuration: GitLocalConfiguration,
         val gitInitChecker: GitInitChecker,
         val gitCloner: GitCloner)
 
-    : GitLocal, GitLocalConfiguration by localConfiguration {
+    : GitLocal, GitLocalConfiguration by configuration {
 
 
     override lateinit var git: Git
-    override lateinit var remote: GitRemote
+    override lateinit var parent: GitPlus
     private val log = LoggerFactory.getLogger(this.javaClass.name)
 
-    override fun prepare(remote: GitRemote) {
+    override fun prepare(parent: GitPlus) {
         if (active) {
             log.debug("preparing GitLocal")
-            this.remote = remote
-            localConfiguration.validate(remote)
-            git = gitProvider.openRepository(localConfiguration)
+            this.parent = parent
+            configuration.validate(parent.remote)
+            git = gitProvider.openRepository(configuration)
             gitInitChecker.setGit(git)
         }
     }
 
     override fun init() {
-        log.debug("initialising {} directory for git", localConfiguration.projectDir())
+        log.debug("initialising {} directory for git", configuration.projectDir())
         var repo: Repository? = null
         try {
-            val gitDir = File(localConfiguration.projectDir(), ".git")
+            val gitDir = File(configuration.projectDir(), ".git")
             repo = FileRepository(gitDir)
             repo.create()
             log.debug("repo created")
             gitInitChecker.initDone()
-            projectCreator.invoke(localConfiguration)
+            projectCreator.invoke(configuration)
             add(projectDir())
         } catch (e: Exception) {
             throw GitLocalException("Unable to initialise DefaultGitLocal", e)
@@ -111,10 +111,10 @@ open class DefaultGitLocal @Inject constructor(
         if (cloneFromRemote) {
             log.debug("clone requested")
             try {
-                val localDir = localConfiguration.projectDir()
+                val localDir = configuration.projectDir()
                 if (localDir.exists()) {
                     log.debug("local copy (assumed to be clone) already exists")
-                    when (localConfiguration.cloneExistsResponse) {
+                    when (configuration.cloneExistsResponse) {
                         CloneExistsResponse.DELETE -> {
                             //this will throw exception if denied
                             deleteFolderIfApproved(localDir)
@@ -145,11 +145,11 @@ open class DefaultGitLocal @Inject constructor(
     }
 
     open fun remoteUrl(): String {
-        return remote.repoBaselUrl()
+        return parent.remote.repoBaselUrl()
     }
 
     private fun deleteFolderIfApproved(localDir: File) {
-        if (localConfiguration.fileDeleteApprover.approve(localDir)) {
+        if (configuration.fileDeleteApprover.approve(localDir)) {
             FileUtils.forceDelete(localDir)
             log.debug("'{}' deleted", localDir)
         } else {
@@ -185,8 +185,8 @@ open class DefaultGitLocal @Inject constructor(
         if (create) {
             try {
 
-                log.debug("creating local and remote repo for project: '{}'", localConfiguration.projectName)
-                val projectDir = localConfiguration.projectDir()
+                log.debug("creating local and remote repo for project: '{}'", configuration.projectName)
+                val projectDir = configuration.projectDir()
                 FileUtils.forceMkdir(projectDir)
                 init()
             } catch (e: Exception) {
@@ -214,7 +214,7 @@ open class DefaultGitLocal @Inject constructor(
             val checkout = git.checkout()
             checkout.setCreateBranch(true).setName(branch.name)
 
-            if (remote.active && checkTrackingBranch()) {
+            if (parent.remote.active && checkTrackingBranch()) {
                 checkout.call()
                 push(true, true)
                 return
@@ -353,7 +353,7 @@ open class DefaultGitLocal @Inject constructor(
             val config = git.repository.config
             val remotes = config.getSubsections(DefaultGitPlus.REMOTE)
             if (!remotes.contains(DefaultGitPlus.ORIGIN)) {
-                throw GitLocalException("No origin has been defined for " + localConfiguration.projectDir())
+                throw GitLocalException("No origin has been defined for " + configuration.projectDir())
             }
             return config.getString(DefaultGitPlus.REMOTE, DefaultGitPlus.ORIGIN, DefaultGitPlus.URL)
         } catch (e: Exception) {
@@ -364,7 +364,7 @@ open class DefaultGitLocal @Inject constructor(
 
     override fun setOrigin() {
         try {
-            val originUrl = remote.cloneUrl()
+            val originUrl = parent.remote.cloneUrl()
             setOrigin(originUrl)
         } catch (e: Exception) {
             throw GitLocalException("Unable to set origin", e)
@@ -405,7 +405,7 @@ open class DefaultGitLocal @Inject constructor(
     }
 
     fun doPush(pc: PushCommand): PushResponse {
-        pc.setCredentialsProvider(remote.credentialsProvider)
+        pc.setCredentialsProvider(parent.remote.credentialsProvider)
         val results = pc.call()
         val response = PushResponse()
         for (pushResult in results) {
@@ -439,7 +439,7 @@ open class DefaultGitLocal @Inject constructor(
      * @return true if a new tracking branch set up
      */
     private fun checkTrackingBranch(): Boolean {
-        if (remote.active) {
+        if (parent.remote.active) {
             val cfg = git.repository.config
             val branch = git.repository.branch
             val trackingBranch: String? = branchConfigProvider.get(cfg, branch).trackingBranch
@@ -496,7 +496,7 @@ open class DefaultGitLocal @Inject constructor(
             }
             return tags
         } catch (e: Exception) {
-            throw GitLocalException("Unable to read Git status" + localConfiguration.projectDir().absolutePath, e)
+            throw GitLocalException("Unable to read Git status" + configuration.projectDir().absolutePath, e)
         }
 
     }
@@ -561,12 +561,12 @@ open class DefaultGitLocal @Inject constructor(
         try {
             val tagCommand = git.tag()
             val tagDate = Date()
-            val personalIdent = PersonIdent(localConfiguration.taggerName, localConfiguration.taggerEmail)
+            val personalIdent = PersonIdent(parent.taggerName(), parent.taggerEmail())
             tagCommand.setMessage(tagBody).setAnnotated(true).setName(tagName).tagger = PersonIdent(personalIdent, tagDate)
             tagCommand.call()
 
         } catch (e: Exception) {
-            throw GitLocalException("Unable to tag" + localConfiguration.projectDir().absolutePath, e)
+            throw GitLocalException("Unable to tag" + configuration.projectDir().absolutePath, e)
         }
 
     }
@@ -577,7 +577,7 @@ open class DefaultGitLocal @Inject constructor(
             val tagCommand = git.tag()
             tagCommand.setAnnotated(false).setName(tagMsg).call()
         } catch (e: Exception) {
-            throw GitLocalException("Unable to tag" + localConfiguration.projectDir().absolutePath, e)
+            throw GitLocalException("Unable to tag" + configuration.projectDir().absolutePath, e)
         }
 
     }

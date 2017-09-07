@@ -56,7 +56,7 @@ class DefaultGitLocalConfigurationTest extends Specification {
         given: "change to a couple of non-default values"
         ObjectMapper objectMapper = new ObjectMapper()
         StringWriter sw = new StringWriter()
-        configuration.projectName('wiggly').taggerEmail('funky@pigeon')
+        configuration.projectName('wiggly')
         configuration.setVersion(23)
 
         when:

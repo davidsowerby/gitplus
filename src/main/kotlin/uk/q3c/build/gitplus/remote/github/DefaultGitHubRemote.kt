@@ -8,9 +8,9 @@ import org.eclipse.jgit.transport.CredentialsProvider
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider
 import org.slf4j.LoggerFactory
 import uk.q3c.build.gitplus.GitSHA
+import uk.q3c.build.gitplus.gitplus.GitPlus
 import uk.q3c.build.gitplus.gitplus.GitPlusConfigurationException
 import uk.q3c.build.gitplus.local.GitBranch
-import uk.q3c.build.gitplus.local.GitLocal
 import uk.q3c.build.gitplus.remote.*
 import uk.q3c.build.gitplus.remote.GitRemote.TokenScope.*
 import java.io.IOException
@@ -20,17 +20,20 @@ import java.util.*
 /**
  * Created by David Sowerby on 12 Feb 2016
  */
-class DefaultGitHubRemote @Inject constructor(override val configuration: GitRemoteConfiguration, val gitHubProvider: GitHubProvider, val remoteRequest: RemoteRequest, override val urlMapper: GitHubUrlMapper) :
+class DefaultGitHubRemote @Inject constructor(
+        override val configuration: GitRemoteConfiguration,
+        val gitHubProvider: GitHubProvider,
+        val remoteRequest: RemoteRequest,
+        override val urlMapper: GitHubUrlMapper) :
         GitHubRemote,
         GitRemoteConfiguration by configuration,
         GitRemoteUrlMapper by urlMapper {
-
 
     override fun hasBranch(branch: GitBranch): Boolean {
         try {
             getBranch(branch)
             return true
-        } catch(e: Exception) {
+        } catch (e: Exception) {
             return false
         }
     }
@@ -41,12 +44,13 @@ class DefaultGitHubRemote @Inject constructor(override val configuration: GitRem
     }
 
     private val log = LoggerFactory.getLogger(this.javaClass.name)
-    private var gitHub: Github = getGitHub(RESTRICTED)
-    private var currentTokenScope: GitRemote.TokenScope = RESTRICTED
-    lateinit override var local: GitLocal
+
+
+    private var currentTokenScope: GitRemote.TokenScope = CREATE_ISSUE
+    lateinit override var parent: GitPlus
 
     init {
-        urlMapper.parent = this
+        urlMapper.owner = this
     }
 
 
@@ -62,7 +66,7 @@ class DefaultGitHubRemote @Inject constructor(override val configuration: GitRem
     override fun getIssue(remoteRepoUser: String, remoteRepoName: String, issueNumber: Int): GPIssue {
         log.debug("Retrieving issue {} from {}", issueNumber, remoteRepoName)
         try {
-            val repo = getGitHub(RESTRICTED).repos().get(Coordinates.Simple(remoteRepoUser, remoteRepoName))
+            val repo = getGitHub(CREATE_ISSUE).repos().get(Coordinates.Simple(remoteRepoUser, remoteRepoName))
             return GPIssue(repo.issues().get(issueNumber))
         } catch (e: Exception) {
             throw GitRemoteException("Unable to retrieve issue $issueNumber from $remoteRepoName", e)
@@ -75,7 +79,7 @@ class DefaultGitHubRemote @Inject constructor(override val configuration: GitRem
     override val credentialsProvider: CredentialsProvider
         get() {
             try {
-                val token = gitHubProvider.apiTokenRestricted()
+                val token = parent.apiTokenIssueCreate(ServiceProvider.GITHUB)
                 return UsernamePasswordCredentialsProvider(token, "")
             } catch (e: Exception) {
                 throw GitRemoteException("An api token is required in order to enable credentials", e)
@@ -86,7 +90,7 @@ class DefaultGitHubRemote @Inject constructor(override val configuration: GitRem
     override fun apiStatus(): Status {
 
         try {
-            val token = gitHubProvider.apiTokenRestricted()
+            val token = parent.apiTokenIssueCreate(ServiceProvider.GITHUB)
 
             val response = remoteRequest.request(Request.GET, GitHubUrlMapper.STATUS_API_URL, token)
             val status = response.readObject().getString("status")
@@ -105,7 +109,7 @@ class DefaultGitHubRemote @Inject constructor(override val configuration: GitRem
 
 
     override fun createIssue(issueTitle: String, body: String, vararg labels: String): GPIssue {
-        val issue = getRepo(RESTRICTED).issues().create(issueTitle, body)
+        val issue = getRepo(CREATE_ISSUE).issues().create(issueTitle, body)
 
         val jsIssue = Issue.Smart(issue)
         jsIssue.assign(configuration.repoUser)
@@ -114,11 +118,7 @@ class DefaultGitHubRemote @Inject constructor(override val configuration: GitRem
     }
 
     private fun getGitHub(tokenScope: GitRemote.TokenScope): Github {
-        if (currentTokenScope != tokenScope) {
-            this.gitHub = gitHubProvider.get(configuration, tokenScope)
-            currentTokenScope = tokenScope
-        }
-        return gitHub
+        return gitHubProvider.get(parent, tokenScope)
     }
 
 
@@ -162,9 +162,9 @@ class DefaultGitHubRemote @Inject constructor(override val configuration: GitRem
 
 
     override fun listRepositoryNames(): Set<String> {
-        val qualifier = "user:" + getRepo(RESTRICTED).coordinates().user()
+        val qualifier = "user:" + getRepo(CREATE_ISSUE).coordinates().user()
         val repoNames = TreeSet<String>()
-        val repos = getGitHub(RESTRICTED).search().repos(qualifier, "coordinates", Search.Order.ASC)
+        val repos = getGitHub(CREATE_ISSUE).search().repos(qualifier, "coordinates", Search.Order.ASC)
         repos.iterator().forEach { r -> repoNames.add(r.coordinates().repo()) }
         return repoNames
     }
@@ -176,7 +176,7 @@ class DefaultGitHubRemote @Inject constructor(override val configuration: GitRem
 
 
     override fun mergeLabels(labelsToMerge: Map<String, String>): Map<String, String> {
-        val labels = getRepo(RESTRICTED).labels()
+        val labels = getRepo(CREATE_ISSUE).labels()
         val iterate = labels.iterate()
         val iterator = iterate.iterator()
 
@@ -232,7 +232,7 @@ class DefaultGitHubRemote @Inject constructor(override val configuration: GitRem
 
     override val labelsAsMap: Map<String, String>
         get() {
-            val labels = getRepo(RESTRICTED).labels()
+            val labels = getRepo(CREATE_ISSUE).labels()
             val map = TreeMap<String, String>()
             for (label in labels.iterate()) {
                 val smLabel = Label.Smart(label)
@@ -250,16 +250,16 @@ class DefaultGitHubRemote @Inject constructor(override val configuration: GitRem
         return headCommit(GitBranch("develop"))
     }
 
-    override fun prepare(local: GitLocal) {
-        this.local = local
+    override fun prepare(parent: GitPlus) {
+        this.parent = parent
         if (active) {
-            validate(local)
+            validate(parent.local)
         }
     }
 
     override fun verifyFromLocal() {
-        if (local.active) {
-            setupFromOrigin(local.getOrigin())
+        if (parent.local.active) {
+            setupFromOrigin(parent.local.getOrigin())
         } else {
             throw GitPlusConfigurationException("GitRemote cannot be verified from a GitLocal which is not active")
         }
@@ -267,7 +267,7 @@ class DefaultGitHubRemote @Inject constructor(override val configuration: GitRem
 
 
     private fun getBranch(branch: GitBranch): Branch {
-        val branchIterator = getRepo(RESTRICTED).branches().iterate().iterator()
+        val branchIterator = getRepo(CREATE_ISSUE).branches().iterate().iterator()
         while (branchIterator.hasNext()) {
             val candidate = branchIterator.next()
             if (candidate.name() == branch.name) {

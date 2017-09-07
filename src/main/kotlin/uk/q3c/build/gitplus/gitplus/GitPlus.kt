@@ -4,6 +4,7 @@ import uk.q3c.build.gitplus.local.*
 import uk.q3c.build.gitplus.remote.GitRemote
 import uk.q3c.build.gitplus.remote.GitRemoteConfiguration
 import uk.q3c.build.gitplus.remote.ServiceProvider
+import uk.q3c.build.gitplus.util.PropertiesResolver
 import java.io.File
 
 /**
@@ -27,10 +28,11 @@ import java.io.File
  * Created by David Sowerby on 16 Oct 2016
  */
 
-interface GitPlus : AutoCloseable {
+interface GitPlus : PropertiesResolver, AutoCloseable, GitPlusConfiguration {
     var serviceProvider: ServiceProvider
     val local: GitLocal
     val wikiLocal: WikiLocal
+    val configuration: GitPlusConfiguration
 
     /**
      * The [GitRemote] instance is selected by configuration, so we use a provider to set this property
@@ -42,7 +44,7 @@ interface GitPlus : AutoCloseable {
      *
      * @throw various exceptions if configuration is incomplete or inconsistent
      */
-    fun prepare()
+    fun evaluate()
 
     /**
      * The main entry point.  Executes the settings provided via configuration, creating / cloning or otherwise manipulating repositories as required.
@@ -144,4 +146,14 @@ interface GitPlus : AutoCloseable {
      * @param publicProject if true create as a public project, if false, create as a private project (both will need appropriate API keys, see http://gitplus.readthedocs.io/en/stable/build-properties/)
      */
     fun createRemoteOnly(remoteRepoUserName: String, projectName: String, publicProject: Boolean)
+
+    /**
+     * Sets up configuration so that properties are taken from gradle.properties. Not effective until [execute] is called
+     */
+    fun propertiesFromGradle(): GitPlus
+
+    /**
+     * Sets up configuration so that properties are taken from gitplus.properties. Not effective until [execute] is called
+     */
+    fun propertiesFromGitPlus(): GitPlus
 }

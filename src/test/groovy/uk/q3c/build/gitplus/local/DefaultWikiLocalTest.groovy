@@ -9,7 +9,10 @@ import org.eclipse.jgit.transport.CredentialsProvider
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
+import uk.q3c.build.gitplus.gitplus.GitPlus
 import uk.q3c.build.gitplus.remote.GitRemote
+import uk.q3c.build.gitplus.util.PropertiesResolver
+
 /**
  * Created by David Sowerby on 30 Oct 2016
  */
@@ -22,6 +25,7 @@ class DefaultWikiLocalTest extends Specification {
     Git mockGit = Mock(Git)
     DefaultWikiLocal wikiLocal
     GitLocalConfiguration localConfiguration
+    GitPlus gitPlus = Mock(GitPlus)
     GitRemote gitRemote = Mock(GitRemote)
     GitLocal gitLocal = Mock(GitLocal)
     DefaultGitLocalConfiguration configuration
@@ -34,16 +38,20 @@ class DefaultWikiLocalTest extends Specification {
     Set<String> remotes = Mock(Set)
     GitInitChecker mockInitChecker = Mock(GitInitChecker)
     MockGitCloner cloner
+    PropertiesResolver apiPropertiesResolver = Mock(PropertiesResolver)
 
     def setup() {
+        gitPlus.remote >> gitRemote
+        gitPlus.local >> gitLocal
         cloner = new MockGitCloner()
         temp = temporaryFolder.getRoot()
         localConfiguration = new DefaultGitLocalConfiguration()
-        gitLocal.getLocalConfiguration() >> localConfiguration
+        gitLocal.getConfiguration() >> localConfiguration
         branchConfigProvider.get(_, _) >> branchConfig
         mockGitProvider.openRepository(_) >> mockGit
         wikiLocal = new DefaultWikiLocal(branchConfigProvider, mockGitProvider, new DefaultGitLocalConfiguration(), mockInitChecker, cloner)
         wikiLocal.active = true
+        wikiLocal.parent = gitPlus
     }
 
     def "prepare modifies copies relevant config"() {
@@ -51,17 +59,15 @@ class DefaultWikiLocalTest extends Specification {
         localConfiguration.projectName('wiggly').projectDirParent(temp)
         gitLocal.getProjectName() >> 'wiggly'
         gitLocal.getProjectDirParent() >> temp
-        gitLocal.getTaggerEmail() >> 'me@there'
-        gitLocal.getTaggerName() >> 'me'
+
 
         when:
-        wikiLocal.prepare(gitRemote, gitLocal)
+        wikiLocal.prepare(gitPlus)
 
         then:
         wikiLocal.projectName == 'wiggly.wiki'
         wikiLocal.projectDir() == new File(temp, 'wiggly.wiki')
-        wikiLocal.taggerName == 'me'
-        wikiLocal.taggerEmail == 'me@there'
+
     }
 
 
@@ -88,9 +94,7 @@ class DefaultWikiLocalTest extends Specification {
         StoredConfig config = Mock(StoredConfig)
         gitLocal.getProjectName() >> 'x'
         gitLocal.projectDirParent >> temp
-        gitLocal.taggerEmail >> '?'
-        gitLocal.taggerName >> '?'
-        wikiLocal.prepare(gitRemote, gitLocal)
+        wikiLocal.prepare(gitPlus)
 
         when:
         wikiLocal.setOrigin()
@@ -111,7 +115,6 @@ class DefaultWikiLocalTest extends Specification {
         given:
         Repository repository = Mock(Repository)
         StoredConfig config = Mock(StoredConfig)
-        wikiLocal.remote = gitRemote
         config.save() >> { throw new NullPointerException() }
 
         when:
@@ -121,25 +124,16 @@ class DefaultWikiLocalTest extends Specification {
         thrown GitLocalException
     }
 
-    def "prepare(remote) is unsupported"() {
-        when:
-        wikiLocal.prepare(gitRemote)
-
-        then:
-        thrown UnsupportedOperationException
-    }
 
     def "clone uses base url "() {
         given:
-        wikiLocal.localConfiguration.cloneFromRemote = true
-        wikiLocal.localConfiguration.projectName = 'wiggly'
-        wikiLocal.localConfiguration.projectDirParent = temp
+        wikiLocal.configuration.cloneFromRemote = true
+        wikiLocal.configuration.projectName = 'wiggly'
+        wikiLocal.configuration.projectDirParent = temp
         String baseUrl = 'repo/base/url'
         String wikiUrl = 'repo/base/url.wiki'
         gitRemote.repoBaselUrl() >> baseUrl
         gitRemote.wikiCloneUrl() >> wikiUrl
-        gitLocal.remote = gitRemote
-        wikiLocal.remote = gitRemote
 
         when:
         wikiLocal.cloneRemote()

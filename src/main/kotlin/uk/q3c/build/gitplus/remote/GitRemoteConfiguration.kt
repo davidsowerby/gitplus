@@ -72,8 +72,13 @@ interface GitRemoteConfiguration {
      */
     fun validate(local: GitLocalConfiguration)
 
+
 }
 
+
+/**
+ * BitBucket is not actually implemented yet
+ */
 enum class ServiceProvider {
     GITHUB, BITBUCKET
 }

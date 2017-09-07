@@ -21,8 +21,7 @@ data class DefaultGitLocalConfiguration(override var projectName: String = notSp
     override var fileDeleteApprover: FileDeleteApprover = DefaultFileDeleteApprover()
 
     override var projectDirParent: File = File(".")
-    override var taggerName: String = notSpecified
-    override var taggerEmail: String = notSpecified
+
     override var create = false
     override var cloneFromRemote = false
     @JsonIgnore
@@ -51,16 +50,6 @@ data class DefaultGitLocalConfiguration(override var projectName: String = notSp
 
     override fun projectDirParent(projectDirParent: File): GitLocalConfiguration {
         this.projectDirParent = projectDirParent
-        return this
-    }
-
-    override fun taggerEmail(taggerEmail: String): GitLocalConfiguration {
-        this.taggerEmail = taggerEmail
-        return this
-    }
-
-    override fun taggerName(taggerName: String): GitLocalConfiguration {
-        this.taggerName = taggerName
         return this
     }
 
@@ -104,8 +93,6 @@ data class DefaultGitLocalConfiguration(override var projectName: String = notSp
         this.projectName = other.projectName
         this.cloneExistsResponse = other.cloneExistsResponse
         this.fileDeleteApprover = other.fileDeleteApprover
-        this.taggerName = other.taggerName
-        this.taggerEmail = other.taggerEmail
         this.create = other.create
         this.cloneFromRemote = other.cloneFromRemote
         this.projectCreator = other.projectCreator

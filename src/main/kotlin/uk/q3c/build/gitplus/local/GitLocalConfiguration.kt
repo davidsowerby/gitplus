@@ -31,8 +31,7 @@ interface GitLocalConfiguration {
      */
     var cloneExistsResponse: CloneExistsResponse
     var fileDeleteApprover: FileDeleteApprover
-    var taggerName: String
-    var taggerEmail: String
+
     /**
      * If true, create a local copy.
      */
@@ -53,8 +52,6 @@ interface GitLocalConfiguration {
     fun fileDeleteApprover(fileDeleteApprover: FileDeleteApprover): GitLocalConfiguration
     fun projectName(projectName: String): GitLocalConfiguration
     fun projectDirParent(projectDirParent: File): GitLocalConfiguration
-    fun taggerEmail(taggerEmail: String): GitLocalConfiguration
-    fun taggerName(taggerName: String): GitLocalConfiguration
     fun cloneFromRemote(value: Boolean): GitLocalConfiguration
     fun create(value: Boolean): GitLocalConfiguration
     fun active(value: Boolean): GitLocalConfiguration

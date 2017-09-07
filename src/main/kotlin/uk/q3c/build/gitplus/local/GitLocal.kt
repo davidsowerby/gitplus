@@ -11,15 +11,16 @@ import org.eclipse.jgit.dircache.DirCache
 import org.eclipse.jgit.lib.Ref
 import org.eclipse.jgit.merge.MergeStrategy
 import uk.q3c.build.gitplus.GitSHA
+import uk.q3c.build.gitplus.gitplus.GitPlus
 import uk.q3c.build.gitplus.gitplus.GitPlusConfigurationException
-import uk.q3c.build.gitplus.remote.GitRemote
 import java.io.File
+
 /**
  * Created by David Sowerby on 17 Oct 2016
  */
 interface GitLocal : GitLocalConfiguration, AutoCloseable {
-    val localConfiguration: GitLocalConfiguration
-    var remote: GitRemote
+    val configuration: GitLocalConfiguration
+    var parent: GitPlus
     var git: Git
 
     /**
@@ -29,8 +30,8 @@ interface GitLocal : GitLocalConfiguration, AutoCloseable {
     fun init()
 
     /**
-     * Clones the remote repo to local.  The clone url is taken from [localConfiguration].  If a local directory already exists which would have to be
-     * overwritten (presumably because of an earlier clone), the outcome is determined by [localConfiguration.getCloneExistsResponse]:
+     * Clones the remote repo to local.  The clone url is taken from [configuration].  If a local directory already exists which would have to be
+     * overwritten (presumably because of an earlier clone), the outcome is determined by [configuration.getCloneExistsResponse]:
      *  1. DELETE - deletes the local copy and clones from remote
      *  1. PULL - executes a Git 'pull' instead of a clone
      *  1. EXCEPTION - throws a GitLocalException
@@ -42,14 +43,15 @@ interface GitLocal : GitLocalConfiguration, AutoCloseable {
     /**
      * This method should not generally be called directly .. it is invoked by [GitPlus.execute]
      *
-     * Validates the [localConfiguration], then prepares this instance for the configuration settings
-     * If unspecified, [projectName] is taken from the [remote.repoName] property.  If still unspecified, a validation exception is thrown
+     * Validates the [configuration], then prepares this instance for the configuration settings
+     * If unspecified, [projectName] is taken from the [parent.repoName] property.  If still unspecified, a validation exception is thrown
      *
      * @throws GitPlusConfigurationException
      *
-     * @param the [GitRemote] associated with this local instance
+     * @param parent the [GitPlus] instance which contains this instance
      */
-    fun prepare(remote: GitRemote)
+    fun prepare(parent: GitPlus)
+
 
     /**
      * Executes a Git pull, defaulting to the current branch
@@ -211,7 +213,7 @@ interface GitLocal : GitLocalConfiguration, AutoCloseable {
 
     /**
      * Adds `tag` to the most recent commit, with [tagName] and [tagBody].  This will add an annotated tag, with
-     * other attributes (such as personIdent and tagger email) taken from [localConfiguration]
+     * other attributes (such as personIdent and tagger email) taken from [configuration]
      *
      * @param tagName the tag to apply
      */
@@ -277,4 +279,5 @@ interface GitLocal : GitLocalConfiguration, AutoCloseable {
      * @throws GitLocalException wrapping any of the exceptions from [CheckoutCommand.call], or if JGit returns null from the underlying [CheckoutCommand.call]
      */
     fun checkoutRemoteBranch(branch: GitBranch): Ref
+
 }

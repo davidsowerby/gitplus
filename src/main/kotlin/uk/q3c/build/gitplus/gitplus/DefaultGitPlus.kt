@@ -2,19 +2,27 @@ package uk.q3c.build.gitplus.gitplus
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
+import com.google.common.collect.ImmutableList
 import com.google.inject.Inject
 import org.slf4j.LoggerFactory
 import uk.q3c.build.gitplus.local.*
 import uk.q3c.build.gitplus.remote.GitRemote
 import uk.q3c.build.gitplus.remote.GitRemoteResolver
 import uk.q3c.build.gitplus.remote.ServiceProvider
+import uk.q3c.build.gitplus.util.FilePropertiesLoader
+import uk.q3c.build.gitplus.util.PropertiesResolver
 import java.io.File
 import java.io.StringWriter
 
 
-class DefaultGitPlus @Inject constructor(override val local: GitLocal,
-                                         override val wikiLocal: WikiLocal,
-                                         val remoteResolver: GitRemoteResolver) : GitPlus {
+class DefaultGitPlus @Inject constructor(
+        override val local: GitLocal,
+        override val wikiLocal: WikiLocal,
+        val remoteResolver: GitRemoteResolver,
+        val propertiesResolver: PropertiesResolver,
+        override val configuration: GitPlusConfiguration)
+
+    : GitPlus, PropertiesResolver by propertiesResolver, GitPlusConfiguration by configuration {
 
 
     private val log = LoggerFactory.getLogger(this.javaClass.name)
@@ -92,30 +100,43 @@ class DefaultGitPlus @Inject constructor(override val local: GitLocal,
         wikiLocal.cloneExistsResponse = cloneExistsResponse
     }
 
-    override fun prepare() {
+    override fun propertiesFromGitPlus(): GitPlus {
+        configuration.propertiesLoaders.clear()
+        configuration.propertiesLoaders.add(FilePropertiesLoader().sourceFromGitPlus())
+        return this
+    }
+
+    override fun propertiesFromGradle(): GitPlus {
+        configuration.propertiesLoaders.clear()
+        configuration.propertiesLoaders.add(FilePropertiesLoader().sourceFromGradle())
+        return this
+    }
+
+    override fun evaluate() {
         remote = selectedRemote()
-        local.prepare(remote)
-        wikiLocal.prepare(remote, local)
-        remote.prepare(local)
+        local.prepare(this)
+        wikiLocal.prepare(this)
+        remote.prepare(this)
         log.debug("preparation stage complete")
     }
 
 
     override fun execute(): GitPlus {
-        prepare()
+        evaluate()
         if (log.isDebugEnabled) {
             val objectMapper = ObjectMapper()
             objectMapper.configure(SerializationFeature.INDENT_OUTPUT, true)
             val swLocal = StringWriter()
             val swWiki = StringWriter()
             val swRemote = StringWriter()
-            objectMapper.writeValue(swLocal, local.localConfiguration)
-            objectMapper.writeValue(swWiki, wikiLocal.localConfiguration)
+            objectMapper.writeValue(swLocal, local.configuration)
+            objectMapper.writeValue(swWiki, wikiLocal.configuration)
             objectMapper.writeValue(swRemote, remote.configuration)
 
             log.debug("executing GitPlus with configuration of: \nGitLocal:\n{}\nGitRemote:\n{}\nWikiLocal:\n{}", swLocal.toString(), swRemote.toString(), swWiki.toString())
         }
         try {
+            propertiesResolver.loaders = ImmutableList.copyOf(configuration.propertiesLoaders)
             if (local.create && remote.create) {
                 createBoth()
                 processWiki()

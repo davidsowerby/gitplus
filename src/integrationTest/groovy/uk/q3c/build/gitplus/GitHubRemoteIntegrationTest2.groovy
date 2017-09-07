@@ -19,18 +19,23 @@ class GitHubRemoteIntegrationTest2 extends Specification {
 
     def setup() {
         gitPlus.remote.repoUser('davidsowerby').repoName('krail')
+        gitPlus.propertiesFromGradle()
+
     }
 
     def "api status"() {
+        given:
+        gitPlus.execute()
 
         expect:
         gitPlus.remote.apiStatus() == DefaultGitHubRemote.Status.GREEN
     }
 
     def "list repos for this user"() {
-
         when:
         gitPlus.remote.repoUser = 'davidsowerby'
+        gitPlus.propertiesFromGradle()
+        gitPlus.execute()
         Set<String> repos = gitPlus.remote.listRepositoryNames()
 
         then:

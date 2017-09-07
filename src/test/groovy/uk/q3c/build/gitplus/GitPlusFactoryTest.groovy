@@ -32,9 +32,9 @@ class GitPlusFactoryTest extends Specification {
 
         when:
         GitLocal local = gitPlus.local
-        local.localConfiguration.projectDirParent = temp
-        local.localConfiguration.projectName = 'wiggly'
-        local.prepare(gitPlus.remote)
+        local.configuration.projectDirParent = temp
+        local.configuration.projectName = 'wiggly'
+        local.prepare(gitPlus)
 
         then:
         local.status().changed.isEmpty()
@@ -47,12 +47,27 @@ class GitPlusFactoryTest extends Specification {
 
         when:
         GitLocal local = gitPlus.local
-        local.localConfiguration.projectDirParent = temp
-        local.localConfiguration.projectName = 'wiggly'
-        local.prepare(gitPlus.remote)
+        local.configuration.projectDirParent = temp
+        local.configuration.projectName = 'wiggly'
+        local.prepare(gitPlus)
 
         then:
         local.status().changed.isEmpty()
     }
 
+    def "execute does not look for API tokens"() {
+        given:
+        GitPlus gitPlus = GitPlusFactory.instance
+        GitLocal local = gitPlus.local
+        local.configuration.projectDirParent = temp
+        local.configuration.projectName = 'wiggly'
+        gitPlus.remote.repoUser = "davidsowerby"
+        gitPlus.remote.repoName = "scratch"
+
+        when:
+        gitPlus.execute()
+
+        then:
+        noExceptionThrown()
+    }
 }

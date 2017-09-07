@@ -2,6 +2,7 @@ package uk.q3c.build.gitplus.local
 
 import org.eclipse.jgit.api.Git
 import spock.lang.Specification
+import uk.q3c.build.gitplus.gitplus.GitPlus
 import uk.q3c.build.gitplus.remote.GitRemote
 
 /**
@@ -19,18 +20,19 @@ class DefaultWikiLocalTest2 extends Specification {
     Git git = Mock(Git)
     GitInitChecker mockInitChecker = Mock(GitInitChecker)
     GitCloner cloner = Mock(GitCloner)
+    GitPlus gitPlus = Mock(GitPlus)
 
     def setup() {
+        gitPlus.local >> gitLocal
+        gitPlus.remote >> remote
         wikiLocal = new DefaultWikiLocal(branchConfigProvider, gitProvider, localConfiguration, mockInitChecker, cloner)
         gitLocal.projectDirParent >> new File('.')
-        gitLocal.taggerEmail >> "xx"
-        gitLocal.taggerName >> "xx"
     }
 
     def "prepare does not validate if not active"() {
 
         when:
-        wikiLocal.prepare(remote, gitLocal)
+        wikiLocal.prepare(gitPlus)
 
         then:
         2 * localConfiguration.getActive() >> true  // as super.prepare() called
@@ -39,7 +41,7 @@ class DefaultWikiLocalTest2 extends Specification {
 
         when:
         wikiLocal.active = false
-        wikiLocal.prepare(remote, gitLocal)
+        wikiLocal.prepare(gitPlus)
 
         then:
         1 * localConfiguration.getActive() >> false

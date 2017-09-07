@@ -2,7 +2,7 @@ package uk.q3c.build.gitplus.local
 
 import com.google.inject.Inject
 import org.slf4j.LoggerFactory
-import uk.q3c.build.gitplus.remote.GitRemote
+import uk.q3c.build.gitplus.gitplus.GitPlus
 
 /**
  * Created by David Sowerby on 21 Oct 2016
@@ -26,7 +26,7 @@ class DefaultWikiLocal @Inject constructor(
 
     override fun setOrigin() {
         try {
-            val originUrl = remote.wikiCloneUrl()
+            val originUrl = parent.remote.wikiCloneUrl()
             log.debug("Setting local wiki origin to '{}'", originUrl)
             setOrigin(originUrl)
         } catch (e: Exception) {
@@ -35,23 +35,18 @@ class DefaultWikiLocal @Inject constructor(
     }
 
     override fun remoteUrl(): String {
-        return remote.wikiCloneUrl()
+        return parent.remote.wikiCloneUrl()
     }
 
-    override fun prepare(remote: GitRemote) {
-        throw UnsupportedOperationException("For WikiLocal, use prepare(GitRemote,GitLocal)")
-    }
-
-    override fun prepare(remote: GitRemote, local: GitLocal) {
+    override fun prepare(parent: GitPlus) {
         if (active) {
             log.debug("preparing wiki element of GitLocal")
-            projectName("${local.projectName}.wiki")
-            projectDirParent(local.projectDirParent)
-            taggerEmail(local.taggerEmail)
-            taggerName(local.taggerName)
-            super.prepare(remote)
+            projectName("${parent.local.projectName}.wiki")
+            projectDirParent(parent.local.projectDirParent)
+            super.prepare(parent)
         }
     }
+
 
 
     /**
@@ -73,7 +68,7 @@ class DefaultWikiLocal @Inject constructor(
     }
 
     override fun active(value: Boolean): GitLocalConfiguration {
-        return localConfiguration.active(value)
+        return configuration.active(value)
     }
 
 }
