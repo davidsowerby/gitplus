@@ -14,8 +14,8 @@ import java.util.*
  * Created by David Sowerby on 11 Mar 2016
  */
 class FilePropertiesLoader : PropertiesLoader {
-    override fun getPropertyValue(property: APIProperty, serviceProvider: ServiceProvider): String {
-        val propertyName = apiPropertyLookup(property, serviceProvider)
+    override fun getPropertyValue(property: GitPlusProperty, serviceProvider: ServiceProvider): String {
+        val propertyName = propertyLookup(property, serviceProvider)
         return retrieveValue(propertyName)
     }
 

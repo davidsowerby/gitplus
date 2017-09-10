@@ -5,7 +5,7 @@ import uk.q3c.build.gitplus.notSpecified
 import uk.q3c.build.gitplus.remote.GitRemoteConfiguration
 import uk.q3c.build.gitplus.remote.ServiceProvider
 import uk.q3c.build.gitplus.remote.UnsupportedServiceProviderException
-import uk.q3c.build.gitplus.util.APIProperty.*
+import uk.q3c.build.gitplus.util.GitPlusProperty.*
 
 /**
  * Retrieves external properties (mostly API tokens), typically held in a file or supplied by Gradle for example.
@@ -27,7 +27,7 @@ interface PropertiesHandler {
      *
      * @throws NoSuchElementException if no token is found in any [PropertiesLoader]
      */
-    fun getPropertyValue(property: APIProperty, serviceProvider: ServiceProvider): String
+    fun getPropertyValue(property: GitPlusProperty, serviceProvider: ServiceProvider): String
 
 }
 
@@ -97,13 +97,13 @@ interface PropertiesResolver : PropertiesHandler {
 
 class DefaultPropertiesResolver : PropertiesResolver {
     private val log = LoggerFactory.getLogger(this.javaClass.name)
-    override fun getPropertyValue(property: APIProperty, serviceProvider: ServiceProvider): String {
+    override fun getPropertyValue(property: GitPlusProperty, serviceProvider: ServiceProvider): String {
 
         try {
             val loader = loaders.first { loader -> loader.getPropertyValue(property, serviceProvider) != notSpecified }
             return loader.getPropertyValue(property, serviceProvider)
         } catch (nsee: NoSuchElementException) {
-            val msg = "No value found for property ${apiPropertyLookup(property, serviceProvider)}, you either need to add the property so an existing loader can locate it, or add a loader to GitRemoteConfiguration.apiPropertiesLoaders"
+            val msg = "No value found for property ${propertyLookup(property, serviceProvider)}, you either need to add the property so an existing loader can locate it, or add a loader to GitPlusConfiguration.propertiesLoaders"
             log.error(msg)
             throw MissingPropertyException(msg)
         }
@@ -135,18 +135,18 @@ class DefaultPropertiesResolver : PropertiesResolver {
 
 }
 
-enum class APIProperty {
+enum class GitPlusProperty {
     ISSUE_CREATE_TOKEN, REPO_CREATE_TOKEN, REPO_DELETE_TOKEN, TAGGER_NAME, TAGGER_EMAIL
 }
 
-fun apiPropertyLookup(apiProperty: APIProperty, serviceProvider: ServiceProvider): String {
+fun propertyLookup(gitPlusProperty: GitPlusProperty, serviceProvider: ServiceProvider): String {
     if (serviceProvider == ServiceProvider.BITBUCKET) {
         throw UnsupportedServiceProviderException(serviceProvider)
     }
 
-    return when (apiProperty) {
-        TAGGER_NAME, TAGGER_EMAIL -> apiProperty.name
-        ISSUE_CREATE_TOKEN, REPO_CREATE_TOKEN, REPO_DELETE_TOKEN -> "${serviceProvider.name}_${apiProperty.name}"
+    return when (gitPlusProperty) {
+        TAGGER_NAME, TAGGER_EMAIL -> gitPlusProperty.name
+        ISSUE_CREATE_TOKEN, REPO_CREATE_TOKEN, REPO_DELETE_TOKEN -> "${serviceProvider.name}_${gitPlusProperty.name}"
     }
 
 }

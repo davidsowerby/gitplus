@@ -28,7 +28,7 @@ group = 'uk.q3c.build'
 
 kaytee {
     version {
-        number = '0.30.1.0'
+        number = '0.31.0.0'
     }
     unitTest {
         qualityGate = true

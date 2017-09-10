@@ -7,7 +7,7 @@ import uk.q3c.build.gitplus.remote.UnsupportedServiceProviderException
 import uk.q3c.util.testutil.TestResource
 
 import static uk.q3c.build.gitplus.remote.ServiceProvider.*
-import static uk.q3c.build.gitplus.util.APIProperty.*
+import static uk.q3c.build.gitplus.util.GitPlusProperty.*
 
 /**
  * Created by David Sowerby on 22 Mar 2016
@@ -28,9 +28,9 @@ class FilePropertiesLoaderTest extends Specification {
         expect:
         loader.getProperties().size() >= 2
         loader.bintrayToken() != null
-        loader.getPropertyValue(APIProperty.REPO_CREATE_TOKEN, GITHUB) != null
-        loader.getPropertyValue(APIProperty.ISSUE_CREATE_TOKEN, GITHUB) != null
-        loader.getPropertyValue(APIProperty.REPO_DELETE_TOKEN, GITHUB) != null
+        loader.getPropertyValue(GitPlusProperty.REPO_CREATE_TOKEN, GITHUB) != null
+        loader.getPropertyValue(GitPlusProperty.ISSUE_CREATE_TOKEN, GITHUB) != null
+        loader.getPropertyValue(GitPlusProperty.REPO_DELETE_TOKEN, GITHUB) != null
     }
 
     def "Exception when called with unsupported provider"() {
@@ -38,7 +38,7 @@ class FilePropertiesLoaderTest extends Specification {
         loader.load()
 
         when:
-        loader.getPropertyValue(APIProperty.REPO_CREATE_TOKEN, BITBUCKET)
+        loader.getPropertyValue(GitPlusProperty.REPO_CREATE_TOKEN, BITBUCKET)
 
         then:
         thrown UnsupportedServiceProviderException
@@ -62,9 +62,9 @@ class FilePropertiesLoaderTest extends Specification {
 
 
         expect:
-        loader.getPropertyValue(APIProperty.REPO_CREATE_TOKEN, GITHUB) == ConstantsKt.notSpecified
-        loader.getPropertyValue(APIProperty.ISSUE_CREATE_TOKEN, GITHUB) == ConstantsKt.notSpecified
-        loader.getPropertyValue(APIProperty.REPO_DELETE_TOKEN, GITHUB) == ConstantsKt.notSpecified
+        loader.getPropertyValue(GitPlusProperty.REPO_CREATE_TOKEN, GITHUB) == ConstantsKt.notSpecified
+        loader.getPropertyValue(GitPlusProperty.ISSUE_CREATE_TOKEN, GITHUB) == ConstantsKt.notSpecified
+        loader.getPropertyValue(GitPlusProperty.REPO_DELETE_TOKEN, GITHUB) == ConstantsKt.notSpecified
 
     }
 

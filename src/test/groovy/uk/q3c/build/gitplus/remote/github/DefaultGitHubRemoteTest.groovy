@@ -15,8 +15,8 @@ import uk.q3c.build.gitplus.gitplus.GitPlusConfigurationException
 import uk.q3c.build.gitplus.local.GitBranch
 import uk.q3c.build.gitplus.local.GitLocal
 import uk.q3c.build.gitplus.remote.*
-import uk.q3c.build.gitplus.util.APIProperty
 import uk.q3c.build.gitplus.util.FilePropertiesLoader
+import uk.q3c.build.gitplus.util.GitPlusProperty
 
 import javax.json.JsonObject
 import javax.json.JsonReader
@@ -222,7 +222,7 @@ class DefaultGitHubRemoteTest extends Specification {
 
     def "api status, all possible return values"() {
         given:
-        String apiKey = new FilePropertiesLoader().getPropertyValue(APIProperty.ISSUE_CREATE_TOKEN, ServiceProvider.GITHUB)
+        String apiKey = new FilePropertiesLoader().getPropertyValue(GitPlusProperty.ISSUE_CREATE_TOKEN, ServiceProvider.GITHUB)
         gitPlus.apiTokenIssueCreate(ServiceProvider.GITHUB) >> apiKey
         gitHubProvider.get(gitPlus, GitRemote.TokenScope.CREATE_ISSUE) >> gitHub
         JsonReader jsonReader = Mock(JsonReader)
@@ -249,7 +249,7 @@ class DefaultGitHubRemoteTest extends Specification {
 
     def "api not available to return status"() {
         given:
-        String apiKey = new FilePropertiesLoader().getPropertyValue(APIProperty.ISSUE_CREATE_TOKEN, ServiceProvider.GITHUB)
+        String apiKey = new FilePropertiesLoader().getPropertyValue(GitPlusProperty.ISSUE_CREATE_TOKEN, ServiceProvider.GITHUB)
         gitPlus.apiTokenIssueCreate(ServiceProvider.GITHUB) >> apiKey
         remote = new DefaultGitHubRemote(krailConfiguration, gitHubProvider, remoteRequest, new GitHubUrlMapper())
         remote.prepare(gitPlus)
@@ -284,7 +284,7 @@ class DefaultGitHubRemoteTest extends Specification {
 
     def "credentials provider"() {
         given:
-        String apiKey = new FilePropertiesLoader().getPropertyValue(APIProperty.ISSUE_CREATE_TOKEN, ServiceProvider.GITHUB)
+        String apiKey = new FilePropertiesLoader().getPropertyValue(GitPlusProperty.ISSUE_CREATE_TOKEN, ServiceProvider.GITHUB)
         gitPlus.apiTokenIssueCreate(ServiceProvider.GITHUB) >> apiKey
         gitHubProvider.get(gitPlus, GitRemote.TokenScope.CREATE_ISSUE) >> gitHub
         remote = new DefaultGitHubRemote(dummyConfiguration, gitHubProvider, remoteRequest, new GitHubUrlMapper())
