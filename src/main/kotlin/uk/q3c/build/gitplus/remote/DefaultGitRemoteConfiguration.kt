@@ -18,6 +18,7 @@ data class DefaultGitRemoteConfiguration(
     override var version = 1
     override var active = true
     override var confirmDelete: String = ""
+    @Transient
     @JsonIgnore
     override var repoDeleteApprover: RemoteRepoDeleteApprover = DefaultRemoteRepoDeleteApprover()
 

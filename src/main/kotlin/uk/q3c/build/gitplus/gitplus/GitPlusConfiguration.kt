@@ -22,6 +22,7 @@ interface GitPlusConfiguration {
 
 class DefaultGitPlusConfiguration : GitPlusConfiguration {
     override var version = 1
+    @Transient
     @JsonIgnore
     override var propertiesLoaders: MutableList<PropertiesLoader> = mutableListOf(FilePropertiesLoader().sourceFromGitPlus())
 }

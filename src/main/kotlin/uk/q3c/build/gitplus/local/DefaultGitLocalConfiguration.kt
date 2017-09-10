@@ -8,22 +8,26 @@ import uk.q3c.build.gitplus.local.CloneExistsResponse.EXCEPTION
 import uk.q3c.build.gitplus.notSpecified
 import uk.q3c.build.gitplus.remote.GitRemoteConfiguration
 import java.io.File
+import java.io.Serializable
 
 /**
  * Created by David Sowerby on 17 Oct 2016
  */
-data class DefaultGitLocalConfiguration(override var projectName: String = notSpecified) : GitLocalConfiguration {
+data class DefaultGitLocalConfiguration(override var projectName: String = notSpecified) : GitLocalConfiguration, Serializable {
 
     override var version = 1
     override var active = true
     override var cloneExistsResponse = EXCEPTION
+    @Transient
     @JsonIgnore
     override var fileDeleteApprover: FileDeleteApprover = DefaultFileDeleteApprover()
-
+    @Transient
+    @JsonIgnore
     override var projectDirParent: File = File(".")
 
     override var create = false
     override var cloneFromRemote = false
+    @Transient
     @JsonIgnore
     override var projectCreator: ProjectCreator = DefaultProjectCreator()
 
