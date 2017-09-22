@@ -1,6 +1,7 @@
 package uk.q3c.build.gitplus.gitplus
 
 import com.google.common.base.Splitter
+import org.slf4j.LoggerFactory
 import uk.q3c.build.gitplus.notSpecified
 import uk.q3c.build.gitplus.remote.ServiceProvider
 import uk.q3c.build.gitplus.remote.ServiceProvider.BITBUCKET
@@ -27,7 +28,6 @@ interface UrlParser {
      *
      * @throws MalformedURLException if the URL is malformed
      * @throws RepoException if the url is not recognised as a repo
-     * @throws RepoIssueException if the url is not recognised as an issue
      */
     fun issueDescriptor(url: String): IssueDescriptor
 
@@ -35,6 +35,7 @@ interface UrlParser {
 }
 
 class DefaultUrlParser : UrlParser {
+    private val log = LoggerFactory.getLogger(this.javaClass.name)
 
     override fun repoDescriptor(url: String): RepoDescriptor {
         return repoDescriptor(URL(url))
@@ -45,6 +46,11 @@ class DefaultUrlParser : UrlParser {
     }
 
     private fun descriptor(url: URL, issue: Boolean): Descriptor {
+        log.debug("parsing ${url.toExternalForm()}")
+        var issues = notSpecified
+        var issueNumber = -1
+        var repoDescriptor: RepoDescriptor
+
         try {
             val host = url.host
             val segments = Splitter.on("/").split(url.path).toList()
@@ -57,32 +63,32 @@ class DefaultUrlParser : UrlParser {
                         GITHUB
                     }
 
-            var issues = notSpecified
-            var issueNumber = -1
+
 
             if (segments.size >= 5) {
+                log.debug("checking additional segment(s) for issue identification")
                 issues = segments[3]
                 issueNumber = segments[4].toInt()
             }
-            val repoDescriptor = RepoDescriptor(host = host, repoUser = repoUser, repoName = repoName, provider = provider)
+
+
+            repoDescriptor = RepoDescriptor(host = host, repoUser = repoUser, repoName = repoName, provider = provider)
 
             if (!issue) {
                 return repoDescriptor
-            } else {
-                if (issues == "issues" && issueNumber > 0) {
-                    return IssueDescriptor(repoDescriptor, issueNumber)
-                }
-                throw RepoIssueException("${url.toExternalForm()} is not a recognised as an issue URL")
-
             }
         } catch (e: Exception) {
-            if (issue) {
-                throw RepoIssueException("${url.toExternalForm()} is not a recognised as an issue URL", e)
-            } else {
-                throw RepoException("${url.toExternalForm()} is not a valid repository URL", e)
-            }
+            throw RepoException("${url.toExternalForm()} is not a valid repository URL", e)
         }
+
+
+        if (issues == "issues" && issueNumber > 0) {
+            return IssueDescriptor(repoDescriptor, issueNumber)
+        }
+        throw RepoException("${url.toExternalForm()} is not a recognised as an issue URL")
+
     }
+
 
     override fun issueDescriptor(url: String): IssueDescriptor {
         return issueDescriptor(URL(url))
@@ -94,11 +100,10 @@ class DefaultUrlParser : UrlParser {
 
 }
 
-open class RepoException(msg: String, e: Exception) : RuntimeException(msg, e)
-
-class RepoIssueException(msg: String, e: Exception?) : RuntimeException(msg, e) {
+class RepoException(msg: String, e: Exception?) : RuntimeException(msg, e) {
     constructor(msg: String) : this(msg, null)
 }
+
 
 interface Descriptor
 

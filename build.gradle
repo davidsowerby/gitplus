@@ -33,8 +33,8 @@ kaytee {
     unitTest {
         qualityGate = true
         thresholds {
-            complexity = 67
-            method = 69
+            complexity = 66
+            method = 70
         }
     }
 

@@ -87,7 +87,7 @@ class DefaultUrlParserTest extends Specification {
         actual = parser.issueDescriptor(urli4)
 
         then: "then exception thrown"
-        thrown RepoIssueException
+        thrown RepoException
 
     }
 }
