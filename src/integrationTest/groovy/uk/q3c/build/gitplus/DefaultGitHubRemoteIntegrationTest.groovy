@@ -15,6 +15,8 @@ import uk.q3c.build.gitplus.remote.GPIssue
 import uk.q3c.build.gitplus.remote.GitRemoteException
 import uk.q3c.build.gitplus.util.FilePropertiesLoader
 
+import java.time.LocalDateTime
+
 /**
  * This test needs to delete the 'dummy' repo in cleanup.  This test is a bit weird because it has to use deleteRepo to clean up, but also tests deleteRepo
  *
@@ -114,9 +116,14 @@ class DefaultGitHubRemoteIntegrationTest extends Specification {
     def "create remote only"() {
         given:
         gitPlus.createRemoteOnly('davidsowerby', 'dummy', true)
+        LocalDateTime timeout = LocalDateTime.now().plusSeconds(5)
 
         when:
         gitPlus.execute()
+        while (!remoteRepoExists('dummy') && LocalDateTime.now().isBefore(timeout)) {
+            println 'waiting for remote repo to be created'
+            Thread.sleep(1000)
+        }
         createTestIssues(1)
 
         then:
