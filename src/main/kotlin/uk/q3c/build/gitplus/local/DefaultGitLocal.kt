@@ -264,6 +264,22 @@ open class DefaultGitLocal @Inject constructor(
         }
     }
 
+    override fun checkoutCommitNoMerge(sha: GitSHA, toBranch: String) {
+        log.info("checking out Git hash: '{}' to branch '{}'", sha, toBranch)
+        try {
+            val checkout = git.checkout()
+            checkout
+                    .setCreateBranch(true)
+                    .setName(toBranch)
+                    .setStartPoint(sha.sha)
+                    .setForce(true)
+            checkout.call()
+
+        } catch (e: Exception) {
+            throw GitLocalException("Unable to force checkout commit " + sha, e)
+        }
+    }
+
 
     override fun createBranch(branchName: String) {
         log.info("creating branch '{}'", branchName)

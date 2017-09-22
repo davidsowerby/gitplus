@@ -4,8 +4,10 @@ import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.MapBinder;
 import uk.q3c.build.gitplus.gitplus.DefaultGitPlus;
 import uk.q3c.build.gitplus.gitplus.DefaultGitPlusConfiguration;
+import uk.q3c.build.gitplus.gitplus.DefaultUrlParser;
 import uk.q3c.build.gitplus.gitplus.GitPlus;
 import uk.q3c.build.gitplus.gitplus.GitPlusConfiguration;
+import uk.q3c.build.gitplus.gitplus.UrlParser;
 import uk.q3c.build.gitplus.local.BranchConfigProvider;
 import uk.q3c.build.gitplus.local.DefaultBranchConfigProvider;
 import uk.q3c.build.gitplus.local.DefaultGitCloner;
@@ -70,6 +72,7 @@ public class GitPlusModule extends AbstractModule {
         bind(GitCloner.class).to(DefaultGitCloner.class);
         bind(PropertiesResolver.class).to(DefaultPropertiesResolver.class);
         bind(GitPlusConfiguration.class).to(DefaultGitPlusConfiguration.class);
+        bind(UrlParser.class).to(DefaultUrlParser.class);
 
     }
 }

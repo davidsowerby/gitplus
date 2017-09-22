@@ -107,6 +107,11 @@ interface GitLocal : GitLocalConfiguration, AutoCloseable {
     fun checkoutCommit(sha: GitSHA, toBranch: String)
 
     /**
+     * Forces the checkout (in other words, does not attempt to merge with any local changes), the same setting [CheckoutCommand.setForce] to true
+     */
+    fun checkoutCommitNoMerge(sha: GitSHA, toBranch: String)
+
+    /**
      * Creates a new branch with the name `branchName`, but does nothing with it
 
      * @param branchName name of the new branch
