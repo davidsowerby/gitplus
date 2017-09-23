@@ -33,6 +33,7 @@ interface GitPlus : PropertiesResolver, AutoCloseable, GitPlusConfiguration {
     val local: GitLocal
     val wikiLocal: WikiLocal
     val configuration: GitPlusConfiguration
+    val urlParser: UrlParser
 
     /**
      * The [GitRemote] instance is selected by configuration, so we use a provider to set this property

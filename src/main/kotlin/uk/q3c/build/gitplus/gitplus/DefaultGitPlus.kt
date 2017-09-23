@@ -20,6 +20,7 @@ class DefaultGitPlus @Inject constructor(
         override val wikiLocal: WikiLocal,
         val remoteResolver: GitRemoteResolver,
         val propertiesResolver: PropertiesResolver,
+        override val urlParser: UrlParser,
         override val configuration: GitPlusConfiguration)
 
     : GitPlus, PropertiesResolver by propertiesResolver, GitPlusConfiguration by configuration {
