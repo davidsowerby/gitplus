@@ -105,8 +105,18 @@ class RepoException(msg: String, e: Exception?) : RuntimeException(msg, e) {
 }
 
 
-interface Descriptor
+interface Descriptor {
+    fun toUrl(): String
+}
 
-data class RepoDescriptor @JvmOverloads constructor(val host: String, val repoUser: String, val repoName: String, val provider: ServiceProvider = GITHUB) : Descriptor
+data class RepoDescriptor @JvmOverloads constructor(val host: String, val repoUser: String, val repoName: String, val provider: ServiceProvider = GITHUB) : Descriptor {
+    override fun toUrl(): String {
+        return "$host/$repoUser/$repoName"
+    }
+}
 
-data class IssueDescriptor(val repoDescriptor: RepoDescriptor, val issueNumber: Int) : Descriptor
+data class IssueDescriptor(val repoDescriptor: RepoDescriptor, val issueNumber: Int) : Descriptor {
+    override fun toUrl(): String {
+        return "${repoDescriptor.toUrl()}/issues/$issueNumber"
+    }
+}
