@@ -208,7 +208,7 @@ class DefaultGitHubRemoteIntegrationTest extends Specification {
             println 'waiting 1 second for api, ' + timeout + ' before timeout'
             Thread.sleep(1000)
             timeout--
-            names = remote.listRepositoryNames()
+            names = gitPlusForSetup.remote.listRepositoryNames()
         }
         if (timeout <= 0) {
             throw new RuntimeException("Timed out")

@@ -42,6 +42,7 @@ class DefaultGitPlusTest extends Specification {
     File projDirParent
     PropertiesResolver propertiesResolver
     GitPlusConfiguration gitPlusConfiguration = new DefaultGitPlusConfiguration()
+    UrlParser urlParser = Mock(UrlParser)
 
 
     def setup() {
@@ -56,7 +57,7 @@ class DefaultGitPlusTest extends Specification {
         serviceProviders.put(BITBUCKET, bitBucketProvider)
         temp = temporaryFolder.getRoot()
         gitRemoteProvider = new DefaultGitRemoteResolver(serviceProviders)
-        gitplus = new DefaultGitPlus(local, wikiLocal, gitRemoteProvider, propertiesResolver, gitPlusConfiguration)
+        gitplus = new DefaultGitPlus(local, wikiLocal, gitRemoteProvider, propertiesResolver, urlParser, gitPlusConfiguration)
         projDirParent = temp
     }
 
