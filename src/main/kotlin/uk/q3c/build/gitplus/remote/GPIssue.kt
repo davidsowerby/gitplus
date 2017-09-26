@@ -35,9 +35,23 @@ class GPIssue : Comparable<GPIssue> {
         isPullRequest = jsIssue.isPull
     }
 
+
     constructor(number: Int) {
         this.number = number
     }
+
+    //for Jackson
+    constructor()
+
+//    @JsonCreator
+//    constructor(title: String, labels: MutableSet<String>, body: String, number: Int, htmlUrl: String, isPullRequest: Boolean) {
+//        this.title = title
+//        this.labels = labels
+//        this.body = body
+//        this.number = number
+//        this.htmlUrl = htmlUrl
+//        this.isPullRequest = isPullRequest
+//    }
 
     fun title(title: String): GPIssue {
         this.title = title
