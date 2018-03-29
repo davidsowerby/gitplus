@@ -11,13 +11,13 @@ class PropertiesKtTest extends Specification {
 
     def "property lookup"() {
         expect:
-        PropertiesKt.propertyLookup(GitPlusProperty.ISSUE_CREATE_TOKEN, ServiceProvider.GITHUB) == "GITHUB_ISSUE_CREATE_TOKEN"
+        PropertiesKt.propertyLookup(GitPlusProperty.ISSUE_CREATE_TOKEN, ServiceProvider.GITHUB) == "github-issue-create-token"
 //        PropertiesHandlerKt.apiPropertyLookup(GitPlusProperty.REPO_CREATE_TOKEN,ServiceProvider.BITBUCKET)=="BITBUCKET_REPO_CREATE_TOKEN"
     }
 
     def "Unsupported provider"() {
         when:
-        PropertiesKt.propertyLookup(GitPlusProperty.TAGGER_EMAIL, ServiceProvider.BITBUCKET) == "TAGGER_EMAIL"
+        PropertiesKt.propertyLookup(GitPlusProperty.TAGGER_EMAIL, ServiceProvider.BITBUCKET) == "tagger-email"
 
         then:
 

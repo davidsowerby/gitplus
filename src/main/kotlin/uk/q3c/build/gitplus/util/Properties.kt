@@ -145,8 +145,12 @@ fun propertyLookup(gitPlusProperty: GitPlusProperty, serviceProvider: ServicePro
     }
 
     return when (gitPlusProperty) {
-        TAGGER_NAME, TAGGER_EMAIL -> gitPlusProperty.name
-        ISSUE_CREATE_TOKEN, REPO_CREATE_TOKEN, REPO_DELETE_TOKEN -> "${serviceProvider.name}_${gitPlusProperty.name}"
+        TAGGER_NAME, TAGGER_EMAIL -> propertyNameFromEnum(gitPlusProperty)
+        ISSUE_CREATE_TOKEN, REPO_CREATE_TOKEN, REPO_DELETE_TOKEN -> "${serviceProvider.name.toLowerCase()}-${propertyNameFromEnum(gitPlusProperty)}"
     }
 
+}
+
+fun propertyNameFromEnum(property: GitPlusProperty): String {
+    return property.name.toLowerCase().replace("_", "-")
 }
