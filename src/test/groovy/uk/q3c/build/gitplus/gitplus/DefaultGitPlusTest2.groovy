@@ -33,7 +33,7 @@ class DefaultGitPlusTest2 extends Specification {
         then:
         gitPlus.propertiesResolver.loaders.size() == 1
         gitPlus.propertiesResolver.loaders.get(0) instanceof FilePropertiesLoader
-        (gitPlus.propertiesResolver.loaders.get(0) as FilePropertiesLoader).source == new File(FileUtils.userDirectory, "gradle/gradle.properties")
+        (gitPlus.propertiesResolver.loaders.get(0) as FilePropertiesLoader).source == new File(FileUtils.userDirectory, ".gradle/gradle.properties")
 
         when:
         gitPlus.propertiesFromGitPlus()

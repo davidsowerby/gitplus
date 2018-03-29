@@ -69,6 +69,15 @@ class FilePropertiesLoaderTest extends Specification {
     }
 
 
+    def "read gradle home"() {
+        given:
+        String s = System.getenv("GRADLE_USER_HOME")
+
+        expect:
+        !s.isEmpty()
+    }
+
+
     def "tagger name and email"() {
         given:
         loader.source(testResource('test1.properties'))
@@ -118,7 +127,7 @@ class FilePropertiesLoaderTest extends Specification {
         loader.sourceFromGradle()
 
         then:
-        loader.source == new File(FileUtils.userDirectory, "gradle/gradle.properties")
+        loader.source == new File(FileUtils.userDirectory, ".gradle/gradle.properties")
 
         when:
         loader.sourceFromGitPlus()

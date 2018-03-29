@@ -1,5 +1,6 @@
 package uk.q3c.build.gitplus.util
 
+import org.slf4j.LoggerFactory
 import uk.q3c.build.gitplus.BINTRAY_TOKEN
 import uk.q3c.build.gitplus.notSpecified
 import uk.q3c.build.gitplus.remote.ServiceProvider
@@ -14,6 +15,7 @@ import java.util.*
  * Created by David Sowerby on 11 Mar 2016
  */
 class FilePropertiesLoader : PropertiesLoader {
+    private val log = LoggerFactory.getLogger(this.javaClass.name)
     override fun getPropertyValue(property: GitPlusProperty, serviceProvider: ServiceProvider): String {
         val propertyName = propertyLookup(property, serviceProvider)
         return retrieveValue(propertyName)
@@ -25,8 +27,25 @@ class FilePropertiesLoader : PropertiesLoader {
 
     override var properties: Properties = Properties()
 
+    /**
+     * Looks for a gradle.properties file initially in the GRADLE_USER_HOME directory if that has been set, or if not, then in
+     * user.home/.gradle
+     */
     fun sourceFromGradle(): PropertiesLoader {
-        source = File(File(System.getProperty("user.home")), "gradle/gradle.properties")
+        val gradleHome = System.getenv("GRADLE_USER_HOME")
+        val fileName =
+                if (gradleHome != null) {
+                    "$gradleHome/gradle.properties"
+                } else {
+                    val userHome = System.getProperty("user.home")
+                    "$userHome/.gradle/gradle.properties"
+                }
+
+
+        source = File(fileName)
+        if (!source.exists()) {
+            log.warn("Cannot find a gradle.properties file at $fileName.  If any properties are required the application may fail")
+        }
         return this
     }
 
