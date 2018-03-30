@@ -1,7 +1,7 @@
 //noinspection GrPackage
 buildscript {
     ext.kotlin_version = '1.2.31'
-    ext.kaytee_plugin_version = '0.19.1.0'
+    ext.kaytee_plugin_version = '0.20.0.0'
     repositories {
         mavenLocal()
         maven {
@@ -28,7 +28,7 @@ group = 'uk.q3c.build'
 
 kaytee {
     version {
-        number = '0.35.0.0'
+        number = '0.35.0.1'
     }
     unitTest {
         qualityGate = true
